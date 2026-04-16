@@ -1,0 +1,26 @@
+Read AGENTS.md and all files in /docs first.
+
+Task:
+Implement authentication and authorization with Supabase.
+
+Requirements:
+- Google SSO sign-in
+- profile creation on first login
+- role-based authorization
+- roles:
+  - anonymous
+  - user
+  - admin
+- anonymous can browse public pages
+- user can access dashboard and save progress
+- admin can access admin pages
+- create reusable permission helpers
+- protect admin routes in middleware and server checks
+
+Deliver:
+- Supabase auth setup
+- middleware protection
+- profile bootstrap logic
+- role helpers
+- sign-in page
+- short explanation of how admin role is assigned

@@ -1,0 +1,38 @@
+Read AGENTS.md and all files in /docs first.
+
+Task:
+Implement the database schema and admin CRUD for vocabulary, grammar, and lessons.
+
+Requirements:
+- create SQL migration files
+- create seed file with small demo data
+- define TypeScript domain types
+- build admin pages for:
+  - words list
+  - create word
+  - edit word
+  - grammar list/create/edit
+  - lessons list/create/edit
+- word form fields:
+  - simplified
+  - traditional
+  - hanzi
+  - pinyin
+  - han_viet
+  - vietnamese_meaning
+  - examples
+  - HSK level
+  - topic
+  - radical
+  - notes
+  - publish status
+
+Constraints:
+- only admin can write content
+- public pages read only published content
+
+Deliver:
+- migrations
+- admin UI
+- validation
+- reusable forms

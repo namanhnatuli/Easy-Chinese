@@ -1,0 +1,28 @@
+Read AGENTS.md and all files in /docs first.
+
+Task:
+Build the learner experience for a lesson.
+
+Requirements:
+- lesson study page
+- learning modes:
+  - flashcard
+  - multiple choice
+  - typing / complete word
+- mode switcher
+- keyboard-friendly interactions
+- for logged-in users:
+  - save progress
+  - create review events
+  - update user_word_progress
+- for anonymous users:
+  - allow studying
+  - do not persist to database
+  - show sign-in CTA when needed
+
+Use a simple spaced repetition rule from docs/04-learning-engine.md.
+
+Deliver:
+- learning components
+- progress persistence
+- clear separation of UI and business logic

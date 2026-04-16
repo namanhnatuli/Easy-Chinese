@@ -1,0 +1,39 @@
+Read AGENTS.md and all files in /docs first.
+
+You are building a Chinese learning web app with:
+- Next.js App Router
+- TypeScript
+- Tailwind
+- shadcn/ui
+- Supabase
+
+Task:
+1. Propose a short implementation plan.
+2. Initialize the project structure.
+3. Create the base app shell:
+   - left sidebar
+   - top header
+   - responsive layout
+4. Create placeholder pages for:
+   - home
+   - lessons
+   - lesson detail
+   - learn lesson
+   - grammar
+   - dashboard
+   - settings
+   - admin
+5. Set up shared types and basic utilities.
+6. Do not implement business logic yet.
+7. Keep code clean and modular.
+
+Use the screenshots only as loose inspiration:
+- study-focused layout
+- lesson cards
+- dark learning panel
+- stats dashboard
+
+Deliver:
+- created files
+- summary of structure
+- next recommended step

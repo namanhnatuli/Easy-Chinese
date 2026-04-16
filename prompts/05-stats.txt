@@ -1,0 +1,22 @@
+Read AGENTS.md and all files in /docs first.
+
+Task:
+Build a logged-in user statistics dashboard.
+
+Requirements:
+- show counts:
+  - new
+  - learning
+  - review due
+  - mastered
+  - total studied
+- show lesson completion progress
+- show recent activity
+- graceful empty states
+- route must require login
+
+Deliver:
+- dashboard page
+- data queries
+- summary cards
+- chart-ready structure
