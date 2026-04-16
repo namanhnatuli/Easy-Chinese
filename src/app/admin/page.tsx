@@ -1,17 +1,33 @@
 import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminUser } from "@/lib/auth";
 
 const adminSections = [
   {
     href: "/admin/words",
     title: "Words",
-    description: "Phase 4 CRUD workspace placeholder.",
+    description: "Manage vocabulary, examples, publish state, and taxonomy links.",
   },
   {
-    href: "/admin/words/new",
-    title: "New Word",
-    description: "Phase 4 form flow placeholder.",
+    href: "/admin/grammar",
+    title: "Grammar Points",
+    description: "Create grammar explanations, examples, and publishable lesson content.",
+  },
+  {
+    href: "/admin/lessons",
+    title: "Lessons",
+    description: "Compose ordered lesson content from words and grammar points.",
+  },
+  {
+    href: "/admin/topics",
+    title: "Topics",
+    description: "Maintain lesson categories and content organization.",
+  },
+  {
+    href: "/admin/radicals",
+    title: "Radicals",
+    description: "Maintain Chinese radical reference data for vocabulary entries.",
   },
 ];
 
@@ -20,13 +36,11 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Admin</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">Admin shell</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Admin authorization is active in phase 2. CRUD flows remain deferred to phase 4.
-        </p>
-      </section>
+      <AdminPageHeader
+        eyebrow="Admin"
+        title="Content management"
+        description="Phase 4 adds admin-only content CRUD on top of the existing schema, auth model, and RLS rules."
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         {adminSections.map((section) => (

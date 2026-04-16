@@ -2,8 +2,16 @@ export type UserRole = "anonymous" | "user" | "admin";
 export type StoredUserRole = Exclude<UserRole, "anonymous">;
 
 export type ReviewMode = "flashcard" | "multiple_choice" | "typing";
+export type ReviewResult = "correct" | "incorrect" | "skipped";
 
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
+export type PreferredTheme = "light" | "dark" | "system";
+export type PreferredFont = "sans" | "serif";
+
+export interface TimestampedEntity {
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface AuthUser {
   id: string;
@@ -13,27 +21,25 @@ export interface AuthUser {
   role: StoredUserRole;
 }
 
-export interface Profile {
+export interface Profile extends TimestampedEntity {
   id: string;
   email: string | null;
   displayName: string | null;
   avatarUrl: string | null;
   role: StoredUserRole;
   preferredLanguage: string;
-  preferredTheme: "light" | "dark" | "system";
-  preferredFont: "sans" | "serif";
-  createdAt: string;
-  updatedAt: string;
+  preferredTheme: PreferredTheme;
+  preferredFont: PreferredFont;
 }
 
-export interface Topic {
+export interface Topic extends TimestampedEntity {
   id: string;
   name: string;
   slug: string;
   description: string | null;
 }
 
-export interface Radical {
+export interface Radical extends TimestampedEntity {
   id: string;
   radical: string;
   pinyin: string | null;
@@ -41,12 +47,12 @@ export interface Radical {
   strokeCount: number;
 }
 
-export interface Word {
+export interface Word extends TimestampedEntity {
   id: string;
+  slug: string;
   simplified: string;
   traditional: string | null;
   hanzi: string;
-  slug: string;
   pinyin: string;
   hanViet: string | null;
   vietnameseMeaning: string;
@@ -57,11 +63,18 @@ export interface Word {
   notes: string | null;
   isPublished: boolean;
   createdBy: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface GrammarPoint {
+export interface WordExample extends TimestampedEntity {
+  id: string;
+  wordId: string;
+  chineseText: string;
+  pinyin: string | null;
+  vietnameseMeaning: string;
+  sortOrder: number;
+}
+
+export interface GrammarPoint extends TimestampedEntity {
   id: string;
   title: string;
   slug: string;
@@ -71,29 +84,44 @@ export interface GrammarPoint {
   notes: string | null;
   isPublished: boolean;
   createdBy: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface LessonSummary {
+export interface GrammarExample extends TimestampedEntity {
+  id: string;
+  grammarPointId: string;
+  chineseText: string;
+  pinyin: string | null;
+  vietnameseMeaning: string;
+  sortOrder: number;
+}
+
+export interface Lesson extends TimestampedEntity {
   id: string;
   slug: string;
   title: string;
-  description: string;
+  description: string | null;
   hskLevel: number;
-  topicName: string;
-  wordCount: number;
-  grammarCount: number;
-  estimatedMinutes: number;
+  topicId: string | null;
   isPublished: boolean;
+  sortOrder: number;
+  createdBy: string | null;
 }
 
-export interface LessonDetail extends LessonSummary {
-  words: Word[];
-  grammarPoints: GrammarPoint[];
+export interface LessonWord {
+  lessonId: string;
+  wordId: string;
+  sortOrder: number;
+  createdAt: string;
 }
 
-export interface WordProgress {
+export interface LessonGrammarPoint {
+  lessonId: string;
+  grammarPointId: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface UserWordProgress extends TimestampedEntity {
   id: string;
   userId: string;
   wordId: string;
@@ -105,17 +133,39 @@ export interface WordProgress {
   lastReviewedAt: string | null;
   easeFactor: number;
   intervalDays: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface LessonProgress {
+export interface UserLessonProgress extends TimestampedEntity {
   id: string;
   userId: string;
   lessonId: string;
   completionPercent: number;
   lastStudiedAt: string | null;
   completedAt: string | null;
+}
+
+export interface ReviewEvent {
+  id: string;
+  userId: string;
+  wordId: string;
+  mode: ReviewMode;
+  result: ReviewResult;
+  reviewedAt: string;
+  createdAt: string;
+}
+
+export interface LessonSummary extends Lesson {
+  topicName: string | null;
+  wordCount: number;
+  grammarCount: number;
+  estimatedMinutes: number;
+}
+
+export interface LessonDetail extends LessonSummary {
+  words: Word[];
+  grammarPoints: GrammarPoint[];
+  wordExamples?: WordExample[];
+  grammarExamples?: GrammarExample[];
 }
 
 export interface LearningCard {
@@ -225,11 +275,16 @@ export const sampleLessons: LessonDetail[] = [
     title: "Survival Greetings",
     description: "Learn the first greeting phrases, polite responses, and a simple question form.",
     hskLevel: 1,
+    topicId: "topic-greetings",
     topicName: "Greetings",
     wordCount: 12,
     grammarCount: 1,
     estimatedMinutes: 10,
     isPublished: true,
+    sortOrder: 1,
+    createdBy: null,
+    createdAt: "2026-04-16T00:00:00.000Z",
+    updatedAt: "2026-04-16T00:00:00.000Z",
     words: sampleWords,
     grammarPoints: sampleGrammarPoints,
   },
@@ -239,11 +294,16 @@ export const sampleLessons: LessonDetail[] = [
     title: "Introducing Yourself",
     description: "Basic self-introduction phrases for names, nationality, and polite follow-ups.",
     hskLevel: 1,
+    topicId: "topic-introductions",
     topicName: "Introductions",
     wordCount: 15,
     grammarCount: 2,
     estimatedMinutes: 14,
     isPublished: true,
+    sortOrder: 2,
+    createdBy: null,
+    createdAt: "2026-04-16T00:00:00.000Z",
+    updatedAt: "2026-04-16T00:00:00.000Z",
     words: sampleWords,
     grammarPoints: sampleGrammarPoints,
   },
