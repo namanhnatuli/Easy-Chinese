@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import type { MultipleChoiceQuestion } from "@/types/domain";
 
 export function MultipleChoicePanel({
@@ -19,7 +20,7 @@ export function MultipleChoicePanel({
   );
 
   return (
-    <section className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl">
+    <section className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-panel">
       <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
         <span>Multiple Choice</span>
         <span>
@@ -65,16 +66,16 @@ export function MultipleChoicePanel({
       </div>
 
       <div className="mt-6">
-        <button
-          type="button"
+        <Button
           onClick={() => {
             setIndex((value) => (value + 1) % questions.length);
             setSelectedChoice(null);
           }}
-          className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white"
+          variant="outline"
+          className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
         >
           Next question
-        </button>
+        </Button>
       </div>
     </section>
   );

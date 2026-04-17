@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import type { TypingQuestion } from "@/types/domain";
 
 export function TypingPanel({ questions }: { questions: TypingQuestion[] }) {
@@ -23,7 +24,7 @@ export function TypingPanel({ questions }: { questions: TypingQuestion[] }) {
   }
 
   return (
-    <section className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl">
+    <section className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-panel">
       <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
         <span>Typing</span>
         <span>
@@ -54,23 +55,20 @@ export function TypingPanel({ questions }: { questions: TypingQuestion[] }) {
         ) : null}
 
         <div className="flex flex-wrap gap-3">
-          <button
-            type="submit"
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950"
-          >
+          <Button type="submit" variant="secondary" className="bg-white text-slate-950 hover:bg-white/90">
             Check answer
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={() => {
               setIndex((value) => (value + 1) % questions.length);
               setValue("");
               setSubmitted(false);
             }}
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white"
+            variant="outline"
+            className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
             Next prompt
-          </button>
+          </Button>
         </div>
       </form>
     </section>

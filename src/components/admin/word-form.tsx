@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
+import { buttonVariants } from "@/components/ui/button";
 import type { AdminSelectOption, AdminWordEditor } from "@/features/admin/words";
 
 interface WordFormProps {
@@ -103,13 +104,13 @@ export function WordForm({
               ))}
             </select>
           </Field>
-          <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+          <label className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
             <input
               type="checkbox"
               name="is_published"
               defaultChecked={word?.is_published ?? false}
             />
-            <span className="text-sm font-medium text-slate-700">Published</span>
+            <span className="text-sm font-medium text-foreground">Published</span>
           </label>
           <div className="md:col-span-2">
             <Field label="Notes">
@@ -136,7 +137,7 @@ export function WordForm({
           secondaryAction={
             <Link
               href="/admin/words"
-              className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700"
+              className={buttonVariants({ variant: "outline" })}
             >
               Cancel
             </Link>

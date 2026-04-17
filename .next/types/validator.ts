@@ -173,6 +173,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/grammar/[grammarSlug]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/grammar/[grammarSlug]">> = Specific
+  const handler = {} as typeof import("../../src/app/grammar/[grammarSlug]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/grammar/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/grammar">> = Specific
+  const handler = {} as typeof import("../../src/app/grammar/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/learn/lesson/[lessonId]/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/learn/lesson/[lessonId]">> = Specific
@@ -213,6 +231,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends AppPageConfig<"/settings">> = Specific
   const handler = {} as typeof import("../../src/app/settings/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/vocabulary/[wordSlug]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/vocabulary/[wordSlug]">> = Specific
+  const handler = {} as typeof import("../../src/app/vocabulary/[wordSlug]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/vocabulary/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/vocabulary">> = Specific
+  const handler = {} as typeof import("../../src/app/vocabulary/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

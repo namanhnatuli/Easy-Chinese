@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
+import { buttonVariants } from "@/components/ui/button";
 import type { AdminLessonEditor, LessonCompositionOption } from "@/features/admin/lessons";
 
 function SelectionGrid({
@@ -22,7 +23,7 @@ function SelectionGrid({
           return (
             <div
               key={option.id}
-              className="grid gap-3 rounded-2xl border border-slate-200 p-4 md:grid-cols-[1fr_120px]"
+              className="grid gap-3 rounded-2xl border border-border bg-muted/20 p-4 md:grid-cols-[1fr_120px]"
             >
               <label className="flex items-center gap-3">
                 <input
@@ -105,13 +106,13 @@ export function LessonForm({
               ))}
             </select>
           </Field>
-          <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+          <label className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
             <input
               type="checkbox"
               name="is_published"
               defaultChecked={lesson?.is_published ?? false}
             />
-            <span className="text-sm font-medium text-slate-700">Published</span>
+            <span className="text-sm font-medium text-foreground">Published</span>
           </label>
           <div className="md:col-span-2">
             <Field label="Description">
@@ -129,7 +130,7 @@ export function LessonForm({
           secondaryAction={
             <Link
               href="/admin/lessons"
-              className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700"
+              className={buttonVariants({ variant: "outline" })}
             >
               Cancel
             </Link>

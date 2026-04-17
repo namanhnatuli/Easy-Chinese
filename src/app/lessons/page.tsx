@@ -1,52 +1,67 @@
 import Link from "next/link";
+import { BookOpen, Filter } from "lucide-react";
 
+import { ContentCard } from "@/components/shared/content-card";
+import { FilterBar } from "@/components/shared/filter-bar";
+import { PageHeader } from "@/components/shared/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { sampleLessons } from "@/types/domain";
 
 export default function LessonsPage() {
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Lessons</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">Follow a structured path</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Public lessons stay accessible to anonymous learners. Saved lesson progress becomes
-          available after sign-in.
-        </p>
-      </section>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Lessons"
+        badge="Public browsing"
+        title="Follow a structured lesson path"
+        description="Lessons combine vocabulary, grammar, and practice context so learners can move through HSK content in a more coherent sequence."
+        actions={
+          <Button asChild>
+            <Link href="/vocabulary">Browse vocabulary</Link>
+          </Button>
+        }
+      />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <FilterBar>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-muted">
+            <Filter className="size-4" />
+          </span>
+          <div>
+            <p className="font-medium text-foreground">Lesson filters</p>
+            <p>Level, topic, and duration controls can live here once data fetching is wired.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">HSK 1</Badge>
+          <Badge variant="secondary">Greetings</Badge>
+          <Badge variant="secondary">Introductions</Badge>
+        </div>
+      </FilterBar>
+
+      <section className="grid gap-4 lg:grid-cols-2">
         {sampleLessons.map((lesson) => (
-          <article key={lesson.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                {lesson.topicName}
-              </span>
-              <span className="text-sm text-slate-500">{lesson.estimatedMinutes} min</span>
+          <div key={lesson.id} className="flex flex-col gap-4">
+            <ContentCard
+              title={lesson.title}
+              description={lesson.description ?? ""}
+              badge={lesson.topicName ?? "General"}
+              meta={[`HSK ${lesson.hskLevel}`, `${lesson.wordCount} words`, `${lesson.grammarCount} grammar`, `${lesson.estimatedMinutes} min`]}
+              href={`/lessons/${lesson.slug}`}
+              ctaLabel="Lesson details"
+            />
+            <div className="flex items-center gap-2 px-2">
+              <Button asChild variant="ghost" className="h-10 px-2">
+                <Link href={`/learn/lesson/${lesson.id}`}>
+                  <BookOpen className="size-4" />
+                  Start learning
+                </Link>
+              </Button>
             </div>
-            <h2 className="mt-4 text-xl font-semibold text-slate-950">{lesson.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{lesson.description}</p>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
-              <span>HSK {lesson.hskLevel}</span>
-              <span>{lesson.wordCount} words</span>
-              <span>{lesson.grammarCount} grammar point</span>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={`/lessons/${lesson.slug}`}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-              >
-                Lesson details
-              </Link>
-              <Link
-                href={`/learn/lesson/${lesson.id}`}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
-              >
-                Start learning
-              </Link>
-            </div>
-          </article>
+          </div>
         ))}
-      </div>
+      </section>
     </div>
   );
 }

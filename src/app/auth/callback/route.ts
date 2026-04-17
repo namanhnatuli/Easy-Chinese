@@ -7,7 +7,8 @@ import { getDefaultAuthenticatedPath, sanitizeNextPath } from "@/features/auth/r
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const next = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
-  const response = NextResponse.next();
+  const redirectDestination = new URL("/", request.url);
+  const response = NextResponse.redirect(redirectDestination);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -45,5 +46,6 @@ export async function GET(request: NextRequest) {
   const profile = await ensureProfileForUser(supabase, user);
   const destination = next ?? getDefaultAuthenticatedPath(profile.role);
 
-  return NextResponse.redirect(new URL(destination, request.url));
+  response.headers.set("Location", new URL(destination, request.url).toString());
+  return response;
 }

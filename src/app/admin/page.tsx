@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireAdminUser } from "@/lib/auth";
 
 const adminSections = [
@@ -44,14 +45,14 @@ export default async function AdminPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {adminSections.map((section) => (
-          <Link
-            key={section.href}
-            href={section.href}
-            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
-          >
-            <h2 className="text-xl font-semibold text-slate-950">{section.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{section.description}</p>
-          </Link>
+          <Card key={section.href} className="border-border/80 transition hover:border-primary/30">
+            <CardContent className="p-6">
+              <Link href={section.href} className="block">
+                <h2 className="text-xl font-semibold text-foreground">{section.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.description}</p>
+              </Link>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>

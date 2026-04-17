@@ -1,33 +1,31 @@
 import { requirePermission } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatCard } from "@/components/shared/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function DashboardPage() {
   await requirePermission("dashboard.read");
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Dashboard</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">Progress dashboard shell</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          This route is now protected for authenticated users. Real dashboard statistics still belong
-          to phase 7.
-        </p>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Dashboard"
+        badge="Authenticated"
+        title="Your study progress"
+        description="The dashboard now has a stronger visual structure even though live progress metrics still arrive in phase 7."
+      />
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="New" value="0" description="Words not started yet" />
+        <StatCard label="Learning" value="0" description="Words currently in active rotation" />
+        <StatCard label="Review due" value="0" description="Scheduled review items will appear here" accent="warning" />
+        <StatCard label="Mastered" value="0" description="Stable vocabulary and completed drills" accent="success" />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Planned for phase 7</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            New, learning, review due, mastered, and lesson completion counters.
-          </p>
-        </article>
-        <article className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Dependency</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Requires completed auth, content schema, and persisted progress layers first.
-          </p>
-        </article>
-      </section>
+      <EmptyState
+        title="Progress data is not connected yet"
+        description="This dashboard shell now matches the app’s visual system, but real counters and charts still depend on the later progress and review phases."
+      />
     </div>
   );
 }

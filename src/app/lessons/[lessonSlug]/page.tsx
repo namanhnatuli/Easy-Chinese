@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
+import { FilterBar } from "@/components/shared/filter-bar";
+import { PageHeader } from "@/components/shared/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { sampleLessons } from "@/types/domain";
 
 export default async function LessonDetailPage({
@@ -16,53 +22,65 @@ export default async function LessonDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-          Lesson Overview
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">{lesson.title}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">{lesson.description}</p>
-        <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
-          <span>HSK {lesson.hskLevel}</span>
-          <span>{lesson.wordCount} vocabulary items</span>
-          <span>{lesson.grammarCount} grammar point</span>
-          <span>{lesson.estimatedMinutes} minutes</span>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Lesson overview"
+        badge={`HSK ${lesson.hskLevel}`}
+        title={lesson.title}
+        description={lesson.description ?? ""}
+        actions={
+          <Button asChild size="lg">
+            <Link href={`/learn/lesson/${lesson.id}`}>
+              Start lesson
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        }
+      />
+
+      <FilterBar>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">{lesson.topicName}</Badge>
+          <Badge variant="secondary">{lesson.wordCount} vocabulary items</Badge>
+          <Badge variant="secondary">{lesson.grammarCount} grammar points</Badge>
+          <Badge variant="secondary">{lesson.estimatedMinutes} minutes</Badge>
         </div>
-        <Link
-          href={`/learn/lesson/${lesson.id}`}
-          className="mt-6 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Start lesson
-        </Link>
-      </section>
+        <p className="text-sm text-muted-foreground">
+          Review the material first, then move into the focused study panel.
+        </p>
+      </FilterBar>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-950">Vocabulary focus</h2>
-          <div className="mt-4 space-y-3">
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Vocabulary focus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {lesson.words.map((word) => (
-              <div key={word.id} className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xl font-semibold text-slate-950">{word.hanzi}</p>
-                <p className="mt-1 text-sm text-slate-600">{word.pinyin}</p>
-                <p className="mt-2 text-sm text-slate-700">{word.vietnameseMeaning}</p>
+              <div key={word.id} className="rounded-[1.5rem] bg-muted/50 p-4">
+                <p className="text-hanzi">{word.hanzi}</p>
+                <p className="mt-2 text-pinyin">{word.pinyin}</p>
+                <p className="mt-3 text-sm font-medium text-foreground">{word.vietnameseMeaning}</p>
+                {word.hanViet ? <p className="mt-1 text-sm text-muted-foreground">Hán Việt: {word.hanViet}</p> : null}
               </div>
             ))}
-          </div>
-        </article>
+          </CardContent>
+        </Card>
 
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-950">Grammar focus</h2>
-          <div className="mt-4 space-y-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Grammar focus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {lesson.grammarPoints.map((point) => (
-              <div key={point.id} className="rounded-2xl bg-slate-50 p-4">
-                <p className="font-semibold text-slate-950">{point.title}</p>
-                <p className="mt-1 text-sm text-slate-600">{point.structureText}</p>
-                <p className="mt-2 text-sm text-slate-700">{point.explanationVi}</p>
+              <div key={point.id} className="rounded-[1.5rem] bg-muted/50 p-4">
+                <p className="font-semibold text-foreground">{point.title}</p>
+                <p className="mt-1 text-sm text-primary">{point.structureText}</p>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{point.explanationVi}</p>
               </div>
             ))}
-          </div>
-        </article>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

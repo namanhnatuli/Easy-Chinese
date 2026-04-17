@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { RadicalForm } from "@/components/admin/radical-form";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   deleteRadicalAction,
   getRadicalById,
@@ -31,60 +34,48 @@ export default async function AdminRadicalsPage({
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50 text-left text-slate-600">
-                <tr>
-                  <th className="px-5 py-3 font-medium">Radical</th>
-                  <th className="px-5 py-3 font-medium">Pinyin</th>
-                  <th className="px-5 py-3 font-medium">Meaning</th>
-                  <th className="px-5 py-3 font-medium">Strokes</th>
-                  <th className="px-5 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {radicals.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-slate-500">
-                      No radicals yet.
-                    </td>
-                  </tr>
-                ) : (
-                  radicals.map((radical) => (
-                    <tr key={radical.id}>
-                      <td className="px-5 py-4 text-lg font-semibold text-slate-950">
-                        {radical.radical}
-                      </td>
-                      <td className="px-5 py-4 text-slate-600">{radical.pinyin ?? "—"}</td>
-                      <td className="px-5 py-4 text-slate-600">{radical.meaning_vi}</td>
-                      <td className="px-5 py-4 text-slate-700">{radical.stroke_count}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-3">
-                          <Link
-                            href={`/admin/radicals?edit=${radical.id}`}
-                            className="text-sm font-medium text-slate-700 underline-offset-4 hover:underline"
-                          >
-                            Edit
-                          </Link>
-                          <form action={deleteRadicalAction}>
-                            <input type="hidden" name="id" value={radical.id} />
-                            <button
-                              type="submit"
-                              className="text-sm font-medium text-rose-600 underline-offset-4 hover:underline"
-                            >
-                              Delete
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {radicals.length === 0 ? (
+          <EmptyState title="No radicals yet" description="Create radicals to support richer vocabulary metadata." />
+        ) : (
+          <section className="surface-panel overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Radical</TableHead>
+                  <TableHead>Pinyin</TableHead>
+                  <TableHead>Meaning</TableHead>
+                  <TableHead>Strokes</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {radicals.map((radical) => (
+                  <TableRow key={radical.id}>
+                    <TableCell className="font-chinese text-2xl font-semibold text-foreground">
+                      {radical.radical}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{radical.pinyin ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{radical.meaning_vi}</TableCell>
+                    <TableCell>{radical.stroke_count}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-3">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/admin/radicals?edit=${radical.id}`}>Edit</Link>
+                        </Button>
+                        <form action={deleteRadicalAction}>
+                          <input type="hidden" name="id" value={radical.id} />
+                          <Button type="submit" variant="ghost" size="sm" className="text-rose-600 hover:text-rose-600">
+                            Delete
+                          </Button>
+                        </form>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </section>
+        )}
 
         <RadicalForm
           action={saveRadicalAction}

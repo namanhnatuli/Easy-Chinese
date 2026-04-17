@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
 export function AdminFormCard({
   children,
   title,
@@ -10,13 +14,13 @@ export function AdminFormCard({
   description?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-        {description ? <p className="mt-2 text-sm text-slate-600">{description}</p> : null}
-      </div>
-      {children}
-    </div>
+    <Card className="border-border/80 bg-card/95">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   );
 }
 
@@ -32,24 +36,30 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="space-y-2" htmlFor={htmlFor}>
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint ? <span className="block text-xs text-slate-500">{hint}</span> : null}
-    </label>
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
   );
 }
 
-export function inputClassName() {
-  return "w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400";
+export function inputClassName(className?: string) {
+  return cn(
+    "flex h-11 w-full rounded-2xl border border-input bg-background px-4 py-2 text-sm transition-colors placeholder:text-muted-foreground focus-ring disabled:cursor-not-allowed disabled:opacity-50",
+    className,
+  );
 }
 
-export function textareaClassName() {
-  return `${inputClassName()} min-h-32`;
+export function textareaClassName(className?: string) {
+  return cn(
+    "flex min-h-32 w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm transition-colors placeholder:text-muted-foreground focus-ring disabled:cursor-not-allowed disabled:opacity-50",
+    className,
+  );
 }
 
-export function checkboxClassName() {
-  return "h-4 w-4 rounded border-slate-300";
+export function checkboxClassName(className?: string) {
+  return cn("size-4 rounded border-border text-primary focus-ring", className);
 }
 
 export function AdminSubmitRow({
@@ -60,10 +70,10 @@ export function AdminSubmitRow({
   secondaryAction?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap gap-3 pt-2">
+    <div className="flex flex-wrap gap-3 pt-6">
       <button
         type="submit"
-        className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white"
+        className="focus-ring inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition hover:bg-primary/90"
       >
         {submitLabel}
       </button>

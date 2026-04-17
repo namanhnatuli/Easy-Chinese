@@ -4,8 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 import { sanitizeNextPath } from "@/features/auth/routes";
 
 export async function GET(request: NextRequest) {
-  const response = NextResponse.next();
   const next = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
+  const oauthRedirect = new URL("/", request.url);
+  const response = NextResponse.redirect(oauthRedirect);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -41,5 +42,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/sign-in", request.url));
   }
 
-  return NextResponse.redirect(data.url);
+  response.headers.set("Location", data.url);
+  return response;
 }
