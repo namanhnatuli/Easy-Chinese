@@ -1,21 +1,30 @@
 import Link from "next/link";
-import { BookOpen, Filter } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 import { ContentCard } from "@/components/shared/content-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { sampleLessons } from "@/types/domain";
+import { listLessonTopics, listPublicLessons, parseLessonFilters } from "@/features/public/lessons";
 
-export default function LessonsPage() {
+export default async function LessonsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const filters = parseLessonFilters(resolvedSearchParams);
+  const [topics, lessons] = await Promise.all([listLessonTopics(), listPublicLessons(filters)]);
+
   return (
     <div className="page-shell">
       <PageHeader
         eyebrow="Lessons"
-        badge="Public browsing"
+        badge="Published content"
         title="Follow a structured lesson path"
-        description="Lessons combine vocabulary, grammar, and practice context so learners can move through HSK content in a more coherent sequence."
+        description="Lessons combine published vocabulary and grammar into one clear entry point before learners move into the focused study shell."
         actions={
           <Button asChild>
             <Link href="/vocabulary">Browse vocabulary</Link>
@@ -24,44 +33,86 @@ export default function LessonsPage() {
       />
 
       <FilterBar>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-muted">
-            <Filter className="size-4" />
-          </span>
-          <div>
-            <p className="font-medium text-foreground">Lesson filters</p>
-            <p>Level, topic, and duration controls can live here once data fetching is wired.</p>
+        <form className="grid w-full gap-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]" method="get">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-foreground">HSK level</span>
+            <select
+              name="hsk"
+              defaultValue={filters.hsk?.toString() ?? ""}
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">All levels</option>
+              {Array.from({ length: 9 }).map((_, index) => {
+                const level = index + 1;
+                return (
+                  <option key={level} value={level}>
+                    HSK {level}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-foreground">Topic</span>
+            <select
+              name="topic"
+              defaultValue={filters.topic ?? ""}
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">All topics</option>
+              {topics.map((topic) => (
+                <option key={topic.id} value={topic.slug}>
+                  {topic.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="flex items-end gap-2">
+            <Button type="submit" className="h-11">
+              Apply filters
+            </Button>
+            <Button asChild type="button" variant="ghost" className="h-11">
+              <Link href="/lessons">Reset</Link>
+            </Button>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">HSK 1</Badge>
-          <Badge variant="secondary">Greetings</Badge>
-          <Badge variant="secondary">Introductions</Badge>
-        </div>
+        </form>
       </FilterBar>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        {sampleLessons.map((lesson) => (
-          <div key={lesson.id} className="flex flex-col gap-4">
-            <ContentCard
-              title={lesson.title}
-              description={lesson.description ?? ""}
-              badge={lesson.topicName ?? "General"}
-              meta={[`HSK ${lesson.hskLevel}`, `${lesson.wordCount} words`, `${lesson.grammarCount} grammar`, `${lesson.estimatedMinutes} min`]}
-              href={`/lessons/${lesson.slug}`}
-              ctaLabel="Lesson details"
-            />
-            <div className="flex items-center gap-2 px-2">
-              <Button asChild variant="ghost" className="h-10 px-2">
-                <Link href={`/learn/lesson/${lesson.id}`}>
-                  <BookOpen className="size-4" />
-                  Start learning
-                </Link>
-              </Button>
+      {lessons.length === 0 ? (
+        <EmptyState
+          title="No published lessons match these filters"
+          description="Try another topic or HSK level to widen the published lesson list."
+        />
+      ) : (
+        <section className="grid gap-4 lg:grid-cols-2">
+          {lessons.map((lesson) => (
+            <div key={lesson.id} className="flex flex-col gap-4">
+              <ContentCard
+                title={lesson.title}
+                description={lesson.description}
+                badge={lesson.topic?.name ?? "General"}
+                meta={[`HSK ${lesson.hskLevel}`, `${lesson.wordCount} words`, `${lesson.grammarCount} grammar`]}
+                href={`/lessons/${lesson.slug}`}
+                ctaLabel="Lesson details"
+              />
+              <div className="flex items-center gap-2 px-2">
+                <Button asChild variant="ghost" className="h-10 px-2">
+                  <Link href={`/learn/lesson/${lesson.id}`}>
+                    <BookOpen className="size-4" />
+                    Start learning
+                  </Link>
+                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">HSK {lesson.hskLevel}</Badge>
+                  {lesson.topic ? <Badge variant="outline">{lesson.topic.name}</Badge> : null}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
