@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getStoredRoleForUserId } from "@/features/auth/profile";
+import { ensureProfileForUser } from "@/features/auth/profile";
 import {
   getDefaultAuthenticatedPath,
   getRequiredPermissionForPath,
@@ -35,12 +35,12 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const profile = user ? await ensureProfileForUser(supabase, user) : null;
 
   const requiredPermission = getRequiredPermissionForPath(request.nextUrl.pathname);
 
   if (isAuthPage(request.nextUrl.pathname) && user) {
-    const role = (await getStoredRoleForUserId(supabase, user.id)) ?? "user";
-    return NextResponse.redirect(new URL(getDefaultAuthenticatedPath(role), request.url));
+    return NextResponse.redirect(new URL(getDefaultAuthenticatedPath(profile?.role ?? "user"), request.url));
   }
 
   if (!requiredPermission) {
@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  const role = (await getStoredRoleForUserId(supabase, user.id)) ?? "user";
+  const role = profile?.role ?? "user";
 
   if (!hasPermission(role, requiredPermission)) {
     return NextResponse.redirect(new URL(getDefaultAuthenticatedPath(role), request.url));

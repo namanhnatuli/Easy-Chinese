@@ -1,6 +1,8 @@
 import { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
+import { resolveBootstrapRole } from "@/lib/admin-bootstrap";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Profile, StoredUserRole } from "@/types/domain";
 
 const profileThemeSchema = z.enum(["light", "dark", "system"]);
@@ -33,10 +35,6 @@ function getDisplayName(user: User): string | null {
 
 function getAvatarUrl(user: User): string | null {
   return user.user_metadata?.avatar_url ?? null;
-}
-
-function getRole(user: User): StoredUserRole {
-  return user.user_metadata?.role === "admin" ? "admin" : "user";
 }
 
 function mapProfileRow(row: ProfileRow): Profile {
@@ -94,18 +92,29 @@ export async function ensureProfileForUser(
   supabase: SupabaseClient,
   user: User,
 ): Promise<Profile> {
+  const existingProfile = await getProfileForUserId(supabase, user.id);
+  const desiredRole = resolveBootstrapRole(user.email, existingProfile?.role ?? null);
+  const writeClient =
+    desiredRole === "admin" && existingProfile?.role !== "admin"
+      ? createSupabaseAdminClient()
+      : supabase;
+
+  // Role assignment stays server-side only. We never trust client-controlled
+  // user metadata for admin elevation. The server resolves admin status from
+  // the deployment allowlist and only escalates through the server-only admin
+  // client when an actual admin promotion is required.
   const payload = {
     id: user.id,
     email: user.email ?? null,
     display_name: getDisplayName(user),
     avatar_url: getAvatarUrl(user),
-    role: getRole(user),
-    preferred_language: "vi",
-    preferred_theme: "system" as const,
-    preferred_font: "sans" as const,
+    role: desiredRole,
+    preferred_language: existingProfile?.preferredLanguage ?? "vi",
+    preferred_theme: existingProfile?.preferredTheme ?? ("system" as const),
+    preferred_font: existingProfile?.preferredFont ?? ("sans" as const),
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await writeClient
     .from("profiles")
     .upsert(payload, { onConflict: "id" })
     .select(

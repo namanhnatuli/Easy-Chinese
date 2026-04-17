@@ -32,9 +32,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
-  const profile =
-    (await getProfileForUserId(supabase, user.id)) ??
-    (await ensureProfileForUser(supabase, user));
+  const profile = await ensureProfileForUser(supabase, user);
 
   return mapToAuthUser(profile);
 }
@@ -49,10 +47,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     return null;
   }
 
-  return (
-    (await getProfileForUserId(supabase, user.id)) ??
-    (await ensureProfileForUser(supabase, user))
-  );
+  return ensureProfileForUser(supabase, user);
 }
 
 export async function getCurrentRole(): Promise<UserRole> {
