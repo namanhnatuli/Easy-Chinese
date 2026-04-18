@@ -44,7 +44,6 @@ export default async function AdminRadicalsPage({
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>{t("admin.radicals.columns.radical")}</TableHead>
-                  <TableHead>{t("admin.radicals.columns.pinyin")}</TableHead>
                   <TableHead>{t("admin.radicals.columns.meaning")}</TableHead>
                   <TableHead>{t("admin.radicals.columns.strokes")}</TableHead>
                   <TableHead className="text-right">{t("admin.radicals.columns.actions")}</TableHead>
@@ -56,7 +55,6 @@ export default async function AdminRadicalsPage({
                     <TableCell className="font-chinese text-2xl font-semibold text-foreground">
                       {radical.radical}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{radical.pinyin ?? t("common.notAvailable")}</TableCell>
                     <TableCell className="text-muted-foreground">{radical.meaning_vi}</TableCell>
                     <TableCell>{radical.stroke_count}</TableCell>
                     <TableCell>

@@ -91,6 +91,10 @@
       "label": "Import",
       "description": "Bulk word upload"
     },
+    "contentSync": {
+      "label": "Content sync",
+      "description": "Review staged sheet imports"
+    },
     "manageGrammar": {
       "label": "Grammar",
       "description": "Grammar library"
@@ -457,7 +461,9 @@
         "topicsTitle": "Topics",
         "topicsDescription": "Maintain lesson categories and content organization.",
         "radicalsTitle": "Radicals",
-        "radicalsDescription": "Maintain Chinese radical reference data for vocabulary entries."
+        "radicalsDescription": "Maintain Chinese radical reference data for vocabulary entries.",
+        "contentSyncTitle": "Content sync",
+        "contentSyncDescription": "Review staged Google Sheets rows before any production apply step."
       }
     },
     "status": {

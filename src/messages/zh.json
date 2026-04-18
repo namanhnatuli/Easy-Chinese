@@ -91,6 +91,10 @@
       "label": "导入",
       "description": "批量上传词汇"
     },
+    "contentSync": {
+      "label": "内容同步",
+      "description": "审核已暂存的表格导入"
+    },
     "manageGrammar": {
       "label": "语法",
       "description": "语法库"
@@ -457,7 +461,9 @@
         "topicsTitle": "主题",
         "topicsDescription": "维护课程分类和内容组织。",
         "radicalsTitle": "部首",
-        "radicalsDescription": "维护词汇条目使用的汉字部首参考数据。"
+        "radicalsDescription": "维护词汇条目使用的汉字部首参考数据。",
+        "contentSyncTitle": "内容同步",
+        "contentSyncDescription": "在写入正式词汇数据之前，先审核已暂存的 Google Sheets 行。"
       }
     },
     "status": {

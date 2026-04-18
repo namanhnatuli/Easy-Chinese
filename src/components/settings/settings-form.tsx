@@ -154,10 +154,10 @@ export function SettingsForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Label htmlFor="theme-preference">{t("common.theme")}</Label>
+              <Label htmlFor="theme-preference">{t("settings.themeTitle")}</Label>
               <Select value={values.theme} onValueChange={(value) => updateField("theme", value as UserSettingsInput["theme"])}>
                 <SelectTrigger id="theme-preference" aria-describedby="theme-help">
-                  <SelectValue placeholder={t("common.theme")} />
+                  <SelectValue placeholder={t("settings.themeTitle")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="system">{t("settings.system")}</SelectItem>
@@ -182,10 +182,10 @@ export function SettingsForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Label htmlFor="font-preference">{t("common.font")}</Label>
+              <Label htmlFor="font-preference">{t("settings.fontTitle")}</Label>
               <Select value={values.font} onValueChange={(value) => updateField("font", value as UserSettingsInput["font"])}>
                 <SelectTrigger id="font-preference" aria-describedby="font-help">
-                  <SelectValue placeholder={t("common.font")} />
+                  <SelectValue placeholder={t("settings.fontTitle")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sans">{t("settings.sans")}</SelectItem>

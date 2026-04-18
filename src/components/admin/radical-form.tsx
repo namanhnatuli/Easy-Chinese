@@ -24,13 +24,6 @@ export async function RadicalForm({
               className={inputClassName()}
             />
           </Field>
-          <Field label={t("admin.radicals.form.pinyin")}>
-            <input
-              name="pinyin"
-              defaultValue={initialValue?.pinyin ?? ""}
-              className={inputClassName()}
-            />
-          </Field>
           <Field label={t("admin.radicals.form.meaning")}>
             <input
               name="meaning_vi"

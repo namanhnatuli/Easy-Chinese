@@ -10,6 +10,7 @@ import {
   parseWordImportText,
   type ImportedWordInput,
 } from "@/features/admin/word-import-parser";
+import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 
 export interface WordImportState {
   ok: boolean;
@@ -138,10 +139,34 @@ export async function importWordsFromText({
     han_viet: word.hanViet,
     vietnamese_meaning: word.vietnameseMeaning,
     english_meaning: word.englishMeaning,
+    normalized_text: word.simplified,
+    meanings_vi: word.vietnameseMeaning,
+    traditional_variant: word.traditional,
     hsk_level: word.hskLevel,
     topic_id: word.topicSlug ? topicMap.get(word.topicSlug) ?? null : null,
     radical_id: word.radicalCharacter ? radicalMap.get(word.radicalCharacter) ?? null : null,
+    review_status: "approved",
+    ai_status: "done",
+    source_confidence: "high",
     notes: word.notes,
+    content_hash: buildWordContentHash({
+      normalizedText: word.simplified,
+      pinyin: word.pinyin,
+      meaningsVi: word.vietnameseMeaning,
+      hanViet: word.hanViet ?? null,
+      traditionalVariant: word.traditional ?? null,
+      hskLevel: word.hskLevel,
+      partOfSpeech: null,
+      componentBreakdownJson: null,
+      radicalSummary: null,
+      mnemonic: null,
+      characterStructureType: null,
+      structureExplanation: null,
+      notes: word.notes ?? null,
+      ambiguityFlag: false,
+      ambiguityNote: null,
+      readingCandidates: null,
+    }),
     is_published: word.isPublished,
     created_by: auth.user?.id ?? null,
   }));

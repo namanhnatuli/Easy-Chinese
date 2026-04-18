@@ -102,6 +102,7 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
     { href: "/admin", label: t("navigation.admin.label"), description: t("navigation.admin.description"), icon: Shield },
     { href: "/admin/words", label: t("navigation.words.label"), description: t("navigation.words.description"), icon: LibraryBig },
     { href: "/admin/import", label: t("navigation.import.label"), description: t("navigation.import.description"), icon: Upload },
+    { href: "/admin/content-sync", label: t("navigation.contentSync.label"), description: t("navigation.contentSync.description"), icon: Sparkles },
     { href: "/admin/grammar", label: t("navigation.manageGrammar.label"), description: t("navigation.manageGrammar.description"), icon: BookOpen },
     { href: "/admin/lessons", label: t("navigation.manageLessons.label"), description: t("navigation.manageLessons.description"), icon: LayoutDashboard },
   ];

@@ -70,6 +70,25 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
 SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
 ```
 
+For Google Sheets preview sync, set one of these server-side credential formats:
+
+```env
+# Option A
+GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON={"client_email":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"}
+
+# Option B
+GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL=
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
+
+# Optional default preview target
+GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID=
+```
+
+Notes:
+- the service account must have access to the target spreadsheet
+- credentials are used only on the server through the Google OAuth JWT bearer flow
+- `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` may use literal newlines or `\n` escapes
+
 ## Admin bootstrap
 The app does not have a public admin signup flow and does not auto-promote the first user.
 
@@ -169,6 +188,101 @@ Import behavior:
 - skips obvious duplicates found in the file or already in the database
 - inserts `word_examples` when valid example payloads are supplied
 - reports row-level validation failures back to the admin UI
+
+## Google Sheets vocabulary sync
+The admin sync workflow supports ongoing Google Sheets imports with staged preview, review, approval, and safe production apply.
+
+Service account setup:
+1. Create or reuse a Google Cloud service account with the Google Sheets API enabled.
+2. Grant that service account access to the target spreadsheet in Google Sheets.
+3. Provide credentials through either `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON` or the `GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` pair.
+4. Optionally set `GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID` so admins only need to provide a sheet tab name when starting preview.
+
+Preview flow:
+1. Open `/admin/content-sync`.
+2. Start a preview batch with a spreadsheet ID and sheet name.
+3. The server reads rows from Google Sheets, normalizes them, computes a content hash, and matches them against production `words`.
+4. Rows are written into `vocab_sync_batches` and `vocab_sync_rows` with separate review and apply states.
+
+Review and approval flow:
+1. Use filters to narrow rows by change type, review status, apply status, or search text.
+2. Inspect row diffs, payloads, and issues.
+3. Approve only rows that should update production content.
+4. Apply one row, selected rows, or all approved rows.
+5. Retry failed apply rows from the same page after fixing the underlying issue.
+
+Incremental behavior:
+- unchanged rows are detected with `content_hash` and source identity data
+- unchanged rows are auto-skipped during preview so they do not re-enter manual review or apply
+- batch summaries separate `new`, `changed`, `unchanged`, `conflict`, `invalid`, `approved`, and `applied`
+- batch retry creates a new preview batch from the same source sheet without mutating the earlier audit trail
+
+Expected sheet columns:
+- `input_text`
+- `normalized_text`
+- `pinyin`
+- `meanings_vi`
+- `han_viet`
+- `traditional_variant`
+- `main_radicals`
+- `component_breakdown_json`
+- `radical_summary`
+- `hsk_level`
+- `part_of_speech`
+- `topic_tags`
+- `examples`
+- `similar_chars`
+- `character_structure_type`
+- `structure_explanation`
+- `mnemonic`
+- `notes`
+- `source_confidence`
+- `ambiguity_flag`
+- `ambiguity_note`
+- `reading_candidates`
+- `review_status`
+- `ai_status`
+- `updated_at`
+- optional `external_id`
+
+Normalization behavior:
+- trims strings and collapses internal whitespace
+- parses pipe-delimited radicals, tags, and similar chars
+- parses `examples` entries from `CN=...|PY=...|VI=...`
+- parses `component_breakdown_json` safely
+- normalizes booleans, enums, and source timestamps
+- derives `source_row_key` from `normalized_text + pinyin + part_of_speech` when no `external_id` is present
+
+Classification behavior:
+- `new`: no production word match
+- `changed`: one production word match, but meaningful content differs
+- `unchanged`: one production word match and normalized content hash matches
+- `conflict`: multiple production words match, or duplicate source identity exists within the batch
+- `invalid`: parse/validation errors prevent reliable matching
+
+Matching priority:
+1. exact `external_id`
+2. `source_row_key`
+3. normalized text with pinyin / part-of-speech narrowing
+
+Same Hanzi with different readings:
+- the sync pipeline does not merge rows only because they share the same Hanzi
+- when multiple production words share the same normalized text, pinyin and part of speech are used to keep distinct readings separate
+- if more than one production word still matches after narrowing, the row is marked as `conflict` and the admin UI shows candidate guidance before approval
+
+Apply behavior:
+- approved rows use `admin_edited_payload` first, then fall back to `normalized_payload`
+- existing `word.id` values are preserved for updates
+- apply updates only the relevant content fields for `words`, `word_examples`, `word_tag_links`, and `word_radicals`
+- unchanged approved rows are skipped instead of being applied again
+- apply failures are recorded on the staging row for retry/debugging
+
+Admin preview API:
+- `POST /api/admin/vocab-sync/preview`
+  - body: `{ "spreadsheetId"?: "...", "sheetName": "..." }`
+- `GET /api/admin/vocab-sync/batches`
+- `GET /api/admin/vocab-sync/batches/:batchId`
+- `GET /api/admin/vocab-sync/batches/:batchId/rows?changeType=changed&reviewStatus=pending`
 
 ## Deployment checklist
 Before launch:

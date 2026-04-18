@@ -10,6 +10,10 @@ const publicEnvSchema = z.object({
 const serverEnvSchema = publicEnvSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
   ADMIN_EMAILS: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: z.string().email().optional(),
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().min(20).optional(),
+  GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID: z.string().min(1).optional(),
 });
 
 let cachedPublicEnv: z.infer<typeof publicEnvSchema> | null = null;
@@ -37,6 +41,10 @@ export function getServerEnv() {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
+    GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON: process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON,
+    GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,
+    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID: process.env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_DEFAULT_LOCALE: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
   });

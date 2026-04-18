@@ -7,7 +7,6 @@ import { numberFromFormData, optionalText, requiredText, requireAdminSupabase, r
 const radicalSchema = z.object({
   id: z.string().uuid().optional(),
   radical: z.string().min(1, "Radical is required."),
-  pinyin: z.string().nullable(),
   meaningVi: z.string().min(1, "Vietnamese meaning is required."),
   strokeCount: z.number().int().min(0),
 });
@@ -15,9 +14,11 @@ const radicalSchema = z.object({
 export interface RadicalListItem {
   id: string;
   radical: string;
-  pinyin: string | null;
+  display_label: string | null;
+  han_viet_name: string | null;
   meaning_vi: string;
   stroke_count: number;
+  variant_forms: string[];
   updated_at: string;
 }
 
@@ -25,7 +26,7 @@ export async function listRadicals(): Promise<RadicalListItem[]> {
   const { supabase } = await requireAdminSupabase();
   const { data, error } = await supabase
     .from("radicals")
-    .select("id, radical, pinyin, meaning_vi, stroke_count, updated_at")
+    .select("id, radical, display_label, han_viet_name, meaning_vi, stroke_count, variant_forms, updated_at")
     .order("radical");
 
   if (error) throw error;
@@ -36,7 +37,7 @@ export async function getRadicalById(id: string): Promise<RadicalListItem | null
   const { supabase } = await requireAdminSupabase();
   const { data, error } = await supabase
     .from("radicals")
-    .select("id, radical, pinyin, meaning_vi, stroke_count, updated_at")
+    .select("id, radical, display_label, han_viet_name, meaning_vi, stroke_count, variant_forms, updated_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -49,7 +50,6 @@ export async function saveRadicalAction(formData: FormData) {
   const parsed = radicalSchema.parse({
     id: optionalText(formData.get("id")) ?? undefined,
     radical: requiredText(formData.get("radical")),
-    pinyin: optionalText(formData.get("pinyin")),
     meaningVi: requiredText(formData.get("meaning_vi")),
     strokeCount: numberFromFormData(formData.get("stroke_count")) ?? -1,
   });
@@ -59,7 +59,6 @@ export async function saveRadicalAction(formData: FormData) {
       .from("radicals")
       .update({
         radical: parsed.radical,
-        pinyin: parsed.pinyin,
         meaning_vi: parsed.meaningVi,
         stroke_count: parsed.strokeCount,
       })
@@ -69,7 +68,6 @@ export async function saveRadicalAction(formData: FormData) {
   } else {
     const { error } = await supabase.from("radicals").insert({
       radical: parsed.radical,
-      pinyin: parsed.pinyin,
       meaning_vi: parsed.meaningVi,
       stroke_count: parsed.strokeCount,
     });

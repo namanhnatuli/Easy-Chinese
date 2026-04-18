@@ -91,6 +91,10 @@
       "label": "Nhập liệu",
       "description": "Tải lên từ vựng hàng loạt"
     },
+    "contentSync": {
+      "label": "Đồng bộ nội dung",
+      "description": "Duyệt dữ liệu nhập từ sheet"
+    },
     "manageGrammar": {
       "label": "Ngữ pháp",
       "description": "Thư viện ngữ pháp"
@@ -457,7 +461,9 @@
         "topicsTitle": "Chủ đề",
         "topicsDescription": "Duy trì danh mục bài học và tổ chức nội dung.",
         "radicalsTitle": "Bộ thủ",
-        "radicalsDescription": "Duy trì dữ liệu tham chiếu bộ thủ cho các mục từ vựng."
+        "radicalsDescription": "Duy trì dữ liệu tham chiếu bộ thủ cho các mục từ vựng.",
+        "contentSyncTitle": "Đồng bộ nội dung",
+        "contentSyncDescription": "Duyệt các dòng Google Sheets đã được stage trước khi áp dụng vào dữ liệu thật."
       }
     },
     "status": {

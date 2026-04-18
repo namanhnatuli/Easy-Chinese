@@ -7,6 +7,9 @@ export type ReviewResult = "correct" | "incorrect" | "skipped";
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
 export type PreferredTheme = "light" | "dark" | "system";
 export type PreferredFont = "sans" | "serif" | "kai";
+export type SourceConfidenceLevel = "low" | "medium" | "high";
+export type WordReviewStatus = "pending" | "needs_review" | "approved" | "rejected" | "applied";
+export type WordAiStatus = "pending" | "processing" | "done" | "failed" | "skipped";
 
 export interface TimestampedEntity {
   createdAt: string;
@@ -42,9 +45,11 @@ export interface Topic extends TimestampedEntity {
 export interface Radical extends TimestampedEntity {
   id: string;
   radical: string;
-  pinyin: string | null;
+  displayLabel: string | null;
+  hanVietName: string | null;
   meaningVi: string;
   strokeCount: number;
+  variantForms: string[];
 }
 
 export interface Word extends TimestampedEntity {
@@ -57,12 +62,102 @@ export interface Word extends TimestampedEntity {
   hanViet: string | null;
   vietnameseMeaning: string;
   englishMeaning: string | null;
+  externalSource: string | null;
+  externalId: string | null;
+  sourceRowKey: string | null;
+  normalizedText: string | null;
+  meaningsVi: string | null;
+  traditionalVariant: string | null;
   hskLevel: number;
   topicId: string | null;
   radicalId: string | null;
+  partOfSpeech: string | null;
+  componentBreakdownJson: unknown;
+  radicalSummary: string | null;
+  mnemonic: string | null;
+  characterStructureType: string | null;
+  structureExplanation: string | null;
   notes: string | null;
+  ambiguityFlag: boolean;
+  ambiguityNote: string | null;
+  readingCandidates: string | null;
+  reviewStatus: WordReviewStatus;
+  aiStatus: WordAiStatus;
+  sourceConfidence: SourceConfidenceLevel | null;
+  contentHash: string | null;
+  lastSyncedAt: string | null;
+  lastSourceUpdatedAt: string | null;
   isPublished: boolean;
   createdBy: string | null;
+}
+
+export interface WordTag extends TimestampedEntity {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+}
+
+export interface WordTagLink extends TimestampedEntity {
+  wordId: string;
+  wordTagId: string;
+}
+
+export interface WordRadical extends TimestampedEntity {
+  wordId: string;
+  radicalId: string;
+  isMain: boolean;
+  sortOrder: number;
+}
+
+export interface VocabSyncBatch extends TimestampedEntity {
+  id: string;
+  externalSource: string;
+  sourceDocumentId: string | null;
+  sourceSheetName: string | null;
+  sourceSheetGid: string | null;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  initiatedBy: string | null;
+  rawBatchPayload: Record<string, unknown> | null;
+  totalRows: number;
+  pendingRows: number;
+  approvedRows: number;
+  rejectedRows: number;
+  appliedRows: number;
+  errorRows: number;
+  notes: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+}
+
+export interface VocabSyncRow extends TimestampedEntity {
+  id: string;
+  batchId: string;
+  externalSource: string;
+  externalId: string | null;
+  sourceRowKey: string;
+  sourceRowNumber: number | null;
+  sourceUpdatedAt: string | null;
+  rawPayload: Record<string, unknown>;
+  normalizedPayload: Record<string, unknown>;
+  adminEditedPayload: Record<string, unknown> | null;
+  contentHash: string | null;
+  changeClassification: "new" | "changed" | "unchanged" | "conflict" | "invalid";
+  matchResult: string | null;
+  matchedWordIds: string[];
+  parseErrors: string[];
+  reviewStatus: WordReviewStatus;
+  aiStatus: WordAiStatus;
+  sourceConfidence: SourceConfidenceLevel | null;
+  diffSummary: Record<string, unknown> | null;
+  reviewNote: string | null;
+  applyStatus: "pending" | "applied" | "failed" | "skipped";
+  approvedBy: string | null;
+  approvedAt: string | null;
+  appliedWordId: string | null;
+  appliedBy: string | null;
+  appliedAt: string | null;
+  errorMessage: string | null;
 }
 
 export interface WordExample extends TimestampedEntity {
@@ -203,10 +298,31 @@ export const sampleWords: Word[] = [
     hanViet: "nhĩ hảo",
     vietnameseMeaning: "xin chào",
     englishMeaning: "hello",
+    externalSource: null,
+    externalId: null,
+    sourceRowKey: null,
+    normalizedText: "你好",
+    meaningsVi: "xin chào",
+    traditionalVariant: "你好",
     hskLevel: 1,
     topicId: "topic-greetings",
     radicalId: null,
+    partOfSpeech: null,
+    componentBreakdownJson: null,
+    radicalSummary: null,
+    mnemonic: null,
+    characterStructureType: null,
+    structureExplanation: null,
     notes: "Common greeting for daily conversation.",
+    ambiguityFlag: false,
+    ambiguityNote: null,
+    readingCandidates: null,
+    reviewStatus: "approved",
+    aiStatus: "done",
+    sourceConfidence: "high",
+    contentHash: null,
+    lastSyncedAt: null,
+    lastSourceUpdatedAt: null,
     isPublished: true,
     createdBy: null,
     createdAt: "2026-04-16T00:00:00.000Z",
@@ -222,10 +338,31 @@ export const sampleWords: Word[] = [
     hanViet: "tạ tạ",
     vietnameseMeaning: "cảm ơn",
     englishMeaning: "thank you",
+    externalSource: null,
+    externalId: null,
+    sourceRowKey: null,
+    normalizedText: "谢谢",
+    meaningsVi: "cảm ơn",
+    traditionalVariant: "謝謝",
     hskLevel: 1,
     topicId: "topic-greetings",
     radicalId: null,
+    partOfSpeech: null,
+    componentBreakdownJson: null,
+    radicalSummary: null,
+    mnemonic: null,
+    characterStructureType: null,
+    structureExplanation: null,
     notes: "Often repeated softly in casual speech.",
+    ambiguityFlag: false,
+    ambiguityNote: null,
+    readingCandidates: null,
+    reviewStatus: "approved",
+    aiStatus: "done",
+    sourceConfidence: "high",
+    contentHash: null,
+    lastSyncedAt: null,
+    lastSourceUpdatedAt: null,
     isPublished: true,
     createdBy: null,
     createdAt: "2026-04-16T00:00:00.000Z",
@@ -241,10 +378,31 @@ export const sampleWords: Word[] = [
     hanViet: "tái kiến",
     vietnameseMeaning: "tạm biệt",
     englishMeaning: "goodbye",
+    externalSource: null,
+    externalId: null,
+    sourceRowKey: null,
+    normalizedText: "再见",
+    meaningsVi: "tạm biệt",
+    traditionalVariant: "再見",
     hskLevel: 1,
     topicId: "topic-greetings",
     radicalId: null,
+    partOfSpeech: null,
+    componentBreakdownJson: null,
+    radicalSummary: null,
+    mnemonic: null,
+    characterStructureType: null,
+    structureExplanation: null,
     notes: "Used when parting.",
+    ambiguityFlag: false,
+    ambiguityNote: null,
+    readingCandidates: null,
+    reviewStatus: "approved",
+    aiStatus: "done",
+    sourceConfidence: "high",
+    contentHash: null,
+    lastSyncedAt: null,
+    lastSourceUpdatedAt: null,
     isPublished: true,
     createdBy: null,
     createdAt: "2026-04-16T00:00:00.000Z",

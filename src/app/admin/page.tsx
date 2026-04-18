@@ -34,6 +34,11 @@ export default async function AdminPage() {
       title: t("admin.overview.sections.radicalsTitle"),
       description: t("admin.overview.sections.radicalsDescription"),
     },
+    {
+      href: link("/admin/content-sync"),
+      title: t("admin.overview.sections.contentSyncTitle"),
+      description: t("admin.overview.sections.contentSyncDescription"),
+    },
   ];
 
   return (

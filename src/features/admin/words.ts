@@ -11,6 +11,7 @@ import {
   revalidateAdminPaths,
   redirectTo,
 } from "@/features/admin/shared";
+import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { logger } from "@/lib/logger";
 
 const wordSchema = z.object({
@@ -55,7 +56,28 @@ export interface AdminWordEditor {
     hsk_level: number;
     topic_id: string | null;
     radical_id: string | null;
+    external_source: string | null;
+    external_id: string | null;
+    source_row_key: string | null;
+    normalized_text: string | null;
+    meanings_vi: string | null;
+    traditional_variant: string | null;
+    part_of_speech: string | null;
+    component_breakdown_json: unknown;
+    radical_summary: string | null;
+    mnemonic: string | null;
+    character_structure_type: string | null;
+    structure_explanation: string | null;
     notes: string | null;
+    ambiguity_flag: boolean;
+    ambiguity_note: string | null;
+    reading_candidates: string | null;
+    review_status: "pending" | "needs_review" | "approved" | "rejected" | "applied";
+    ai_status: "pending" | "processing" | "done" | "failed" | "skipped";
+    source_confidence: "low" | "medium" | "high" | null;
+    content_hash: string | null;
+    last_synced_at: string | null;
+    last_source_updated_at: string | null;
     is_published: boolean;
   };
   examplesText: string;
@@ -81,7 +103,7 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
   const { supabase } = await requireAdminSupabase();
   const { data: word, error: wordError } = await supabase
     .from("words")
-    .select("id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, topic_id, radical_id, notes, is_published")
+    .select("id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, topic_id, radical_id, external_source, external_id, source_row_key, normalized_text, meanings_vi, traditional_variant, part_of_speech, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, content_hash, last_synced_at, last_source_updated_at, is_published")
     .eq("id", id)
     .maybeSingle();
 
@@ -159,10 +181,34 @@ export async function saveWordAction(formData: FormData) {
     han_viet: parsed.hanViet,
     vietnamese_meaning: parsed.vietnameseMeaning,
     english_meaning: parsed.englishMeaning,
+    normalized_text: parsed.simplified,
+    meanings_vi: parsed.vietnameseMeaning,
+    traditional_variant: parsed.traditional,
     hsk_level: parsed.hskLevel,
     topic_id: parsed.topicId,
     radical_id: parsed.radicalId,
+    review_status: "approved" as const,
+    ai_status: "done" as const,
+    source_confidence: "high" as const,
     notes: parsed.notes,
+    content_hash: buildWordContentHash({
+      normalizedText: parsed.simplified,
+      pinyin: parsed.pinyin,
+      meaningsVi: parsed.vietnameseMeaning,
+      hanViet: parsed.hanViet,
+      traditionalVariant: parsed.traditional,
+      hskLevel: parsed.hskLevel,
+      partOfSpeech: null,
+      componentBreakdownJson: null,
+      radicalSummary: null,
+      mnemonic: null,
+      characterStructureType: null,
+      structureExplanation: null,
+      notes: parsed.notes,
+      ambiguityFlag: false,
+      ambiguityNote: null,
+      readingCandidates: null,
+    }),
     is_published: parsed.isPublished,
   };
 
