@@ -1,0 +1,660 @@
+{
+  "common": {
+    "appName": "Chinese Learning",
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "applyFilters": "Apply filters",
+    "reset": "Reset",
+    "browseLessons": "Browse lessons",
+    "browseVocabulary": "Browse vocabulary",
+    "browseGrammar": "Browse grammar",
+    "openDetail": "Open detail",
+    "openLesson": "Open lesson",
+    "startLearning": "Start learning",
+    "startLesson": "Start lesson",
+    "continueLearning": "Continue learning",
+    "continueReview": "Continue review",
+    "dashboard": "Dashboard",
+    "review": "Review",
+    "settings": "Settings",
+    "admin": "Admin",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "workspace": "Workspace",
+    "authenticated": "Authenticated",
+    "publishedContent": "Published content",
+    "backToLesson": "Back to lesson",
+    "backToVocabulary": "Back to vocabulary",
+    "backToGrammar": "Back to grammar",
+    "general": "General",
+    "wordCount": "{count} words",
+    "grammarCount": "{count} grammar",
+    "minutesShort": "{count} min",
+    "delete": "Delete",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "tryAgain": "Try again",
+    "home": "Home",
+    "notAvailable": "—",
+    "language": "Language",
+    "theme": "Theme",
+    "font": "Font"
+  },
+  "languages": {
+    "en": "English",
+    "vi": "Vietnamese",
+    "zh": "Chinese"
+  },
+  "navigation": {
+    "explore": "Explore",
+    "account": "Account",
+    "manage": "Manage",
+    "home": {
+      "label": "Home",
+      "description": "Overview and study path"
+    },
+    "lessons": {
+      "label": "Lessons",
+      "description": "Structured lesson library"
+    },
+    "vocabulary": {
+      "label": "Vocabulary",
+      "description": "Words by level and topic"
+    },
+    "grammar": {
+      "label": "Grammar",
+      "description": "Patterns and examples"
+    },
+    "dashboard": {
+      "label": "Dashboard",
+      "description": "Progress and review status"
+    },
+    "review": {
+      "label": "Review",
+      "description": "Due words and spaced repetition"
+    },
+    "settings": {
+      "label": "Settings",
+      "description": "Preferences and account"
+    },
+    "admin": {
+      "label": "Admin",
+      "description": "Content workspace"
+    },
+    "words": {
+      "label": "Words",
+      "description": "Vocabulary library"
+    },
+    "import": {
+      "label": "Import",
+      "description": "Bulk word upload"
+    },
+    "manageGrammar": {
+      "label": "Grammar",
+      "description": "Grammar library"
+    },
+    "manageLessons": {
+      "label": "Lessons",
+      "description": "Lesson composition"
+    }
+  },
+  "header": {
+    "skipToContent": "Skip to content",
+    "openNavigation": "Open navigation",
+    "browseLessonsAria": "Browse lessons",
+    "studyWorkspace": "Study Workspace",
+    "admin": "Admin",
+    "account": "Account",
+    "todayFocus": "Today's focus",
+    "focusHeadline": "One lesson. Three practice modes.",
+    "focusBody": "Keep the session narrow and repeatable.",
+    "signedInAs": "Signed in as {name}",
+    "anonymousMode": "Anonymous mode enabled",
+    "signedInBody": "Protected progress and admin routes stay separated by role.",
+    "anonymousBody": "You can browse lessons and study without saved progress.",
+    "saveProgressCta": "Sign in to save progress",
+    "mobileTitle": "Chinese Learning",
+    "mobileDescription": "Navigate lessons, review pages, and admin tools.",
+    "pageTitles": {
+      "home": {
+        "title": "Learn Chinese at your own pace",
+        "description": "Lessons, vocabulary, grammar, and focused practice in one calm workspace."
+      },
+      "lessons": {
+        "title": "Structured lessons",
+        "description": "Move through curated lesson paths with vocabulary and grammar together."
+      },
+      "dashboard": {
+        "title": "Progress dashboard",
+        "description": "Track review status, lesson completion, and what to study next."
+      },
+      "review": {
+        "title": "Review queue",
+        "description": "Clear due words with a lightweight focused session."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Adjust language, theme, and study preferences over time."
+      },
+      "admin": {
+        "title": "Admin workspace",
+        "description": "Manage curriculum content with draft and publish controls."
+      },
+      "lessonDetail": {
+        "title": "Lesson detail",
+        "description": "Review vocabulary and grammar before starting the focused study flow."
+      },
+      "studySession": {
+        "title": "Study session",
+        "description": "A high-focus learning surface for flashcards, multiple choice, and typing."
+      }
+    }
+  },
+  "home": {
+    "eyebrow": "Structured Chinese study",
+    "badge": "Multilingual learning",
+    "title": "A calmer way to build Chinese vocabulary, grammar, and daily consistency",
+    "description": "Browse public lessons, start practicing immediately, and unlock saved progress when you are ready. The experience stays focused, readable, and structured around one clear next step.",
+    "exploreLessons": "Explore lessons",
+    "signInForSavedProgress": "Sign in for saved progress",
+    "stats": {
+      "modesLabel": "Learning modes",
+      "modesDescription": "Flashcard, multiple choice, and typing practice in one platform.",
+      "structureLabel": "Lesson structure",
+      "structureValue": "Words + Grammar",
+      "structureDescription": "Each lesson blends vocabulary and pattern recognition instead of isolating them.",
+      "toneLabel": "Study tone",
+      "toneValue": "Focused",
+      "toneDescription": "Quiet surfaces, sharp hierarchy, and a dark study panel for practice sessions."
+    },
+    "studyPath": {
+      "badge": "Study path",
+      "anonymousBadge": "Anonymous-friendly",
+      "title": "Move from browsing to deliberate practice without friction",
+      "description": "Public pages help learners explore lessons, vocabulary, and grammar before signing in. Protected pages add saved progress, settings, and admin content management without changing the mental model of the app.",
+      "browseTitle": "Browse",
+      "browseBody": "Open lessons, words, and grammar by level or topic.",
+      "practiceTitle": "Practice",
+      "practiceBody": "Switch modes without losing the context of the lesson.",
+      "reviewTitle": "Review",
+      "reviewBody": "Save progress later when you are ready to track it."
+    },
+    "focusPanel": {
+      "eyebrow": "Focused study panel",
+      "title": "Designed for concentration, not clutter",
+      "description": "Practice surfaces keep the prompt central, controls large, and supporting information secondary so the learner can stay inside the exercise.",
+      "prompt": "Prompt",
+      "reveal": "Reveal",
+      "next": "Next"
+    }
+  },
+  "filters": {
+    "hskLevel": "HSK level",
+    "topic": "Topic",
+    "radical": "Radical",
+    "allLevels": "All levels",
+    "allTopics": "All topics",
+    "allRadicals": "All radicals"
+  },
+  "lessons": {
+    "eyebrow": "Lessons",
+    "title": "Follow a structured lesson path",
+    "description": "Lessons combine published vocabulary and grammar into one clear entry point before learners move into the focused study shell.",
+    "emptyTitle": "No published lessons match these filters",
+    "emptyDescription": "Try another topic or HSK level to widen the published lesson list.",
+    "lessonDetails": "Lesson details",
+    "lessonOverview": "Lesson overview",
+    "reviewContentFirst": "Review the lesson content here first, then move into the learner shell when ready.",
+    "vocabularyItems": "{count} vocabulary items",
+    "grammarPoints": "{count} grammar points",
+    "vocabularyFocus": "Vocabulary focus",
+    "grammarFocus": "Grammar focus",
+    "noLessonWords": "No published lesson words",
+    "noLessonWordsDescription": "This lesson is published, but its public vocabulary composition is still empty.",
+    "noLessonGrammar": "No published lesson grammar",
+    "noLessonGrammarDescription": "This lesson is published, but its public grammar composition is still empty."
+  },
+  "vocabulary": {
+    "eyebrow": "Vocabulary",
+    "title": "Words designed for quick recognition and clean reading",
+    "description": "Browse published vocabulary with clear Hanzi, pinyin, Hán Việt, and meaning, then jump into the learner shell when you are ready.",
+    "emptyTitle": "No published words match these filters",
+    "emptyDescription": "Try a different HSK level, topic, or radical filter to widen the results.",
+    "openDetail": "Open detail",
+    "detailEyebrow": "Vocabulary detail",
+    "metadata": "Metadata",
+    "examples": "Examples",
+    "noExamples": "No public examples have been published for this word yet.",
+    "hanViet": "Hán Việt: {value}",
+    "englishMeaning": "English: {value}",
+    "slug": "Slug: {value}",
+    "simplified": "Simplified: {value}",
+    "traditional": "Traditional: {value}"
+  },
+  "grammar": {
+    "eyebrow": "Grammar",
+    "title": "Grammar patterns explained with clear structure",
+    "description": "Browse published structure patterns, explanations, and examples before entering focused lesson practice.",
+    "emptyTitle": "No published grammar points match these filters",
+    "emptyDescription": "Try a different HSK level or reset the filter to browse all public grammar content.",
+    "openDetail": "Open detail",
+    "detailEyebrow": "Grammar detail",
+    "structure": "Structure",
+    "explanation": "Explanation",
+    "examples": "Examples",
+    "noExamples": "No public examples have been published for this grammar point yet."
+  },
+  "auth": {
+    "signInBadge": "Sign in",
+    "title": "Save progress without losing the public-first browsing flow",
+    "description": "Continue with Google to create or refresh your learner profile, unlock protected pages like Dashboard and Settings, and keep future review progress synced.",
+    "continueWithGoogle": "Continue with Google",
+    "anonymousVisitors": "Anonymous visitors can still browse public lessons and preview the study flow first.",
+    "continueAnonymously": "Continue anonymously",
+    "whySignIn": "Why sign in",
+    "reasons": {
+      "dashboard": "Unlock dashboard and settings routes.",
+      "progress": "Prepare for saved review progress in later phases.",
+      "routing": "Keep role-based routing consistent for user and admin accounts."
+    }
+  },
+  "learning": {
+    "flashcard": "Flashcard",
+    "multipleChoice": "Multiple choice",
+    "typing": "Typing",
+    "answer": "Answer",
+    "revealAnswer": "Reveal answer",
+    "know": "Know",
+    "dontKnow": "Don't know",
+    "skip": "Skip",
+    "nextWord": "Next word",
+    "checkAnswer": "Check answer",
+    "currentWord": "Current word",
+    "shortcuts": "Shortcuts",
+    "flashcardShortcut": "`1/2/3` score flashcards",
+    "multipleChoiceShortcut": "`1-4` choose multiple-choice answers",
+    "enterShortcut": "`Enter` check or continue",
+    "spaceShortcut": "`Space` reveal flashcards",
+    "meaningToPinyin": "Meaning → Pinyin",
+    "pinyinToChinese": "Pinyin → Chinese",
+    "hanziToMeaning": "Chinese → Meaning",
+    "meaningToHanzi": "Meaning → Chinese",
+    "typeYourAnswer": "Type your answer",
+    "hint": "Hint: {value}",
+    "reviewStatus": "Review status",
+    "status": "Status: {value}",
+    "due": "Due: {value}",
+    "lastReviewed": "Last reviewed: {value}",
+    "interval": "Interval: {days} day(s) · Streak: {streak}",
+    "saving": "Saving…",
+    "autosaves": "Progress autosaves",
+    "skippedForNow": "Skipped for now.",
+    "progressSaveFailed": "Progress could not be saved.",
+    "reviewSoon": "Marked for another review soon.",
+    "needsMoreReview": "Marked for more review.",
+    "anonymousWarning": "Studying works anonymously, but long-term progress is not saved.",
+    "signInToSave": "Sign in to save progress",
+    "studySession": {
+      "eyebrow": "Study session",
+      "description": "Move through the lesson in study order. Switch modes whenever you want without losing your place.",
+      "completeEyebrow": "Session complete",
+      "completeDescription": "You finished the lesson study pass. Review the summary below or restart the session.",
+      "restart": "Restart lesson",
+      "known": "Known",
+      "needsWork": "Needs work"
+    },
+    "reviewSession": {
+      "eyebrow": "Review queue",
+      "title": "Due words",
+      "description": "Work through overdue and due-now words with the same study modes you use inside lessons.",
+      "completeEyebrow": "Review complete",
+      "completeTitle": "Queue cleared",
+      "completeDescription": "You finished the due review items in this session. Return to the dashboard or browse more lessons to keep momentum going.",
+      "restart": "Restart queue",
+      "backToDashboard": "Back to dashboard",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "skipped": "Skipped"
+    },
+    "reviewPage": {
+      "eyebrow": "Review",
+      "title": "Due review queue",
+      "description": "Clear the words that are due now or overdue, then return to lessons for fresh material.",
+      "emptyTitle": "Nothing is due right now",
+      "emptyDescription": "Your saved queue is clear. Continue a lesson to create more review items, or browse published lessons for something new.",
+      "suggestedLessons": "Suggested next lessons",
+      "suggestedDescription": "Keep building the queue with published content."
+    },
+    "emptyLesson": {
+      "title": "This lesson has no study words yet",
+      "description": "Return to the lesson overview and attach published vocabulary before starting a learner session."
+    },
+    "emptyReview": {
+      "title": "Nothing is due right now",
+      "description": "Your review queue is empty. Continue a lesson or browse the lesson library to add more study material."
+    },
+    "reviewStatusFallbacks": {
+      "noPriorReview": "No prior review"
+    }
+  },
+  "dashboard": {
+    "eyebrow": "Dashboard",
+    "title": "Your study progress",
+    "description": "See what is due now, how your lesson path is moving, and where to focus next.",
+    "totalStudied": "Total studied",
+    "totalStudiedDescription": "Words with saved progress",
+    "new": "New",
+    "newDescription": "Saved but barely touched",
+    "learning": "Learning",
+    "learningDescription": "Still in active rotation",
+    "reviewDue": "Review due",
+    "reviewDueDescription": "Ready to review now",
+    "mastered": "Mastered",
+    "masteredDescription": "Stable long-term words",
+    "lessonProgress": "Lesson progress",
+    "lessonProgressSummary": "{completed} completed · {inProgress} in progress",
+    "completed": "Completed",
+    "notYet": "Not yet",
+    "noLessonProgress": "No lesson progress yet",
+    "noLessonProgressDescription": "Start a lesson to unlock completion tracking, recent study history, and review recommendations.",
+    "reviewReadiness": "Review readiness",
+    "reviewReadinessDescription": "What needs attention before the day ends.",
+    "dueToday": "Due today",
+    "overdueNow": "Overdue now",
+    "dailyActivity": "Daily activity",
+    "dailyActivityDescription": "Small momentum signals from recent review work.",
+    "currentStreak": "Current streak",
+    "reviewsToday": "Reviews today",
+    "last7Days": "Last 7 days",
+    "activeDays": "Active on {count} day(s)",
+    "recentReviewActivity": "Recent review activity",
+    "recentReviewDescription": "Latest saved answers from your study sessions.",
+    "noReviewActivity": "No review activity yet",
+    "noReviewActivityDescription": "Review events will appear here after you finish a lesson or clear items from the review queue."
+  },
+  "settings": {
+    "eyebrow": "Settings",
+    "title": "Preferences and reading comfort",
+    "description": "Adjust language, theme, and reading style, then keep those preferences across your study and review surfaces.",
+    "saveSuccess": "Settings saved.",
+    "saveError": "Settings could not be saved.",
+    "languageTitle": "Language preference",
+    "languageDescription": "Choose the app language used across navigation, learning surfaces, and settings.",
+    "appLanguage": "App language",
+    "languageHelp": "Language updates immediately, preserves the current page, and is saved to your profile when signed in.",
+    "languageSaveError": "Language preference could not be saved.",
+    "themeTitle": "Theme preference",
+    "themeDescription": "Choose a stable theme or follow the system appearance automatically.",
+    "themeHelp": "Theme updates apply immediately after save and stay consistent across dashboard, review, and study pages.",
+    "fontTitle": "Reading font",
+    "fontDescription": "Pick a reading style tuned for Chinese text, pinyin, and translated glosses.",
+    "fontHelp": "Sans keeps the interface crisp; serif adds extra reading contrast for longer vocabulary and grammar sessions.",
+    "liveSummary": "Live summary",
+    "liveSummaryDescription": "What will be applied right now.",
+    "previewCopy": "Preview copy",
+    "previewDescription": "This preview is intentionally small, but the preference applies across the main reading and study surfaces.",
+    "accountStatus": "Account status",
+    "accountDescription": "Protected profile information remains server-backed.",
+    "learnerFallback": "Learner",
+    "unavailable": "Unavailable",
+    "signedInAs": "Signed in as {name}",
+    "role": "Role: {value}",
+    "email": "Email: {value}",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "sans": "Modern Sans",
+    "serif": "Readable Serif"
+  },
+  "errors": {
+    "dashboardTitle": "Dashboard data could not be loaded",
+    "dashboardDescription": "There was a problem reading your saved progress and review stats.",
+    "lessonsTitle": "Lessons could not be loaded",
+    "lessonsDescription": "A problem occurred while fetching published lesson content.",
+    "vocabularyTitle": "Vocabulary could not be loaded",
+    "vocabularyDescription": "A problem occurred while fetching published vocabulary content.",
+    "grammarTitle": "Grammar content could not be loaded",
+    "grammarDescription": "A problem occurred while fetching published grammar content.",
+    "reviewTitle": "Review queue could not be loaded",
+    "reviewDescription": "There was a problem reading the due review items for your account.",
+    "settingsTitle": "Settings could not be loaded",
+    "settingsDescription": "There was a problem reading or preparing your saved preferences.",
+    "learnLessonTitle": "The lesson session could not be loaded",
+    "learnLessonDescription": "A problem occurred while preparing the learner study experience.",
+    "adminImportTitle": "Import page unavailable",
+    "adminImportDescription": "The import tools could not be loaded. Try again or return to the admin vocabulary library."
+  },
+  "notFound": {
+    "eyebrow": "Not found",
+    "badge": "Route missing",
+    "title": "This page does not exist",
+    "description": "The address may be outdated, unpublished, or mistyped. Return to the lesson library or head back to the main workspace.",
+    "emptyTitle": "Nothing to show here",
+    "emptyDescription": "Try a published lesson, dashboard, or home page instead."
+  },
+  "learn": {
+    "eyebrow": "Learning session",
+    "badge": "Learner mode",
+    "description": "Study lesson vocabulary with flashcards, multiple choice, and typing. Signed-in learners save progress, while anonymous learners can practice without persistence.",
+    "notReadyTitle": "This lesson is not ready for study",
+    "notReadyDescription": "Attach published words to the lesson before starting a learner session."
+  },
+  "admin": {
+    "overview": {
+      "eyebrow": "Admin",
+      "title": "Content management",
+      "description": "Manage curriculum content, taxonomy, and lesson composition inside the protected workspace.",
+      "sections": {
+        "wordsTitle": "Words",
+        "wordsDescription": "Manage vocabulary, examples, publish state, and taxonomy links.",
+        "grammarTitle": "Grammar points",
+        "grammarDescription": "Create grammar explanations, examples, and publishable lesson content.",
+        "lessonsTitle": "Lessons",
+        "lessonsDescription": "Compose ordered lesson content from words and grammar points.",
+        "topicsTitle": "Topics",
+        "topicsDescription": "Maintain lesson categories and content organization.",
+        "radicalsTitle": "Radicals",
+        "radicalsDescription": "Maintain Chinese radical reference data for vocabulary entries."
+      }
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft"
+    },
+    "words": {
+      "eyebrow": "Admin Words",
+      "title": "Vocabulary",
+      "description": "Create, edit, publish, and organize vocabulary entries with attached examples.",
+      "new": "New word",
+      "emptyTitle": "No words yet",
+      "emptyDescription": "Create the first vocabulary entry to start building the library.",
+      "columns": {
+        "word": "Word",
+        "meaning": "Meaning",
+        "hsk": "HSK",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "title": "Word details",
+        "description": "Use one example per line in the format: Chinese | Pinyin | Vietnamese meaning",
+        "slug": "Slug",
+        "hskLevel": "HSK level",
+        "simplified": "Simplified",
+        "traditional": "Traditional",
+        "hanzi": "Hanzi",
+        "pinyin": "Pinyin",
+        "hanViet": "Han-Viet",
+        "englishMeaning": "English meaning",
+        "vietnameseMeaning": "Vietnamese meaning",
+        "topic": "Topic",
+        "noTopic": "No topic",
+        "radical": "Radical",
+        "noRadical": "No radical",
+        "published": "Published",
+        "notes": "Notes",
+        "examples": "Examples"
+      },
+      "create": {
+        "title": "New word",
+        "description": "Create a vocabulary entry with optional taxonomy links and attached examples.",
+        "submit": "Create word"
+      },
+      "edit": {
+        "eyebrow": "Admin Words",
+        "description": "Update vocabulary details, publish state, and examples.",
+        "submit": "Save word"
+      }
+    },
+    "grammar": {
+      "eyebrow": "Admin Grammar",
+      "title": "Grammar points",
+      "description": "Manage explanations, publish state, and example sentences for grammar content.",
+      "new": "New grammar point",
+      "emptyTitle": "No grammar points yet",
+      "emptyDescription": "Add the first grammar entry to start structuring lessons.",
+      "columns": {
+        "title": "Title",
+        "slug": "Slug",
+        "hsk": "HSK",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "title": "Grammar point details",
+        "description": "Use one example per line in the format: Chinese | Pinyin | Vietnamese meaning",
+        "titleLabel": "Title",
+        "slug": "Slug",
+        "hskLevel": "HSK level",
+        "published": "Published",
+        "structureText": "Structure text",
+        "vietnameseExplanation": "Vietnamese explanation",
+        "notes": "Notes",
+        "examples": "Examples"
+      },
+      "create": {
+        "title": "New grammar point",
+        "description": "Create a grammar explanation with examples and publish controls.",
+        "submit": "Create grammar point"
+      },
+      "edit": {
+        "eyebrow": "Admin Grammar",
+        "description": "Update grammar explanations, examples, and publish state.",
+        "submit": "Save grammar point"
+      }
+    },
+    "lessons": {
+      "eyebrow": "Admin Lessons",
+      "title": "Lessons",
+      "description": "Manage publishable lessons and compose ordered words and grammar points.",
+      "new": "New lesson",
+      "emptyTitle": "No lessons yet",
+      "emptyDescription": "Create a lesson to start attaching ordered vocabulary and grammar points.",
+      "columns": {
+        "lesson": "Lesson",
+        "hsk": "HSK",
+        "order": "Order",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "detailsTitle": "Lesson details",
+        "titleLabel": "Title",
+        "slug": "Slug",
+        "hskLevel": "HSK level",
+        "sortOrder": "Sort order",
+        "topic": "Topic",
+        "noTopic": "No topic",
+        "published": "Published",
+        "description": "Description",
+        "orderedWords": "Ordered words",
+        "orderedGrammar": "Ordered grammar points"
+      },
+      "create": {
+        "title": "New lesson",
+        "description": "Create a lesson and attach ordered words and grammar points.",
+        "submit": "Create lesson"
+      },
+      "edit": {
+        "eyebrow": "Admin Lessons",
+        "description": "Update lesson metadata, publish state, and ordered composition.",
+        "submit": "Save lesson"
+      }
+    },
+    "topics": {
+      "eyebrow": "Admin Topics",
+      "title": "Topics",
+      "description": "Manage content categories used by words and lessons.",
+      "emptyTitle": "No topics yet",
+      "emptyDescription": "Create a topic to organize words and lessons by theme.",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "description": "Description",
+        "actions": "Actions"
+      },
+      "form": {
+        "newTitle": "New topic",
+        "editTitle": "Edit topic",
+        "name": "Name",
+        "slug": "Slug",
+        "description": "Description",
+        "create": "Create topic",
+        "save": "Save topic"
+      }
+    },
+    "radicals": {
+      "eyebrow": "Admin Radicals",
+      "title": "Radicals",
+      "description": "Manage radical reference data used by vocabulary entries.",
+      "emptyTitle": "No radicals yet",
+      "emptyDescription": "Create radicals to support richer vocabulary metadata.",
+      "columns": {
+        "radical": "Radical",
+        "pinyin": "Pinyin",
+        "meaning": "Meaning",
+        "strokes": "Strokes",
+        "actions": "Actions"
+      },
+      "form": {
+        "newTitle": "New radical",
+        "editTitle": "Edit radical",
+        "radical": "Radical",
+        "pinyin": "Pinyin",
+        "meaning": "Vietnamese meaning",
+        "strokes": "Stroke count",
+        "create": "Create radical",
+        "save": "Save radical"
+      }
+    },
+    "import": {
+      "eyebrow": "Admin Import",
+      "badge": "Bulk operations",
+      "title": "Import words from CSV or JSON",
+      "description": "Upload a validated import file to create vocabulary entries in bulk. Invalid or duplicate rows are skipped with row-level reporting.",
+      "backToWords": "Back to words",
+      "uploadTitle": "Upload file",
+      "uploadDescription": "Required fields: slug, simplified, hanzi, pinyin, vietnamese_meaning, hsk_level.",
+      "importFile": "Import file",
+      "examplesTitle": "Examples support",
+      "examplesDescription": "JSON imports can provide an examples array. CSV imports can use an examples_json column containing a JSON array of example objects.",
+      "runImport": "Run import",
+      "importing": "Importing…",
+      "templatesTitle": "Templates",
+      "templatesDescription": "Use the bundled templates to avoid formatting mistakes.",
+      "csvTemplate": "CSV template",
+      "jsonTemplate": "JSON template",
+      "latestResult": "Latest result",
+      "latestResultDescription": "Import summary and row-level validation feedback.",
+      "received": "Received: {count}",
+      "inserted": "Inserted: {count}",
+      "skipped": "Skipped: {count}",
+      "issues": "Issues: {count}",
+      "noImportYet": "No import has been run yet in this session."
+    }
+  }
+}

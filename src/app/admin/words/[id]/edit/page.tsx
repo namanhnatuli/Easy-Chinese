@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { WordForm } from "@/components/admin/word-form";
 import { getWordEditor, listWordFormOptions, saveWordAction } from "@/features/admin/words";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 
 export default async function EditWordPage({
@@ -11,6 +12,7 @@ export default async function EditWordPage({
   params: Promise<{ id: string }>;
 }) {
   await requireAdminUser();
+  const { t } = await getServerI18n();
   const { id } = await params;
   const [initialValue, options] = await Promise.all([getWordEditor(id), listWordFormOptions()]);
 
@@ -21,16 +23,16 @@ export default async function EditWordPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Admin Words"
+        eyebrow={t("admin.words.edit.eyebrow")}
         title={`Edit ${initialValue.word.hanzi}`}
-        description="Update vocabulary details, publish state, and examples."
+        description={t("admin.words.edit.description")}
       />
       <WordForm
         action={saveWordAction}
         topics={options.topics}
         radicals={options.radicals}
         initialValue={initialValue}
-        submitLabel="Save word"
+        submitLabel={t("admin.words.edit.submit")}
       />
     </div>
   );

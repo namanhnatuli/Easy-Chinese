@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublicLessonBySlug } from "@/features/public/lessons";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
@@ -38,6 +39,7 @@ export default async function LessonDetailPage({
 }) {
   const { lessonSlug } = await params;
   const lesson = await getPublicLessonBySlug(lessonSlug);
+  const { t, link } = await getServerI18n();
 
   if (!lesson) {
     notFound();
@@ -46,14 +48,14 @@ export default async function LessonDetailPage({
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Lesson overview"
+        eyebrow={t("lessons.lessonOverview")}
         badge={`HSK ${lesson.hskLevel}`}
         title={lesson.title}
         description={lesson.description}
         actions={
           <Button asChild size="lg">
-            <Link href={`/learn/lesson/${lesson.id}`}>
-              Start lesson
+            <Link href={link(`/learn/lesson/${lesson.id}`)}>
+              {t("common.startLesson")}
               <ArrowRight className="size-4" />
             </Link>
           </Button>
@@ -63,24 +65,24 @@ export default async function LessonDetailPage({
       <FilterBar>
         <div className="flex flex-wrap gap-2">
           {lesson.topic ? <Badge variant="secondary">{lesson.topic.name}</Badge> : null}
-          <Badge variant="secondary">{lesson.words.length} vocabulary items</Badge>
-          <Badge variant="secondary">{lesson.grammarPoints.length} grammar points</Badge>
+          <Badge variant="secondary">{t("lessons.vocabularyItems", { count: lesson.words.length })}</Badge>
+          <Badge variant="secondary">{t("lessons.grammarPoints", { count: lesson.grammarPoints.length })}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Review the lesson content here first, then move into the learner shell when ready.
+          {t("lessons.reviewContentFirst")}
         </p>
       </FilterBar>
 
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Vocabulary focus</CardTitle>
+            <CardTitle>{t("lessons.vocabularyFocus")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {lesson.words.length === 0 ? (
               <EmptyState
-                title="No published lesson words"
-                description="This lesson is published, but its public vocabulary composition is still empty."
+                title={t("lessons.noLessonWords")}
+                description={t("lessons.noLessonWordsDescription")}
               />
             ) : (
               lesson.words.map((word) => (
@@ -100,13 +102,13 @@ export default async function LessonDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Grammar focus</CardTitle>
+            <CardTitle>{t("lessons.grammarFocus")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {lesson.grammarPoints.length === 0 ? (
               <EmptyState
-                title="No published lesson grammar"
-                description="This lesson is published, but its public grammar composition is still empty."
+                title={t("lessons.noLessonGrammar")}
+                description={t("lessons.noLessonGrammarDescription")}
               />
             ) : (
               lesson.grammarPoints.map((point) => (

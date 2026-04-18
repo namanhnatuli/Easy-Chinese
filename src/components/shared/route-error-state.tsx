@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 
+import { useI18n } from "@/i18n/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -14,6 +15,8 @@ export function RouteErrorState({
   description: string;
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="page-shell">
       <Card className="border-destructive/30 bg-card/95" role="alert" aria-live="assertive">
@@ -25,7 +28,7 @@ export function RouteErrorState({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={reset}>Try again</Button>
+          <Button onClick={reset}>{t("common.tryAgain")}</Button>
         </CardContent>
       </Card>
     </div>

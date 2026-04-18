@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { listPublicGrammarPoints, parseGrammarFilters } from "@/features/public/grammar";
+import { getServerI18n } from "@/i18n/server";
 
 export default async function GrammarPage({
   searchParams,
@@ -16,26 +17,27 @@ export default async function GrammarPage({
   const resolvedSearchParams = await searchParams;
   const filters = parseGrammarFilters(resolvedSearchParams);
   const grammarPoints = await listPublicGrammarPoints(filters);
+  const { t, link } = await getServerI18n();
 
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Grammar"
-        badge="Published content"
-        title="Grammar patterns explained with Vietnamese-first clarity"
-        description="Browse published structure patterns, explanations, and examples before entering focused lesson practice."
+        eyebrow={t("grammar.eyebrow")}
+        badge={t("common.publishedContent")}
+        title={t("grammar.title")}
+        description={t("grammar.description")}
       />
 
       <FilterBar>
         <form className="grid w-full gap-3 sm:grid-cols-[minmax(0,16rem)_auto]" method="get">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">HSK level</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.hskLevel")}</span>
             <select
               name="hsk"
               defaultValue={filters.hsk?.toString() ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All levels</option>
+              <option value="">{t("filters.allLevels")}</option>
               {Array.from({ length: 9 }).map((_, index) => {
                 const level = index + 1;
                 return (
@@ -49,10 +51,10 @@ export default async function GrammarPage({
 
           <div className="flex items-end gap-2">
             <Button type="submit" className="h-11">
-              Apply filters
+              {t("common.applyFilters")}
             </Button>
             <Button asChild type="button" variant="ghost" className="h-11">
-              <Link href="/grammar">Reset</Link>
+              <Link href={link("/grammar")}>{t("common.reset")}</Link>
             </Button>
           </div>
         </form>
@@ -60,8 +62,8 @@ export default async function GrammarPage({
 
       {grammarPoints.length === 0 ? (
         <EmptyState
-          title="No published grammar points match these filters"
-          description="Try a different HSK level or reset the filter to browse all public grammar content."
+          title={t("grammar.emptyTitle")}
+          description={t("grammar.emptyDescription")}
         />
       ) : (
         <section className="grid gap-4">
@@ -78,7 +80,7 @@ export default async function GrammarPage({
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{point.explanationVi}</p>
                 </div>
                 <Button asChild variant="outline">
-                  <Link href={`/grammar/${point.slug}`}>Open detail</Link>
+                  <Link href={link(`/grammar/${point.slug}`)}>{t("grammar.openDetail")}</Link>
                 </Button>
               </CardContent>
             </Card>

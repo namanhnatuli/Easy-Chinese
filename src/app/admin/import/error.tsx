@@ -1,16 +1,19 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function AdminImportError({
   reset,
 }: {
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="Import page unavailable"
-      description="The import tools could not be loaded. Try again or return to the admin vocabulary library."
+      title={t("errors.adminImportTitle")}
+      description={t("errors.adminImportDescription")}
       reset={reset}
     />
   );

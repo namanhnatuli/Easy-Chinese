@@ -1,6 +1,7 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function DashboardError({
   reset,
@@ -8,10 +9,12 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="Dashboard data could not be loaded"
-      description="There was a problem reading your saved progress and review stats."
+      title={t("errors.dashboardTitle")}
+      description={t("errors.dashboardDescription")}
       reset={reset}
     />
   );

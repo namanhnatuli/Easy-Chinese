@@ -3,8 +3,9 @@ import Link from "next/link";
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
 import { buttonVariants } from "@/components/ui/button";
 import type { AdminGrammarEditor } from "@/features/admin/grammar";
+import { getServerI18n } from "@/i18n/server";
 
-export function GrammarPointForm({
+export async function GrammarPointForm({
   action,
   initialValue,
   submitLabel,
@@ -13,6 +14,7 @@ export function GrammarPointForm({
   initialValue?: AdminGrammarEditor | null;
   submitLabel: string;
 }) {
+  const { t, link } = await getServerI18n();
   const grammarPoint = initialValue?.grammarPoint;
 
   return (
@@ -20,17 +22,17 @@ export function GrammarPointForm({
       <input type="hidden" name="id" defaultValue={grammarPoint?.id ?? ""} />
 
       <AdminFormCard
-        title="Grammar point details"
-        description="Use one example per line in the format: Chinese | Pinyin | Vietnamese meaning"
+        title={t("admin.grammar.form.title")}
+        description={t("admin.grammar.form.description")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title">
+          <Field label={t("admin.grammar.form.titleLabel")}>
             <input name="title" defaultValue={grammarPoint?.title ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="Slug">
+          <Field label={t("admin.grammar.form.slug")}>
             <input name="slug" defaultValue={grammarPoint?.slug ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="HSK level">
+          <Field label={t("admin.grammar.form.hskLevel")}>
             <input
               name="hsk_level"
               type="number"
@@ -46,10 +48,10 @@ export function GrammarPointForm({
               name="is_published"
               defaultChecked={grammarPoint?.is_published ?? false}
             />
-            <span className="text-sm font-medium text-foreground">Published</span>
+            <span className="text-sm font-medium text-foreground">{t("admin.grammar.form.published")}</span>
           </label>
           <div className="md:col-span-2">
-            <Field label="Structure text">
+            <Field label={t("admin.grammar.form.structureText")}>
               <input
                 name="structure_text"
                 defaultValue={grammarPoint?.structure_text ?? ""}
@@ -58,7 +60,7 @@ export function GrammarPointForm({
             </Field>
           </div>
           <div className="md:col-span-2">
-            <Field label="Vietnamese explanation">
+            <Field label={t("admin.grammar.form.vietnameseExplanation")}>
               <textarea
                 name="explanation_vi"
                 defaultValue={grammarPoint?.explanation_vi ?? ""}
@@ -67,7 +69,7 @@ export function GrammarPointForm({
             </Field>
           </div>
           <div className="md:col-span-2">
-            <Field label="Notes">
+            <Field label={t("admin.grammar.form.notes")}>
               <textarea
                 name="notes"
                 defaultValue={grammarPoint?.notes ?? ""}
@@ -76,7 +78,7 @@ export function GrammarPointForm({
             </Field>
           </div>
           <div className="md:col-span-2">
-            <Field label="Examples">
+            <Field label={t("admin.grammar.form.examples")}>
               <textarea
                 name="examples_text"
                 defaultValue={initialValue?.examplesText ?? ""}
@@ -90,10 +92,10 @@ export function GrammarPointForm({
           submitLabel={submitLabel}
           secondaryAction={
             <Link
-              href="/admin/grammar"
+              href={link("/admin/grammar")}
               className={buttonVariants({ variant: "outline" })}
             >
-              Cancel
+              {t("common.cancel")}
             </Link>
           }
         />

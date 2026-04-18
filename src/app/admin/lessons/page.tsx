@@ -6,38 +6,40 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteLessonAction, listLessons } from "@/features/admin/lessons";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 
 export default async function AdminLessonsPage() {
   await requireAdminUser();
+  const { t, link } = await getServerI18n();
   const lessons = await listLessons();
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Admin Lessons"
-        title="Lessons"
-        description="Manage publishable lessons and compose ordered words and grammar points."
+        eyebrow={t("admin.lessons.eyebrow")}
+        title={t("admin.lessons.title")}
+        description={t("admin.lessons.description")}
         actions={
           <Button asChild>
-            <Link href="/admin/lessons/new">New lesson</Link>
+            <Link href={link("/admin/lessons/new")}>{t("admin.lessons.new")}</Link>
           </Button>
         }
       />
 
       {lessons.length === 0 ? (
-        <EmptyState title="No lessons yet" description="Create a lesson to start attaching ordered vocabulary and grammar points." />
+        <EmptyState title={t("admin.lessons.emptyTitle")} description={t("admin.lessons.emptyDescription")} />
       ) : (
         <section className="surface-panel overflow-hidden">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Lesson</TableHead>
-                <TableHead>HSK</TableHead>
-                <TableHead>Order</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("admin.lessons.columns.lesson")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.hsk")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.order")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.status")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.updated")}</TableHead>
+                <TableHead className="text-right">{t("admin.lessons.columns.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -51,7 +53,7 @@ export default async function AdminLessonsPage() {
                   <TableCell>{lesson.sort_order}</TableCell>
                   <TableCell>
                     <Badge variant={lesson.is_published ? "success" : "warning"}>
-                      {lesson.is_published ? "Published" : "Draft"}
+                      {lesson.is_published ? t("admin.status.published") : t("admin.status.draft")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -60,12 +62,12 @@ export default async function AdminLessonsPage() {
                   <TableCell>
                     <div className="flex justify-end gap-3">
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/admin/lessons/${lesson.id}/edit`}>Edit</Link>
+                        <Link href={link(`/admin/lessons/${lesson.id}/edit`)}>{t("common.edit")}</Link>
                       </Button>
                       <form action={deleteLessonAction}>
                         <input type="hidden" name="id" value={lesson.id} />
                         <Button type="submit" variant="ghost" size="sm" className="text-rose-600 hover:text-rose-600">
-                          Delete
+                          {t("common.delete")}
                         </Button>
                       </form>
                     </div>

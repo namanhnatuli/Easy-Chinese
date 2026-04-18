@@ -1,6 +1,7 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function SettingsError({
   reset,
@@ -8,10 +9,12 @@ export default function SettingsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="Settings could not be loaded"
-      description="There was a problem reading or preparing your saved preferences."
+      title={t("errors.settingsTitle")}
+      description={t("errors.settingsDescription")}
       reset={reset}
     />
   );

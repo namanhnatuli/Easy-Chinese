@@ -9,6 +9,7 @@ import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/i18n/client";
 
 const initialState: WordImportState = {
   ok: false,
@@ -22,18 +23,19 @@ const initialState: WordImportState = {
 };
 
 export function WordImportForm() {
+  const { t, link } = useI18n();
   const [state, action, isPending] = useActionState(importWordsAction, initialState);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Admin Import"
-        badge="Bulk operations"
-        title="Import words from CSV or JSON"
-        description="Upload a validated import file to create vocabulary entries in bulk. Invalid or duplicate rows are skipped with row-level reporting."
+        eyebrow={t("admin.import.eyebrow")}
+        badge={t("admin.import.badge")}
+        title={t("admin.import.title")}
+        description={t("admin.import.description")}
         actions={
           <HeaderActions
-            secondary={<HeaderLinkButton href="/admin/words" variant="outline">Back to words</HeaderLinkButton>}
+            secondary={<HeaderLinkButton href={link("/admin/words")} variant="outline">{t("admin.import.backToWords")}</HeaderLinkButton>}
           />
         }
       />
@@ -41,15 +43,15 @@ export function WordImportForm() {
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
-            <CardTitle>Upload file</CardTitle>
+            <CardTitle>{t("admin.import.uploadTitle")}</CardTitle>
             <CardDescription>
-              Required fields: <code>slug</code>, <code>simplified</code>, <code>hanzi</code>, <code>pinyin</code>, <code>vietnamese_meaning</code>, <code>hsk_level</code>.
+              {t("admin.import.uploadDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={action} className="space-y-4">
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">Import file</span>
+                <span className="text-sm font-medium text-foreground">{t("admin.import.importFile")}</span>
                 <input
                   type="file"
                   name="file"
@@ -59,15 +61,13 @@ export function WordImportForm() {
               </label>
 
               <div className="rounded-2xl border border-border/80 bg-muted/30 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Examples support</p>
-                <p className="mt-2">
-                  JSON imports can provide an <code>examples</code> array. CSV imports can use an <code>examples_json</code> column containing a JSON array of example objects.
-                </p>
+                <p className="font-medium text-foreground">{t("admin.import.examplesTitle")}</p>
+                <p className="mt-2">{t("admin.import.examplesDescription")}</p>
               </div>
 
               <Button type="submit" disabled={isPending}>
                 <FileUp className="size-4" />
-                {isPending ? "Importing…" : "Run import"}
+                {isPending ? t("admin.import.importing") : t("admin.import.runImport")}
               </Button>
             </form>
           </CardContent>
@@ -76,20 +76,20 @@ export function WordImportForm() {
         <div className="grid gap-4">
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Templates</CardTitle>
-              <CardDescription>Use the bundled templates to avoid formatting mistakes.</CardDescription>
+              <CardTitle>{t("admin.import.templatesTitle")}</CardTitle>
+              <CardDescription>{t("admin.import.templatesDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
               <Button asChild variant="outline">
                 <Link href="/templates/words-import-template.csv">
                   <Sheet className="size-4" />
-                  CSV template
+                  {t("admin.import.csvTemplate")}
                 </Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/templates/words-import-template.json">
                   <FileJson className="size-4" />
-                  JSON template
+                  {t("admin.import.jsonTemplate")}
                 </Link>
               </Button>
             </CardContent>
@@ -97,15 +97,15 @@ export function WordImportForm() {
 
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Latest result</CardTitle>
-              <CardDescription>Import summary and row-level validation feedback.</CardDescription>
+              <CardTitle>{t("admin.import.latestResult")}</CardTitle>
+              <CardDescription>{t("admin.import.latestResultDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">Received: {state.summary.received}</Badge>
-                <Badge variant="secondary">Inserted: {state.summary.inserted}</Badge>
-                <Badge variant="secondary">Skipped: {state.summary.skipped}</Badge>
-                <Badge variant="secondary">Issues: {state.summary.failed}</Badge>
+                <Badge variant="secondary">{t("admin.import.received", { count: state.summary.received })}</Badge>
+                <Badge variant="secondary">{t("admin.import.inserted", { count: state.summary.inserted })}</Badge>
+                <Badge variant="secondary">{t("admin.import.skipped", { count: state.summary.skipped })}</Badge>
+                <Badge variant="secondary">{t("admin.import.issues", { count: state.summary.failed })}</Badge>
               </div>
 
               {state.messages.length > 0 ? (
@@ -122,7 +122,7 @@ export function WordImportForm() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No import has been run yet in this session.
+                  {t("admin.import.noImportYet")}
                 </p>
               )}
             </CardContent>

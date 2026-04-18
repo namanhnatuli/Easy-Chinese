@@ -3,8 +3,9 @@ import Link from "next/link";
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
 import { buttonVariants } from "@/components/ui/button";
 import type { AdminLessonEditor, LessonCompositionOption } from "@/features/admin/lessons";
+import { getServerI18n } from "@/i18n/server";
 
-function SelectionGrid({
+async function SelectionGrid({
   title,
   prefix,
   options,
@@ -48,7 +49,7 @@ function SelectionGrid({
   );
 }
 
-export function LessonForm({
+export async function LessonForm({
   action,
   initialValue,
   topics,
@@ -63,21 +64,22 @@ export function LessonForm({
   grammarPoints: LessonCompositionOption[];
   submitLabel: string;
 }) {
+  const { t, link } = await getServerI18n();
   const lesson = initialValue?.lesson;
 
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="id" defaultValue={lesson?.id ?? ""} />
 
-      <AdminFormCard title="Lesson details">
+      <AdminFormCard title={t("admin.lessons.form.detailsTitle")}>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title">
+          <Field label={t("admin.lessons.form.titleLabel")}>
             <input name="title" defaultValue={lesson?.title ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="Slug">
+          <Field label={t("admin.lessons.form.slug")}>
             <input name="slug" defaultValue={lesson?.slug ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="HSK level">
+          <Field label={t("admin.lessons.form.hskLevel")}>
             <input
               name="hsk_level"
               type="number"
@@ -87,7 +89,7 @@ export function LessonForm({
               className={inputClassName()}
             />
           </Field>
-          <Field label="Sort order">
+          <Field label={t("admin.lessons.form.sortOrder")}>
             <input
               name="sort_order"
               type="number"
@@ -96,9 +98,9 @@ export function LessonForm({
               className={inputClassName()}
             />
           </Field>
-          <Field label="Topic">
+          <Field label={t("admin.lessons.form.topic")}>
             <select name="topic_id" defaultValue={lesson?.topic_id ?? ""} className={inputClassName()}>
-              <option value="">No topic</option>
+              <option value="">{t("admin.lessons.form.noTopic")}</option>
               {topics.map((topic) => (
                 <option key={topic.id} value={topic.id}>
                   {topic.label}
@@ -112,10 +114,10 @@ export function LessonForm({
               name="is_published"
               defaultChecked={lesson?.is_published ?? false}
             />
-            <span className="text-sm font-medium text-foreground">Published</span>
+            <span className="text-sm font-medium text-foreground">{t("admin.lessons.form.published")}</span>
           </label>
           <div className="md:col-span-2">
-            <Field label="Description">
+            <Field label={t("admin.lessons.form.description")}>
               <textarea
                 name="description"
                 defaultValue={lesson?.description ?? ""}
@@ -129,28 +131,28 @@ export function LessonForm({
           submitLabel={submitLabel}
           secondaryAction={
             <Link
-              href="/admin/lessons"
+              href={link("/admin/lessons")}
               className={buttonVariants({ variant: "outline" })}
             >
-              Cancel
+              {t("common.cancel")}
             </Link>
           }
         />
       </AdminFormCard>
 
-      <SelectionGrid
-        title="Ordered words"
-        prefix="word"
-        options={words}
-        selectedMap={initialValue?.selectedWordIds ?? {}}
-      />
+      {await SelectionGrid({
+        title: t("admin.lessons.form.orderedWords"),
+        prefix: "word",
+        options: words,
+        selectedMap: initialValue?.selectedWordIds ?? {},
+      })}
 
-      <SelectionGrid
-        title="Ordered grammar points"
-        prefix="grammar"
-        options={grammarPoints}
-        selectedMap={initialValue?.selectedGrammarIds ?? {}}
-      />
+      {await SelectionGrid({
+        title: t("admin.lessons.form.orderedGrammar"),
+        prefix: "grammar",
+        options: grammarPoints,
+        selectedMap: initialValue?.selectedGrammarIds ?? {},
+      })}
     </form>
   );
 }

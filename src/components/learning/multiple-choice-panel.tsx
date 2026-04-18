@@ -5,6 +5,7 @@ import type {
   MultipleChoiceStudyQuestion,
   StudyFeedback,
 } from "@/features/learning/types";
+import { useI18n } from "@/i18n/client";
 
 export function MultipleChoicePanel({
   question,
@@ -27,12 +28,13 @@ export function MultipleChoicePanel({
   onSkip: () => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   const isLocked = feedback !== null;
 
   return (
     <section className="rounded-[2rem] bg-slate-950 text-white">
       <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
-        <span>Multiple choice</span>
+        <span>{t("learning.multipleChoice")}</span>
         <span>
           {currentIndex} / {total}
         </span>
@@ -41,7 +43,9 @@ export function MultipleChoicePanel({
       <div className="space-y-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-8">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">
-            {question.variant === "hanzi_to_meaning" ? "Chinese → Vietnamese" : "Vietnamese → Chinese"}
+            {question.variant === "hanzi_to_meaning"
+              ? t("learning.hanziToMeaning")
+              : t("learning.meaningToHanzi")}
           </p>
           <p className="mt-4 text-4xl font-semibold">{question.prompt}</p>
         </div>
@@ -99,14 +103,14 @@ export function MultipleChoicePanel({
               className="bg-white text-slate-950 hover:bg-white/90"
               disabled={!selectedChoice}
             >
-              Check answer
+              {t("learning.checkAnswer")}
             </Button>
             <Button
               onClick={onSkip}
               variant="outline"
               className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
             >
-              Skip
+              {t("learning.skip")}
             </Button>
           </>
         ) : (
@@ -115,7 +119,7 @@ export function MultipleChoicePanel({
             variant="outline"
             className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
-            Next word
+            {t("learning.nextWord")}
           </Button>
         )}
       </div>

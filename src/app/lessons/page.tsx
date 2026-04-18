@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listLessonTopics, listPublicLessons, parseLessonFilters } from "@/features/public/lessons";
+import { getServerI18n } from "@/i18n/server";
 
 export default async function LessonsPage({
   searchParams,
@@ -17,17 +18,18 @@ export default async function LessonsPage({
   const resolvedSearchParams = await searchParams;
   const filters = parseLessonFilters(resolvedSearchParams);
   const [topics, lessons] = await Promise.all([listLessonTopics(), listPublicLessons(filters)]);
+  const { t, link } = await getServerI18n();
 
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Lessons"
-        badge="Published content"
-        title="Follow a structured lesson path"
-        description="Lessons combine published vocabulary and grammar into one clear entry point before learners move into the focused study shell."
+        eyebrow={t("lessons.eyebrow")}
+        badge={t("common.publishedContent")}
+        title={t("lessons.title")}
+        description={t("lessons.description")}
         actions={
           <Button asChild>
-            <Link href="/vocabulary">Browse vocabulary</Link>
+            <Link href={link("/vocabulary")}>{t("common.browseVocabulary")}</Link>
           </Button>
         }
       />
@@ -35,13 +37,13 @@ export default async function LessonsPage({
       <FilterBar>
         <form className="grid w-full gap-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]" method="get">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">HSK level</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.hskLevel")}</span>
             <select
               name="hsk"
               defaultValue={filters.hsk?.toString() ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All levels</option>
+              <option value="">{t("filters.allLevels")}</option>
               {Array.from({ length: 9 }).map((_, index) => {
                 const level = index + 1;
                 return (
@@ -54,13 +56,13 @@ export default async function LessonsPage({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Topic</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.topic")}</span>
             <select
               name="topic"
               defaultValue={filters.topic ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All topics</option>
+              <option value="">{t("filters.allTopics")}</option>
               {topics.map((topic) => (
                 <option key={topic.id} value={topic.slug}>
                   {topic.name}
@@ -71,10 +73,10 @@ export default async function LessonsPage({
 
           <div className="flex items-end gap-2">
             <Button type="submit" className="h-11">
-              Apply filters
+              {t("common.applyFilters")}
             </Button>
             <Button asChild type="button" variant="ghost" className="h-11">
-              <Link href="/lessons">Reset</Link>
+              <Link href={link("/lessons")}>{t("common.reset")}</Link>
             </Button>
           </div>
         </form>
@@ -82,8 +84,8 @@ export default async function LessonsPage({
 
       {lessons.length === 0 ? (
         <EmptyState
-          title="No published lessons match these filters"
-          description="Try another topic or HSK level to widen the published lesson list."
+          title={t("lessons.emptyTitle")}
+          description={t("lessons.emptyDescription")}
         />
       ) : (
         <section className="grid gap-4 lg:grid-cols-2">
@@ -92,16 +94,20 @@ export default async function LessonsPage({
               <ContentCard
                 title={lesson.title}
                 description={lesson.description}
-                badge={lesson.topic?.name ?? "General"}
-                meta={[`HSK ${lesson.hskLevel}`, `${lesson.wordCount} words`, `${lesson.grammarCount} grammar`]}
-                href={`/lessons/${lesson.slug}`}
-                ctaLabel="Lesson details"
+                badge={lesson.topic?.name ?? t("common.general")}
+                meta={[
+                  `HSK ${lesson.hskLevel}`,
+                  t("common.wordCount", { count: lesson.wordCount }),
+                  t("common.grammarCount", { count: lesson.grammarCount }),
+                ]}
+                href={link(`/lessons/${lesson.slug}`)}
+                ctaLabel={t("lessons.lessonDetails")}
               />
               <div className="flex items-center gap-2 px-2">
                 <Button asChild variant="ghost" className="h-10 px-2">
-                  <Link href={`/learn/lesson/${lesson.id}`}>
+                  <Link href={link(`/learn/lesson/${lesson.id}`)}>
                     <BookOpen className="size-4" />
-                    Start learning
+                    {t("common.startLearning")}
                   </Link>
                 </Button>
                 <div className="flex flex-wrap gap-2">

@@ -2,45 +2,46 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
-
-const adminSections = [
-  {
-    href: "/admin/words",
-    title: "Words",
-    description: "Manage vocabulary, examples, publish state, and taxonomy links.",
-  },
-  {
-    href: "/admin/grammar",
-    title: "Grammar Points",
-    description: "Create grammar explanations, examples, and publishable lesson content.",
-  },
-  {
-    href: "/admin/lessons",
-    title: "Lessons",
-    description: "Compose ordered lesson content from words and grammar points.",
-  },
-  {
-    href: "/admin/topics",
-    title: "Topics",
-    description: "Maintain lesson categories and content organization.",
-  },
-  {
-    href: "/admin/radicals",
-    title: "Radicals",
-    description: "Maintain Chinese radical reference data for vocabulary entries.",
-  },
-];
 
 export default async function AdminPage() {
   await requireAdminUser();
+  const { t, link } = await getServerI18n();
+  const adminSections = [
+    {
+      href: link("/admin/words"),
+      title: t("admin.overview.sections.wordsTitle"),
+      description: t("admin.overview.sections.wordsDescription"),
+    },
+    {
+      href: link("/admin/grammar"),
+      title: t("admin.overview.sections.grammarTitle"),
+      description: t("admin.overview.sections.grammarDescription"),
+    },
+    {
+      href: link("/admin/lessons"),
+      title: t("admin.overview.sections.lessonsTitle"),
+      description: t("admin.overview.sections.lessonsDescription"),
+    },
+    {
+      href: link("/admin/topics"),
+      title: t("admin.overview.sections.topicsTitle"),
+      description: t("admin.overview.sections.topicsDescription"),
+    },
+    {
+      href: link("/admin/radicals"),
+      title: t("admin.overview.sections.radicalsTitle"),
+      description: t("admin.overview.sections.radicalsDescription"),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Admin"
-        title="Content management"
-        description="Phase 4 adds admin-only content CRUD on top of the existing schema, auth model, and RLS rules."
+        eyebrow={t("admin.overview.eyebrow")}
+        title={t("admin.overview.title")}
+        description={t("admin.overview.description")}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublicGrammarPointBySlug } from "@/features/public/grammar";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
@@ -35,6 +36,7 @@ export default async function GrammarDetailPage({
 }) {
   const { grammarSlug } = await params;
   const point = await getPublicGrammarPointBySlug(grammarSlug);
+  const { t, link } = await getServerI18n();
 
   if (!point) {
     notFound();
@@ -43,13 +45,13 @@ export default async function GrammarDetailPage({
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Grammar detail"
+        eyebrow={t("grammar.detailEyebrow")}
         badge={`HSK ${point.hskLevel}`}
         title={point.title}
         description={point.explanationVi}
         actions={
           <Button asChild>
-            <Link href="/grammar">Back to grammar</Link>
+            <Link href={link("/grammar")}>{t("common.backToGrammar")}</Link>
           </Button>
         }
       />
@@ -57,7 +59,7 @@ export default async function GrammarDetailPage({
       <section className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Structure</CardTitle>
+            <CardTitle>{t("grammar.structure")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="rounded-[1.5rem] bg-muted p-4 text-lg font-semibold text-primary">
@@ -67,7 +69,7 @@ export default async function GrammarDetailPage({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Explanation</CardTitle>
+            <CardTitle>{t("grammar.explanation")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-muted-foreground">
             <p>{point.explanationVi}</p>
@@ -79,12 +81,12 @@ export default async function GrammarDetailPage({
       <section>
         <Card>
           <CardHeader>
-            <CardTitle>Examples</CardTitle>
+            <CardTitle>{t("grammar.examples")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {point.examples.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No public examples have been published for this grammar point yet.
+                {t("grammar.noExamples")}
               </p>
             ) : (
               point.examples.map((example) => (

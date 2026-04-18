@@ -15,9 +15,10 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { PreferencesProvider } from "@/components/settings/preferences-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getAuthContext } from "@/lib/auth";
+import { I18nProvider } from "@/i18n/client";
+import { getServerI18n } from "@/i18n/server";
 import {
   normalizeFontPreference,
-  normalizeLanguage,
   normalizeThemePreference,
 } from "@/features/settings/preferences";
 
@@ -38,13 +39,13 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const { user, profile } = await getAuthContext();
-  const language = normalizeLanguage(profile?.preferredLanguage);
+  const { locale, messages } = await getServerI18n(profile?.preferredLanguage);
   const theme = normalizeThemePreference(profile?.preferredTheme);
   const font = normalizeFontPreference(profile?.preferredFont);
 
   return (
     <html
-      lang={language}
+      lang={locale}
       data-theme-preference={theme}
       data-theme={theme === "system" ? "light" : theme}
       data-font-preference={font}
@@ -57,18 +58,20 @@ export default async function RootLayout({
           href="#main-content"
           className="focus-ring sr-only fixed left-4 top-4 z-[100] rounded-full bg-background px-4 py-2 text-sm font-medium text-foreground shadow-soft focus:not-sr-only"
         >
-          Skip to content
+          {messages.header.skipToContent}
         </a>
-        <PreferencesProvider language={language} theme={theme} font={font} />
-        <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col gap-6 px-4 py-4 sm:px-5 lg:flex-row lg:px-6 lg:py-6">
-          <AppSidebar user={user} />
-          <div className="min-w-0 flex-1 space-y-6">
-            <AppHeader user={user} />
-            <main id="main-content" className="page-shell" tabIndex={-1}>
-              {children}
-            </main>
+        <PreferencesProvider language={locale} theme={theme} font={font} />
+        <I18nProvider locale={locale} messages={messages}>
+          <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col gap-6 px-4 py-4 sm:px-5 lg:flex-row lg:px-6 lg:py-6">
+            <AppSidebar user={user} />
+            <div className="min-w-0 flex-1 space-y-6">
+              <AppHeader user={user} />
+              <main id="main-content" className="page-shell" tabIndex={-1}>
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </I18nProvider>
         <Toaster />
       </body>
     </html>

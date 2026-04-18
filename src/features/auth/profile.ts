@@ -110,7 +110,7 @@ export async function ensureProfileForUser(
     display_name: getDisplayName(user),
     avatar_url: getAvatarUrl(user),
     role: desiredRole,
-    preferred_language: existingProfile?.preferredLanguage ?? "vi",
+    preferred_language: existingProfile?.preferredLanguage ?? "en",
     preferred_theme: existingProfile?.preferredTheme ?? ("system" as const),
     preferred_font: existingProfile?.preferredFont ?? ("sans" as const),
   };

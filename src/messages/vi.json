@@ -1,0 +1,660 @@
+{
+  "common": {
+    "appName": "Học Tiếng Trung",
+    "loading": "Đang tải…",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "applyFilters": "Áp dụng bộ lọc",
+    "reset": "Đặt lại",
+    "browseLessons": "Xem bài học",
+    "browseVocabulary": "Xem từ vựng",
+    "browseGrammar": "Xem ngữ pháp",
+    "openDetail": "Mở chi tiết",
+    "openLesson": "Mở bài học",
+    "startLearning": "Bắt đầu học",
+    "startLesson": "Bắt đầu bài học",
+    "continueLearning": "Tiếp tục học",
+    "continueReview": "Tiếp tục ôn tập",
+    "dashboard": "Bảng tiến độ",
+    "review": "Ôn tập",
+    "settings": "Cài đặt",
+    "admin": "Quản trị",
+    "signIn": "Đăng nhập",
+    "signOut": "Đăng xuất",
+    "workspace": "Không gian làm việc",
+    "authenticated": "Đã đăng nhập",
+    "publishedContent": "Nội dung đã xuất bản",
+    "backToLesson": "Quay lại bài học",
+    "backToVocabulary": "Quay lại từ vựng",
+    "backToGrammar": "Quay lại ngữ pháp",
+    "general": "Tổng quát",
+    "wordCount": "{count} từ",
+    "grammarCount": "{count} điểm ngữ pháp",
+    "minutesShort": "{count} phút",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "cancel": "Hủy",
+    "tryAgain": "Thử lại",
+    "home": "Trang chủ",
+    "notAvailable": "—",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "font": "Phông chữ"
+  },
+  "languages": {
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt",
+    "zh": "Tiếng Trung"
+  },
+  "navigation": {
+    "explore": "Khám phá",
+    "account": "Tài khoản",
+    "manage": "Quản lý",
+    "home": {
+      "label": "Trang chủ",
+      "description": "Tổng quan và lộ trình học"
+    },
+    "lessons": {
+      "label": "Bài học",
+      "description": "Thư viện bài học có cấu trúc"
+    },
+    "vocabulary": {
+      "label": "Từ vựng",
+      "description": "Từ theo cấp độ và chủ đề"
+    },
+    "grammar": {
+      "label": "Ngữ pháp",
+      "description": "Mẫu câu và ví dụ"
+    },
+    "dashboard": {
+      "label": "Tiến độ",
+      "description": "Tiến độ và trạng thái ôn tập"
+    },
+    "review": {
+      "label": "Ôn tập",
+      "description": "Từ đến hạn và lặp lại ngắt quãng"
+    },
+    "settings": {
+      "label": "Cài đặt",
+      "description": "Tùy chọn và tài khoản"
+    },
+    "admin": {
+      "label": "Quản trị",
+      "description": "Không gian quản lý nội dung"
+    },
+    "words": {
+      "label": "Từ vựng",
+      "description": "Thư viện từ vựng"
+    },
+    "import": {
+      "label": "Nhập liệu",
+      "description": "Tải lên từ vựng hàng loạt"
+    },
+    "manageGrammar": {
+      "label": "Ngữ pháp",
+      "description": "Thư viện ngữ pháp"
+    },
+    "manageLessons": {
+      "label": "Bài học",
+      "description": "Biên soạn bài học"
+    }
+  },
+  "header": {
+    "skipToContent": "Bỏ qua để đến nội dung",
+    "openNavigation": "Mở điều hướng",
+    "browseLessonsAria": "Xem bài học",
+    "studyWorkspace": "Không gian học tập",
+    "admin": "Quản trị",
+    "account": "Tài khoản",
+    "todayFocus": "Trọng tâm hôm nay",
+    "focusHeadline": "Một bài học. Ba chế độ luyện tập.",
+    "focusBody": "Giữ buổi học gọn và lặp lại được.",
+    "signedInAs": "Đăng nhập với tên {name}",
+    "anonymousMode": "Chế độ ẩn danh đang bật",
+    "signedInBody": "Tiến độ được bảo vệ và các tuyến quản trị được tách theo vai trò.",
+    "anonymousBody": "Bạn có thể xem bài học và học mà không lưu tiến độ.",
+    "saveProgressCta": "Đăng nhập để lưu tiến độ",
+    "mobileTitle": "Học Tiếng Trung",
+    "mobileDescription": "Đi tới bài học, trang ôn tập và công cụ quản trị.",
+    "pageTitles": {
+      "home": {
+        "title": "Học tiếng Trung theo nhịp độ của bạn",
+        "description": "Bài học, từ vựng, ngữ pháp và luyện tập tập trung trong một không gian yên tĩnh."
+      },
+      "lessons": {
+        "title": "Bài học có cấu trúc",
+        "description": "Đi qua các lộ trình bài học đã biên soạn với từ vựng và ngữ pháp đi cùng nhau."
+      },
+      "dashboard": {
+        "title": "Bảng tiến độ",
+        "description": "Theo dõi trạng thái ôn tập, mức hoàn thành bài học và nội dung nên học tiếp."
+      },
+      "review": {
+        "title": "Hàng đợi ôn tập",
+        "description": "Xử lý các từ đến hạn trong một phiên ngắn gọn, tập trung."
+      },
+      "settings": {
+        "title": "Cài đặt",
+        "description": "Điều chỉnh ngôn ngữ, giao diện và tùy chọn học tập theo thời gian."
+      },
+      "admin": {
+        "title": "Không gian quản trị",
+        "description": "Quản lý nội dung chương trình học với trạng thái nháp và xuất bản."
+      },
+      "lessonDetail": {
+        "title": "Chi tiết bài học",
+        "description": "Xem lại từ vựng và ngữ pháp trước khi bắt đầu chế độ học tập trung."
+      },
+      "studySession": {
+        "title": "Phiên học",
+        "description": "Không gian tập trung cho flashcard, trắc nghiệm và gõ đáp án."
+      }
+    }
+  },
+  "home": {
+    "eyebrow": "Học tiếng Trung có cấu trúc",
+    "badge": "Trải nghiệm đa ngôn ngữ",
+    "title": "Một cách bình tĩnh hơn để xây vốn từ, ngữ pháp và thói quen học tiếng Trung",
+    "description": "Xem bài học công khai, bắt đầu luyện tập ngay và mở khóa tiến độ đã lưu khi bạn sẵn sàng. Trải nghiệm luôn tập trung, dễ đọc và xoay quanh một bước tiếp theo rõ ràng.",
+    "exploreLessons": "Khám phá bài học",
+    "signInForSavedProgress": "Đăng nhập để lưu tiến độ",
+    "stats": {
+      "modesLabel": "Chế độ học",
+      "modesDescription": "Flashcard, trắc nghiệm và gõ đáp án trong cùng một nền tảng.",
+      "structureLabel": "Cấu trúc bài học",
+      "structureValue": "Từ vựng + Ngữ pháp",
+      "structureDescription": "Mỗi bài học kết hợp nhận diện từ và mẫu câu thay vì tách rời chúng.",
+      "toneLabel": "Không khí học",
+      "toneValue": "Tập trung",
+      "toneDescription": "Bề mặt yên tĩnh, phân cấp rõ và bảng học tối màu cho các phiên luyện tập."
+    },
+    "studyPath": {
+      "badge": "Lộ trình học",
+      "anonymousBadge": "Thân thiện với ẩn danh",
+      "title": "Chuyển từ xem nội dung sang luyện tập chủ đích mà không ma sát",
+      "description": "Các trang công khai giúp người học khám phá bài học, từ vựng và ngữ pháp trước khi đăng nhập. Các trang bảo vệ thêm tiến độ đã lưu, cài đặt và quản trị nội dung mà không làm thay đổi mô hình tinh thần của ứng dụng.",
+      "browseTitle": "Khám phá",
+      "browseBody": "Mở bài học, từ vựng và ngữ pháp theo cấp độ hoặc chủ đề.",
+      "practiceTitle": "Luyện tập",
+      "practiceBody": "Chuyển chế độ mà không mất ngữ cảnh của bài học.",
+      "reviewTitle": "Ôn tập",
+      "reviewBody": "Lưu tiến độ khi bạn sẵn sàng theo dõi lâu dài."
+    },
+    "focusPanel": {
+      "eyebrow": "Bảng học tập trung",
+      "title": "Thiết kế để tập trung, không để rối",
+      "description": "Bề mặt luyện tập giữ câu hỏi ở trung tâm, nút bấm lớn và thông tin hỗ trợ ở mức thứ yếu để người học ở lại trong bài tập.",
+      "prompt": "Câu hỏi",
+      "reveal": "Hiện đáp án",
+      "next": "Tiếp theo"
+    }
+  },
+  "filters": {
+    "hskLevel": "Cấp HSK",
+    "topic": "Chủ đề",
+    "radical": "Bộ thủ",
+    "allLevels": "Tất cả cấp độ",
+    "allTopics": "Tất cả chủ đề",
+    "allRadicals": "Tất cả bộ thủ"
+  },
+  "lessons": {
+    "eyebrow": "Bài học",
+    "title": "Đi theo một lộ trình bài học có cấu trúc",
+    "description": "Bài học kết hợp từ vựng và ngữ pháp đã xuất bản thành một điểm bắt đầu rõ ràng trước khi người học chuyển sang chế độ học tập trung.",
+    "emptyTitle": "Không có bài học đã xuất bản nào khớp với bộ lọc",
+    "emptyDescription": "Thử chủ đề hoặc cấp HSK khác để mở rộng danh sách bài học.",
+    "lessonDetails": "Chi tiết bài học",
+    "lessonOverview": "Tổng quan bài học",
+    "reviewContentFirst": "Hãy xem nội dung bài học ở đây trước, rồi chuyển sang chế độ học khi sẵn sàng.",
+    "vocabularyItems": "{count} mục từ vựng",
+    "grammarPoints": "{count} điểm ngữ pháp",
+    "vocabularyFocus": "Trọng tâm từ vựng",
+    "grammarFocus": "Trọng tâm ngữ pháp",
+    "noLessonWords": "Chưa có từ vựng công khai trong bài học",
+    "noLessonWordsDescription": "Bài học này đã được xuất bản nhưng phần từ vựng công khai vẫn còn trống.",
+    "noLessonGrammar": "Chưa có ngữ pháp công khai trong bài học",
+    "noLessonGrammarDescription": "Bài học này đã được xuất bản nhưng phần ngữ pháp công khai vẫn còn trống."
+  },
+  "vocabulary": {
+    "eyebrow": "Từ vựng",
+    "title": "Từ vựng được trình bày để nhận diện nhanh và đọc rõ ràng",
+    "description": "Xem từ vựng đã xuất bản với Hán tự, pinyin, Hán Việt và nghĩa rõ ràng, rồi chuyển sang chế độ học khi bạn sẵn sàng.",
+    "emptyTitle": "Không có từ nào khớp với bộ lọc",
+    "emptyDescription": "Thử cấp HSK, chủ đề hoặc bộ thủ khác để mở rộng kết quả.",
+    "openDetail": "Mở chi tiết",
+    "detailEyebrow": "Chi tiết từ vựng",
+    "metadata": "Thông tin",
+    "examples": "Ví dụ",
+    "noExamples": "Chưa có ví dụ công khai nào cho từ này.",
+    "hanViet": "Hán Việt: {value}",
+    "englishMeaning": "Nghĩa tiếng Anh: {value}",
+    "slug": "Slug: {value}",
+    "simplified": "Giản thể: {value}",
+    "traditional": "Phồn thể: {value}"
+  },
+  "grammar": {
+    "eyebrow": "Ngữ pháp",
+    "title": "Mẫu ngữ pháp được giải thích với cấu trúc rõ ràng",
+    "description": "Xem các mẫu cấu trúc, giải thích và ví dụ đã xuất bản trước khi vào chế độ luyện tập tập trung.",
+    "emptyTitle": "Không có điểm ngữ pháp nào khớp với bộ lọc",
+    "emptyDescription": "Thử cấp HSK khác hoặc đặt lại bộ lọc để xem toàn bộ nội dung công khai.",
+    "openDetail": "Mở chi tiết",
+    "detailEyebrow": "Chi tiết ngữ pháp",
+    "structure": "Cấu trúc",
+    "explanation": "Giải thích",
+    "examples": "Ví dụ",
+    "noExamples": "Chưa có ví dụ công khai nào cho điểm ngữ pháp này."
+  },
+  "auth": {
+    "signInBadge": "Đăng nhập",
+    "title": "Lưu tiến độ mà vẫn giữ luồng khám phá công khai trước",
+    "description": "Tiếp tục với Google để tạo hoặc làm mới hồ sơ người học, mở khóa các trang được bảo vệ như Bảng tiến độ và Cài đặt, và đồng bộ tiến độ ôn tập về sau.",
+    "continueWithGoogle": "Tiếp tục với Google",
+    "anonymousVisitors": "Khách ẩn danh vẫn có thể xem bài học công khai và xem trước luồng học tập.",
+    "continueAnonymously": "Tiếp tục ẩn danh",
+    "whySignIn": "Vì sao nên đăng nhập",
+    "reasons": {
+      "dashboard": "Mở khóa bảng tiến độ và trang cài đặt.",
+      "progress": "Chuẩn bị cho tiến độ ôn tập được lưu ở các giai đoạn sau.",
+      "routing": "Giữ định tuyến theo vai trò nhất quán cho người dùng và quản trị viên."
+    }
+  },
+  "learning": {
+    "flashcard": "Flashcard",
+    "multipleChoice": "Trắc nghiệm",
+    "typing": "Gõ đáp án",
+    "answer": "Đáp án",
+    "revealAnswer": "Hiện đáp án",
+    "know": "Biết",
+    "dontKnow": "Chưa biết",
+    "skip": "Bỏ qua",
+    "nextWord": "Từ tiếp theo",
+    "checkAnswer": "Kiểm tra đáp án",
+    "currentWord": "Từ hiện tại",
+    "shortcuts": "Phím tắt",
+    "flashcardShortcut": "`1/2/3` chấm điểm flashcard",
+    "multipleChoiceShortcut": "`1-4` chọn đáp án trắc nghiệm",
+    "enterShortcut": "`Enter` kiểm tra hoặc tiếp tục",
+    "spaceShortcut": "`Space` hiện flashcard",
+    "meaningToPinyin": "Nghĩa → Pinyin",
+    "pinyinToChinese": "Pinyin → Chữ Hán",
+    "hanziToMeaning": "Tiếng Trung → Nghĩa",
+    "meaningToHanzi": "Nghĩa → Tiếng Trung",
+    "typeYourAnswer": "Nhập câu trả lời",
+    "hint": "Gợi ý: {value}",
+    "reviewStatus": "Trạng thái ôn tập",
+    "status": "Trạng thái: {value}",
+    "due": "Đến hạn: {value}",
+    "lastReviewed": "Lần ôn gần nhất: {value}",
+    "interval": "Khoảng cách: {days} ngày · Chuỗi đúng: {streak}",
+    "saving": "Đang lưu…",
+    "autosaves": "Tự động lưu tiến độ",
+    "skippedForNow": "Tạm bỏ qua.",
+    "progressSaveFailed": "Không thể lưu tiến độ.",
+    "reviewSoon": "Đã đánh dấu để ôn lại sớm.",
+    "needsMoreReview": "Đã đánh dấu cần ôn thêm.",
+    "anonymousWarning": "Bạn có thể học ẩn danh, nhưng tiến độ dài hạn sẽ không được lưu.",
+    "signInToSave": "Đăng nhập để lưu tiến độ",
+    "studySession": {
+      "eyebrow": "Phiên học",
+      "description": "Đi theo thứ tự bài học. Bạn có thể đổi chế độ bất cứ lúc nào mà không mất vị trí.",
+      "completeEyebrow": "Hoàn thành phiên học",
+      "completeDescription": "Bạn đã hoàn tất lượt học của bài này. Xem tóm tắt bên dưới hoặc bắt đầu lại.",
+      "restart": "Học lại bài",
+      "known": "Đã biết",
+      "needsWork": "Cần luyện thêm"
+    },
+    "reviewSession": {
+      "eyebrow": "Hàng đợi ôn tập",
+      "title": "Từ đến hạn",
+      "description": "Luyện các từ quá hạn hoặc đến hạn bằng chính các chế độ học dùng trong bài học.",
+      "completeEyebrow": "Hoàn tất ôn tập",
+      "completeTitle": "Đã xử lý xong hàng đợi",
+      "completeDescription": "Bạn đã hoàn thành các mục ôn tập đến hạn trong phiên này. Quay lại bảng tiến độ hoặc xem thêm bài học để duy trì đà học.",
+      "restart": "Làm lại hàng đợi",
+      "backToDashboard": "Về bảng tiến độ",
+      "correct": "Đúng",
+      "incorrect": "Sai",
+      "skipped": "Bỏ qua"
+    },
+    "reviewPage": {
+      "eyebrow": "Ôn tập",
+      "title": "Hàng đợi ôn tập đến hạn",
+      "description": "Xử lý các từ đến hạn hoặc quá hạn, rồi quay lại bài học để lấy thêm nội dung mới.",
+      "emptyTitle": "Hiện chưa có mục nào đến hạn",
+      "emptyDescription": "Hàng đợi đã trống. Hãy tiếp tục một bài học để tạo thêm mục ôn tập, hoặc xem bài học đã xuất bản để tìm nội dung mới.",
+      "suggestedLessons": "Bài học gợi ý tiếp theo",
+      "suggestedDescription": "Tiếp tục xây hàng đợi bằng nội dung đã xuất bản."
+    },
+    "emptyLesson": {
+      "title": "Bài học này chưa có từ để luyện",
+      "description": "Quay lại trang tổng quan bài học và gắn từ vựng đã xuất bản trước khi bắt đầu phiên học."
+    },
+    "emptyReview": {
+      "title": "Hiện chưa có mục nào đến hạn",
+      "description": "Hàng đợi ôn tập đang trống. Hãy tiếp tục một bài học hoặc xem thư viện bài học để thêm nội dung học."
+    },
+    "reviewStatusFallbacks": {
+      "noPriorReview": "Chưa từng ôn"
+    }
+  },
+  "dashboard": {
+    "eyebrow": "Bảng tiến độ",
+    "title": "Tiến độ học của bạn",
+    "description": "Xem nội dung nào đến hạn, lộ trình bài học đang tiến đến đâu và nên tập trung vào đâu tiếp theo.",
+    "totalStudied": "Tổng số đã học",
+    "totalStudiedDescription": "Số từ đã có tiến độ lưu",
+    "new": "Mới",
+    "newDescription": "Đã lưu nhưng mới chạm vào",
+    "learning": "Đang học",
+    "learningDescription": "Vẫn còn trong vòng ôn tập",
+    "reviewDue": "Đến hạn ôn",
+    "reviewDueDescription": "Sẵn sàng ôn ngay bây giờ",
+    "mastered": "Đã vững",
+    "masteredDescription": "Từ đã ổn định dài hạn",
+    "lessonProgress": "Tiến độ bài học",
+    "lessonProgressSummary": "{completed} hoàn thành · {inProgress} đang học",
+    "completed": "Đã hoàn thành",
+    "notYet": "Chưa có",
+    "noLessonProgress": "Chưa có tiến độ bài học",
+    "noLessonProgressDescription": "Bắt đầu một bài học để mở khóa theo dõi mức hoàn thành, lịch sử học gần đây và gợi ý ôn tập.",
+    "reviewReadiness": "Mức sẵn sàng ôn tập",
+    "reviewReadinessDescription": "Những gì cần chú ý trước khi kết thúc ngày.",
+    "dueToday": "Đến hạn hôm nay",
+    "overdueNow": "Đang quá hạn",
+    "dailyActivity": "Hoạt động hằng ngày",
+    "dailyActivityDescription": "Một vài tín hiệu nhỏ về đà học gần đây.",
+    "currentStreak": "Chuỗi hiện tại",
+    "reviewsToday": "Lượt ôn hôm nay",
+    "last7Days": "7 ngày qua",
+    "activeDays": "Hoạt động trong {count} ngày",
+    "recentReviewActivity": "Hoạt động ôn tập gần đây",
+    "recentReviewDescription": "Các câu trả lời được lưu gần nhất từ phiên học của bạn.",
+    "noReviewActivity": "Chưa có hoạt động ôn tập",
+    "noReviewActivityDescription": "Sự kiện ôn tập sẽ xuất hiện ở đây sau khi bạn hoàn thành bài học hoặc xử lý hàng đợi ôn tập."
+  },
+  "settings": {
+    "eyebrow": "Cài đặt",
+    "title": "Tùy chọn và sự thoải mái khi đọc",
+    "description": "Điều chỉnh ngôn ngữ, giao diện và phong cách đọc, rồi giữ chúng nhất quán trên các bề mặt học và ôn tập.",
+    "saveSuccess": "Đã lưu cài đặt.",
+    "saveError": "Không thể lưu cài đặt.",
+    "languageTitle": "Tùy chọn ngôn ngữ",
+    "languageDescription": "Chọn ngôn ngữ giao diện dùng cho điều hướng, bề mặt học và trang cài đặt.",
+    "appLanguage": "Ngôn ngữ ứng dụng",
+    "languageHelp": "Ngôn ngữ cập nhật ngay lập tức, giữ nguyên trang hiện tại và sẽ được lưu vào hồ sơ khi bạn đã đăng nhập.",
+    "languageSaveError": "Không thể lưu tuỳ chọn ngôn ngữ.",
+    "themeTitle": "Tùy chọn giao diện",
+    "themeDescription": "Chọn giao diện cố định hoặc theo cài đặt hệ thống.",
+    "themeHelp": "Giao diện được áp dụng ngay sau khi lưu và giữ nhất quán trên bảng tiến độ, ôn tập và trang học.",
+    "fontTitle": "Phông chữ đọc",
+    "fontDescription": "Chọn kiểu đọc phù hợp với chữ Hán, pinyin và phần nghĩa đã dịch.",
+    "fontHelp": "Sans giúp giao diện gọn gàng; serif tăng tương phản khi đọc các phiên từ vựng và ngữ pháp dài hơn.",
+    "liveSummary": "Tóm tắt trực tiếp",
+    "liveSummaryDescription": "Những gì sẽ được áp dụng ngay bây giờ.",
+    "previewCopy": "Đoạn xem trước",
+    "previewDescription": "Phần xem trước này chỉ là nhỏ gọn, nhưng tùy chọn sẽ áp dụng trên các bề mặt đọc và học chính.",
+    "accountStatus": "Trạng thái tài khoản",
+    "accountDescription": "Thông tin hồ sơ được bảo vệ vẫn được lưu ở phía máy chủ.",
+    "learnerFallback": "Người học",
+    "unavailable": "Không có",
+    "signedInAs": "Đăng nhập với tên {name}",
+    "role": "Vai trò: {value}",
+    "email": "Email: {value}",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Theo hệ thống",
+    "sans": "Sans hiện đại",
+    "serif": "Serif dễ đọc"
+  },
+  "errors": {
+    "dashboardTitle": "Không thể tải dữ liệu bảng tiến độ",
+    "dashboardDescription": "Đã xảy ra sự cố khi đọc tiến độ đã lưu và thống kê ôn tập của bạn.",
+    "lessonsTitle": "Không thể tải bài học",
+    "lessonsDescription": "Đã xảy ra sự cố khi lấy nội dung bài học đã xuất bản.",
+    "vocabularyTitle": "Không thể tải từ vựng",
+    "vocabularyDescription": "Đã xảy ra sự cố khi lấy nội dung từ vựng đã xuất bản.",
+    "grammarTitle": "Không thể tải nội dung ngữ pháp",
+    "grammarDescription": "Đã xảy ra sự cố khi lấy nội dung ngữ pháp đã xuất bản.",
+    "reviewTitle": "Không thể tải hàng đợi ôn tập",
+    "reviewDescription": "Đã xảy ra sự cố khi đọc các mục ôn tập đến hạn trong tài khoản của bạn.",
+    "settingsTitle": "Không thể tải cài đặt",
+    "settingsDescription": "Đã xảy ra sự cố khi đọc hoặc chuẩn bị các tùy chọn đã lưu.",
+    "learnLessonTitle": "Không thể tải phiên học bài",
+    "learnLessonDescription": "Đã xảy ra sự cố khi chuẩn bị trải nghiệm học cho người học.",
+    "adminImportTitle": "Trang nhập liệu hiện không khả dụng",
+    "adminImportDescription": "Không thể tải công cụ nhập liệu. Hãy thử lại hoặc quay lại thư viện từ vựng quản trị."
+  },
+  "notFound": {
+    "eyebrow": "Không tìm thấy",
+    "badge": "Thiếu tuyến đường",
+    "title": "Trang này không tồn tại",
+    "description": "Địa chỉ có thể đã lỗi thời, chưa được xuất bản hoặc bị gõ sai. Hãy quay lại thư viện bài học hoặc không gian làm việc chính.",
+    "emptyTitle": "Không có gì để hiển thị ở đây",
+    "emptyDescription": "Hãy thử một bài học đã xuất bản, bảng tiến độ hoặc trang chủ."
+  },
+  "learn": {
+    "eyebrow": "Phiên học",
+    "badge": "Chế độ người học",
+    "description": "Học từ vựng của bài bằng thẻ ghi nhớ, trắc nghiệm và gõ đáp án. Người dùng đã đăng nhập sẽ lưu được tiến độ, còn khách vẫn có thể luyện tập mà không lưu.",
+    "notReadyTitle": "Bài học này chưa sẵn sàng để học",
+    "notReadyDescription": "Hãy gắn các từ đã xuất bản vào bài học trước khi bắt đầu phiên học."
+  },
+  "admin": {
+    "overview": {
+      "eyebrow": "Quản trị",
+      "title": "Quản lý nội dung",
+      "description": "Quản lý nội dung giáo trình, phân loại và cấu trúc bài học trong không gian làm việc được bảo vệ.",
+      "sections": {
+        "wordsTitle": "Từ vựng",
+        "wordsDescription": "Quản lý từ vựng, ví dụ, trạng thái xuất bản và liên kết phân loại.",
+        "grammarTitle": "Điểm ngữ pháp",
+        "grammarDescription": "Tạo giải thích ngữ pháp, ví dụ và nội dung bài học có thể xuất bản.",
+        "lessonsTitle": "Bài học",
+        "lessonsDescription": "Sắp xếp nội dung bài học từ từ vựng và điểm ngữ pháp.",
+        "topicsTitle": "Chủ đề",
+        "topicsDescription": "Duy trì danh mục bài học và tổ chức nội dung.",
+        "radicalsTitle": "Bộ thủ",
+        "radicalsDescription": "Duy trì dữ liệu tham chiếu bộ thủ cho các mục từ vựng."
+      }
+    },
+    "status": {
+      "published": "Đã xuất bản",
+      "draft": "Bản nháp"
+    },
+    "words": {
+      "eyebrow": "Quản trị từ vựng",
+      "title": "Từ vựng",
+      "description": "Tạo, chỉnh sửa, xuất bản và sắp xếp các mục từ vựng kèm ví dụ.",
+      "new": "Từ mới",
+      "emptyTitle": "Chưa có từ nào",
+      "emptyDescription": "Tạo mục từ vựng đầu tiên để bắt đầu xây dựng thư viện.",
+      "columns": {
+        "word": "Từ",
+        "meaning": "Nghĩa",
+        "hsk": "HSK",
+        "status": "Trạng thái",
+        "updated": "Cập nhật",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "title": "Chi tiết từ",
+        "description": "Dùng một ví dụ cho mỗi dòng theo định dạng: Chinese | Pinyin | Vietnamese meaning",
+        "slug": "Slug",
+        "hskLevel": "Cấp độ HSK",
+        "simplified": "Giản thể",
+        "traditional": "Phồn thể",
+        "hanzi": "Hanzi",
+        "pinyin": "Pinyin",
+        "hanViet": "Hán Việt",
+        "englishMeaning": "Nghĩa tiếng Anh",
+        "vietnameseMeaning": "Nghĩa tiếng Việt",
+        "topic": "Chủ đề",
+        "noTopic": "Không có chủ đề",
+        "radical": "Bộ thủ",
+        "noRadical": "Không có bộ thủ",
+        "published": "Đã xuất bản",
+        "notes": "Ghi chú",
+        "examples": "Ví dụ"
+      },
+      "create": {
+        "title": "Từ mới",
+        "description": "Tạo mục từ vựng với các liên kết phân loại tùy chọn và ví dụ đính kèm.",
+        "submit": "Tạo từ"
+      },
+      "edit": {
+        "eyebrow": "Quản trị từ vựng",
+        "description": "Cập nhật chi tiết từ vựng, trạng thái xuất bản và ví dụ.",
+        "submit": "Lưu từ"
+      }
+    },
+    "grammar": {
+      "eyebrow": "Quản trị ngữ pháp",
+      "title": "Điểm ngữ pháp",
+      "description": "Quản lý phần giải thích, trạng thái xuất bản và câu ví dụ cho nội dung ngữ pháp.",
+      "new": "Điểm ngữ pháp mới",
+      "emptyTitle": "Chưa có điểm ngữ pháp nào",
+      "emptyDescription": "Thêm mục ngữ pháp đầu tiên để bắt đầu cấu trúc bài học.",
+      "columns": {
+        "title": "Tiêu đề",
+        "slug": "Slug",
+        "hsk": "HSK",
+        "status": "Trạng thái",
+        "updated": "Cập nhật",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "title": "Chi tiết điểm ngữ pháp",
+        "description": "Dùng một ví dụ cho mỗi dòng theo định dạng: Chinese | Pinyin | Vietnamese meaning",
+        "titleLabel": "Tiêu đề",
+        "slug": "Slug",
+        "hskLevel": "Cấp độ HSK",
+        "published": "Đã xuất bản",
+        "structureText": "Mẫu cấu trúc",
+        "vietnameseExplanation": "Giải thích tiếng Việt",
+        "notes": "Ghi chú",
+        "examples": "Ví dụ"
+      },
+      "create": {
+        "title": "Điểm ngữ pháp mới",
+        "description": "Tạo giải thích ngữ pháp với ví dụ và điều khiển xuất bản.",
+        "submit": "Tạo điểm ngữ pháp"
+      },
+      "edit": {
+        "eyebrow": "Quản trị ngữ pháp",
+        "description": "Cập nhật phần giải thích ngữ pháp, ví dụ và trạng thái xuất bản.",
+        "submit": "Lưu điểm ngữ pháp"
+      }
+    },
+    "lessons": {
+      "eyebrow": "Quản trị bài học",
+      "title": "Bài học",
+      "description": "Quản lý các bài học có thể xuất bản và sắp xếp từ vựng cùng điểm ngữ pháp.",
+      "new": "Bài học mới",
+      "emptyTitle": "Chưa có bài học nào",
+      "emptyDescription": "Tạo một bài học để bắt đầu gắn từ vựng và điểm ngữ pháp theo thứ tự.",
+      "columns": {
+        "lesson": "Bài học",
+        "hsk": "HSK",
+        "order": "Thứ tự",
+        "status": "Trạng thái",
+        "updated": "Cập nhật",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "detailsTitle": "Chi tiết bài học",
+        "titleLabel": "Tiêu đề",
+        "slug": "Slug",
+        "hskLevel": "Cấp độ HSK",
+        "sortOrder": "Thứ tự sắp xếp",
+        "topic": "Chủ đề",
+        "noTopic": "Không có chủ đề",
+        "published": "Đã xuất bản",
+        "description": "Mô tả",
+        "orderedWords": "Từ theo thứ tự",
+        "orderedGrammar": "Điểm ngữ pháp theo thứ tự"
+      },
+      "create": {
+        "title": "Bài học mới",
+        "description": "Tạo bài học và gắn các từ cùng điểm ngữ pháp theo thứ tự.",
+        "submit": "Tạo bài học"
+      },
+      "edit": {
+        "eyebrow": "Quản trị bài học",
+        "description": "Cập nhật siêu dữ liệu, trạng thái xuất bản và cấu trúc có thứ tự của bài học.",
+        "submit": "Lưu bài học"
+      }
+    },
+    "topics": {
+      "eyebrow": "Quản trị chủ đề",
+      "title": "Chủ đề",
+      "description": "Quản lý các danh mục nội dung dùng cho từ và bài học.",
+      "emptyTitle": "Chưa có chủ đề nào",
+      "emptyDescription": "Tạo một chủ đề để sắp xếp từ và bài học theo chủ điểm.",
+      "columns": {
+        "name": "Tên",
+        "slug": "Slug",
+        "description": "Mô tả",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "newTitle": "Chủ đề mới",
+        "editTitle": "Sửa chủ đề",
+        "name": "Tên",
+        "slug": "Slug",
+        "description": "Mô tả",
+        "create": "Tạo chủ đề",
+        "save": "Lưu chủ đề"
+      }
+    },
+    "radicals": {
+      "eyebrow": "Quản trị bộ thủ",
+      "title": "Bộ thủ",
+      "description": "Quản lý dữ liệu tham chiếu bộ thủ dùng cho các mục từ vựng.",
+      "emptyTitle": "Chưa có bộ thủ nào",
+      "emptyDescription": "Tạo bộ thủ để hỗ trợ dữ liệu từ vựng phong phú hơn.",
+      "columns": {
+        "radical": "Bộ thủ",
+        "pinyin": "Pinyin",
+        "meaning": "Nghĩa",
+        "strokes": "Số nét",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "newTitle": "Bộ thủ mới",
+        "editTitle": "Sửa bộ thủ",
+        "radical": "Bộ thủ",
+        "pinyin": "Pinyin",
+        "meaning": "Nghĩa tiếng Việt",
+        "strokes": "Số nét",
+        "create": "Tạo bộ thủ",
+        "save": "Lưu bộ thủ"
+      }
+    },
+    "import": {
+      "eyebrow": "Nhập liệu quản trị",
+      "badge": "Thao tác hàng loạt",
+      "title": "Nhập từ vựng từ CSV hoặc JSON",
+      "description": "Tải lên tệp đã được kiểm tra để tạo mục từ hàng loạt. Các dòng sai hoặc trùng sẽ bị bỏ qua cùng báo cáo chi tiết.",
+      "backToWords": "Quay lại danh sách từ",
+      "uploadTitle": "Tải tệp",
+      "uploadDescription": "Trường bắt buộc: slug, simplified, hanzi, pinyin, vietnamese_meaning, hsk_level.",
+      "importFile": "Tệp nhập",
+      "examplesTitle": "Hỗ trợ ví dụ",
+      "examplesDescription": "Tệp JSON có thể cung cấp mảng examples. CSV có thể dùng cột examples_json chứa mảng JSON các đối tượng ví dụ.",
+      "runImport": "Chạy nhập liệu",
+      "importing": "Đang nhập…",
+      "templatesTitle": "Mẫu tệp",
+      "templatesDescription": "Dùng các mẫu có sẵn để tránh lỗi định dạng.",
+      "csvTemplate": "Mẫu CSV",
+      "jsonTemplate": "Mẫu JSON",
+      "latestResult": "Kết quả gần nhất",
+      "latestResultDescription": "Tóm tắt nhập liệu và phản hồi xác thực theo từng dòng.",
+      "received": "Đã nhận: {count}",
+      "inserted": "Đã chèn: {count}",
+      "skipped": "Đã bỏ qua: {count}",
+      "issues": "Vấn đề: {count}",
+      "noImportYet": "Chưa có lần nhập liệu nào trong phiên này."
+    }
+  }
+}

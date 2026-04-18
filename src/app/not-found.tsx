@@ -4,33 +4,36 @@ import { Compass, Home, Search } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getServerI18n } from "@/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { t, link } = await getServerI18n();
+
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Not found"
-        badge="Route missing"
-        title="This page does not exist"
-        description="The address may be outdated, unpublished, or mistyped. Return to the lesson library or head back to the main workspace."
+        eyebrow={t("notFound.eyebrow")}
+        badge={t("notFound.badge")}
+        title={t("notFound.title")}
+        description={t("notFound.description")}
       />
 
       <EmptyState
-        title="Nothing to show here"
-        description="Try a published lesson, dashboard, or home page instead."
+        title={t("notFound.emptyTitle")}
+        description={t("notFound.emptyDescription")}
         visual={<Compass className="size-10 text-muted-foreground" aria-hidden="true" />}
         action={
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="outline">
-              <Link href="/">
+              <Link href={link("/")}>
                 <Home className="size-4" />
-                Home
+                {t("common.home")}
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/lessons">
+              <Link href={link("/lessons")}>
                 <Search className="size-4" />
-                Browse lessons
+                {t("common.browseLessons")}
               </Link>
             </Button>
           </div>

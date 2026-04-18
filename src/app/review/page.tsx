@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { listDueReviewItems, listRecentLessonProgress, listSuggestedLessons } from "@/features/progress/queries";
+import { getServerI18n } from "@/i18n/server";
 import { requirePermission } from "@/lib/auth";
 
 export default async function ReviewPage() {
@@ -16,6 +17,7 @@ export default async function ReviewPage() {
     listRecentLessonProgress(context.user!.id, 3),
     listSuggestedLessons(3),
   ]);
+  const { t, link } = await getServerI18n(context.profile?.preferredLanguage);
 
   const continueLesson = recentLessons.find(
     (lesson) => lesson.completionPercent > 0 && lesson.completionPercent < 100,
@@ -24,25 +26,25 @@ export default async function ReviewPage() {
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Review"
-        badge="Authenticated"
-        title="Due review queue"
-        description="Clear the words that are due now or overdue, then return to lessons for fresh material."
+        eyebrow={t("learning.reviewPage.eyebrow")}
+        badge={t("common.authenticated")}
+        title={t("learning.reviewPage.title")}
+        description={t("learning.reviewPage.description")}
         actions={
           <HeaderActions
             secondary={
-              <HeaderLinkButton href="/dashboard" variant="outline">
-                Dashboard
+              <HeaderLinkButton href={link("/dashboard")} variant="outline">
+                {t("common.dashboard")}
               </HeaderLinkButton>
             }
             primary={
               <>
                 {continueLesson ? (
-                  <HeaderLinkButton href={`/learn/lesson/${continueLesson.lessonId}`} variant="outline">
-                    Continue learning
+                  <HeaderLinkButton href={link(`/learn/lesson/${continueLesson.lessonId}`)} variant="outline">
+                    {t("common.continueLearning")}
                   </HeaderLinkButton>
                 ) : null}
-                <HeaderLinkButton href="/lessons">Browse lessons</HeaderLinkButton>
+                <HeaderLinkButton href={link("/lessons")}>{t("common.browseLessons")}</HeaderLinkButton>
               </>
             }
           />
@@ -52,17 +54,17 @@ export default async function ReviewPage() {
       {dueItems.length === 0 ? (
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <EmptyState
-            title="Nothing is due right now"
-            description="Your saved queue is clear. Continue a lesson to create more review items, or browse published lessons for something new."
+            title={t("learning.reviewPage.emptyTitle")}
+            description={t("learning.reviewPage.emptyDescription")}
             action={
               <div className="flex flex-wrap gap-3">
                 {continueLesson ? (
                   <Button asChild variant="outline">
-                    <Link href={`/learn/lesson/${continueLesson.lessonId}`}>Continue learning</Link>
+                    <Link href={link(`/learn/lesson/${continueLesson.lessonId}`)}>{t("common.continueLearning")}</Link>
                   </Button>
                 ) : null}
                 <Button asChild>
-                  <Link href="/lessons">Browse lessons</Link>
+                  <Link href={link("/lessons")}>{t("common.browseLessons")}</Link>
                 </Button>
               </div>
             }
@@ -70,14 +72,14 @@ export default async function ReviewPage() {
 
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Suggested next lessons</CardTitle>
-              <CardDescription>Keep building the queue with published content.</CardDescription>
+              <CardTitle>{t("learning.reviewPage.suggestedLessons")}</CardTitle>
+              <CardDescription>{t("learning.reviewPage.suggestedDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {suggestedLessons.map((lesson) => (
                 <Link
                   key={lesson.id}
-                  href={`/lessons/${lesson.slug}`}
+                  href={link(`/lessons/${lesson.slug}`)}
                   className="block rounded-2xl border border-border/80 p-4 transition-colors hover:bg-muted/50"
                 >
                   <div className="flex flex-wrap items-center gap-2">

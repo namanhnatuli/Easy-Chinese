@@ -1,6 +1,6 @@
 import type { PreferredFont, PreferredTheme } from "@/types/domain";
 
-export const supportedLanguages = ["vi", "en"] as const;
+export const supportedLanguages = ["en", "vi", "zh"] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 

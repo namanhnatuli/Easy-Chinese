@@ -1,7 +1,8 @@
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
 import type { TopicListItem } from "@/features/admin/topics";
+import { getServerI18n } from "@/i18n/server";
 
-export function TopicForm({
+export async function TopicForm({
   action,
   initialValue,
   submitLabel,
@@ -10,18 +11,19 @@ export function TopicForm({
   initialValue?: TopicListItem | null;
   submitLabel: string;
 }) {
+  const { t } = await getServerI18n();
   return (
     <form action={action}>
       <input type="hidden" name="id" defaultValue={initialValue?.id ?? ""} />
-      <AdminFormCard title={initialValue ? "Edit topic" : "New topic"}>
+      <AdminFormCard title={initialValue ? t("admin.topics.form.editTitle") : t("admin.topics.form.newTitle")}>
         <div className="grid gap-4">
-          <Field label="Name">
+          <Field label={t("admin.topics.form.name")}>
             <input name="name" defaultValue={initialValue?.name ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="Slug">
+          <Field label={t("admin.topics.form.slug")}>
             <input name="slug" defaultValue={initialValue?.slug ?? ""} className={inputClassName()} />
           </Field>
-          <Field label="Description">
+          <Field label={t("admin.topics.form.description")}>
             <textarea
               name="description"
               defaultValue={initialValue?.description ?? ""}

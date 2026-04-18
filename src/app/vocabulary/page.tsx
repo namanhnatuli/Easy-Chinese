@@ -11,6 +11,7 @@ import {
   listVocabularyFilterOptions,
   parseVocabularyFilters,
 } from "@/features/public/vocabulary";
+import { getServerI18n } from "@/i18n/server";
 
 export default async function VocabularyPage({
   searchParams,
@@ -23,26 +24,27 @@ export default async function VocabularyPage({
     listVocabularyFilterOptions(),
     listPublicWords(filters),
   ]);
+  const { t, link } = await getServerI18n();
 
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Vocabulary"
-        badge="Published content"
-        title="Words designed for quick recognition and clean reading"
-        description="Browse published vocabulary with clear Hanzi, pinyin, Hán Việt, and Vietnamese meaning, then jump into the learner shell when you are ready."
+        eyebrow={t("vocabulary.eyebrow")}
+        badge={t("common.publishedContent")}
+        title={t("vocabulary.title")}
+        description={t("vocabulary.description")}
       />
 
       <FilterBar>
         <form className="grid w-full gap-3 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]" method="get">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">HSK level</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.hskLevel")}</span>
             <select
               name="hsk"
               defaultValue={filters.hsk?.toString() ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All levels</option>
+              <option value="">{t("filters.allLevels")}</option>
               {Array.from({ length: 9 }).map((_, index) => {
                 const level = index + 1;
                 return (
@@ -55,13 +57,13 @@ export default async function VocabularyPage({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Topic</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.topic")}</span>
             <select
               name="topic"
               defaultValue={filters.topic ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All topics</option>
+              <option value="">{t("filters.allTopics")}</option>
               {topics.map((topic) => (
                 <option key={topic.id} value={topic.slug}>
                   {topic.name}
@@ -71,13 +73,13 @@ export default async function VocabularyPage({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Radical</span>
+            <span className="text-sm font-medium text-foreground">{t("filters.radical")}</span>
             <select
               name="radical"
               defaultValue={filters.radical ?? ""}
               className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">All radicals</option>
+              <option value="">{t("filters.allRadicals")}</option>
               {radicals.map((radical) => (
                 <option key={radical.id} value={radical.id}>
                   {radical.radical} · {radical.meaningVi}
@@ -88,10 +90,10 @@ export default async function VocabularyPage({
 
           <div className="flex items-end gap-2">
             <Button type="submit" className="h-11">
-              Apply filters
+              {t("common.applyFilters")}
             </Button>
             <Button asChild type="button" variant="ghost" className="h-11">
-              <Link href="/vocabulary">Reset</Link>
+              <Link href={link("/vocabulary")}>{t("common.reset")}</Link>
             </Button>
           </div>
         </form>
@@ -99,8 +101,8 @@ export default async function VocabularyPage({
 
       {words.length === 0 ? (
         <EmptyState
-          title="No published words match these filters"
-          description="Try a different HSK level, topic, or radical filter to widen the results."
+          title={t("vocabulary.emptyTitle")}
+          description={t("vocabulary.emptyDescription")}
         />
       ) : (
         <section className="grid gap-4">
@@ -126,7 +128,7 @@ export default async function VocabularyPage({
                   </div>
                 </div>
                 <Button asChild variant="outline">
-                  <Link href={`/vocabulary/${word.slug}`}>Open detail</Link>
+                  <Link href={link(`/vocabulary/${word.slug}`)}>{t("vocabulary.openDetail")}</Link>
                 </Button>
               </CardContent>
             </Card>

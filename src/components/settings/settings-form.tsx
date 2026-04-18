@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Globe2, MoonStar, Palette, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { dispatchPreferenceUpdate } from "@/components/settings/preferences-provider";
 import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import {
   getLanguageLabel,
   getThemeLabel,
 } from "@/features/settings/preferences";
+import { useI18n } from "@/i18n/client";
 import type { UserSettingsInput } from "@/features/settings/types";
 import type { Profile } from "@/types/domain";
 
@@ -31,6 +33,7 @@ export function SettingsForm({
 }: {
   profile: Profile;
 }) {
+  const { t, link } = useI18n();
   const [isSaving, startSaving] = useTransition();
   const [values, setValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile));
   const [savedValues, setSavedValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile));
@@ -66,7 +69,7 @@ export function SettingsForm({
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { message?: string } | null;
-        const message = body?.message ?? "Settings could not be saved.";
+        const message = body?.message ?? t("settings.saveError");
         setErrorMessage(message);
         toast.error(message);
         return;
@@ -74,24 +77,24 @@ export function SettingsForm({
 
       setSavedValues(values);
       dispatchPreferenceUpdate(values);
-      toast.success("Settings saved.");
+      toast.success(t("settings.saveSuccess"));
     });
   }
 
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Settings"
-        badge="Authenticated"
-        title="Preferences and reading comfort"
-        description="Adjust language, theme, and reading style, then keep those preferences across your study and review surfaces."
+        eyebrow={t("settings.eyebrow")}
+        badge={t("common.authenticated")}
+        title={t("settings.title")}
+        description={t("settings.description")}
         actions={
           <HeaderActions
-            secondary={<HeaderLinkButton href="/dashboard" variant="outline">Dashboard</HeaderLinkButton>}
+            secondary={<HeaderLinkButton href={link("/dashboard")} variant="outline">{t("common.dashboard")}</HeaderLinkButton>}
             primary={
               <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
                 <Save className="size-4" />
-                {isSaving ? "Saving…" : "Save settings"}
+                {isSaving ? t("common.saving") : t("common.save")}
               </Button>
             }
           />
@@ -101,7 +104,7 @@ export function SettingsForm({
       {errorMessage ? (
         <Card className="border-destructive/30 bg-destructive/5" role="alert" aria-live="assertive">
           <CardHeader>
-            <CardTitle className="text-base">Settings could not be saved</CardTitle>
+            <CardTitle className="text-base">{t("settings.saveError")}</CardTitle>
             <CardDescription>{errorMessage}</CardDescription>
           </CardHeader>
         </Card>
@@ -113,25 +116,29 @@ export function SettingsForm({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe2 className="size-4" />
-                Language preference
+                {t("settings.languageTitle")}
               </CardTitle>
               <CardDescription>
-                Vietnamese stays the default today, with English-ready structure persisted for future expansion.
+                {t("settings.languageDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Label htmlFor="language-preference">App language</Label>
-              <Select value={values.language} onValueChange={(value) => updateField("language", value as UserSettingsInput["language"])}>
-                <SelectTrigger id="language-preference" aria-describedby="language-help">
-                  <SelectValue placeholder="Choose language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vi">Tiếng Việt</SelectItem>
-                  <SelectItem value="en">English-ready</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="language-preference">{t("settings.appLanguage")}</Label>
+              <div id="language-preference">
+                <LanguageSwitcher
+                  authenticated
+                  ariaLabel={t("settings.appLanguage")}
+                  onLocaleChange={(language) => {
+                    updateField("language", language);
+                    setSavedValues((current) => ({
+                      ...current,
+                      language,
+                    }));
+                  }}
+                />
+              </div>
               <p id="language-help" className="text-sm text-muted-foreground">
-                The stored preference already applies to document language and future i18n-ready surfaces.
+                {t("settings.languageHelp")}
               </p>
             </CardContent>
           </Card>
@@ -140,26 +147,26 @@ export function SettingsForm({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MoonStar className="size-4" />
-                Theme preference
+                {t("settings.themeTitle")}
               </CardTitle>
               <CardDescription>
-                Choose a stable theme or follow the system appearance automatically.
+                {t("settings.themeDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Label htmlFor="theme-preference">Theme</Label>
+              <Label htmlFor="theme-preference">{t("common.theme")}</Label>
               <Select value={values.theme} onValueChange={(value) => updateField("theme", value as UserSettingsInput["theme"])}>
                 <SelectTrigger id="theme-preference" aria-describedby="theme-help">
-                  <SelectValue placeholder="Choose theme" />
+                  <SelectValue placeholder={t("common.theme")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">{t("settings.system")}</SelectItem>
+                  <SelectItem value="light">{t("settings.light")}</SelectItem>
+                  <SelectItem value="dark">{t("settings.dark")}</SelectItem>
                 </SelectContent>
               </Select>
               <p id="theme-help" className="text-sm text-muted-foreground">
-                Theme updates apply immediately after save and stay consistent across dashboard, review, and study pages.
+                {t("settings.themeHelp")}
               </p>
             </CardContent>
           </Card>
@@ -168,25 +175,25 @@ export function SettingsForm({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Type className="size-4" />
-                Reading font
+                {t("settings.fontTitle")}
               </CardTitle>
               <CardDescription>
-                Pick a reading style tuned for Chinese text, pinyin, and Vietnamese glosses.
+                {t("settings.fontDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Label htmlFor="font-preference">Font style</Label>
+              <Label htmlFor="font-preference">{t("common.font")}</Label>
               <Select value={values.font} onValueChange={(value) => updateField("font", value as UserSettingsInput["font"])}>
                 <SelectTrigger id="font-preference" aria-describedby="font-help">
-                  <SelectValue placeholder="Choose font" />
+                  <SelectValue placeholder={t("common.font")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sans">Modern Sans</SelectItem>
-                  <SelectItem value="serif">Readable Serif</SelectItem>
+                  <SelectItem value="sans">{t("settings.sans")}</SelectItem>
+                  <SelectItem value="serif">{t("settings.serif")}</SelectItem>
                 </SelectContent>
               </Select>
               <p id="font-help" className="text-sm text-muted-foreground">
-                Sans keeps the interface crisp; serif adds extra reading contrast for longer vocabulary and grammar sessions.
+                {t("settings.fontHelp")}
               </p>
             </CardContent>
           </Card>
@@ -197,9 +204,9 @@ export function SettingsForm({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="size-4" />
-                Live summary
+                {t("settings.liveSummary")}
               </CardTitle>
-              <CardDescription>What will be applied when you save.</CardDescription>
+              <CardDescription>{t("settings.liveSummaryDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -209,11 +216,11 @@ export function SettingsForm({
               </div>
 
               <div className="rounded-[1.5rem] border border-border/80 bg-muted/30 p-4">
-                <p className="text-sm font-semibold text-foreground">Preview copy</p>
+                <p className="text-sm font-semibold text-foreground">{t("settings.previewCopy")}</p>
                 <p className="mt-3 text-hanzi">你好</p>
                 <p className="mt-2 text-pinyin">nǐ hǎo</p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  Xin chào. This preview is intentionally small, but the preference applies across the main reading and study surfaces after save.
+                  {t("settings.previewDescription")}
                 </p>
               </div>
             </CardContent>
@@ -221,18 +228,22 @@ export function SettingsForm({
 
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Account status</CardTitle>
-              <CardDescription>Protected profile information remains server-backed.</CardDescription>
+              <CardTitle>{t("settings.accountStatus")}</CardTitle>
+              <CardDescription>{t("settings.accountDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                Signed in as <span className="font-medium text-foreground">{profile.displayName ?? profile.email ?? "Learner"}</span>
+                {t("settings.signedInAs", {
+                  name: profile.displayName ?? profile.email ?? t("settings.learnerFallback"),
+                })}{" "}
+                <span className="font-medium text-foreground">{profile.displayName ?? profile.email ?? t("settings.learnerFallback")}</span>
               </p>
               <p>
-                Role: <span className="font-medium text-foreground">{profile.role}</span>
+                {t("settings.role", { value: profile.role })} <span className="font-medium text-foreground">{profile.role}</span>
               </p>
               <p>
-                Email: <span className="font-medium text-foreground">{profile.email ?? "Unavailable"}</span>
+                {t("settings.email", { value: profile.email ?? t("settings.unavailable") })}{" "}
+                <span className="font-medium text-foreground">{profile.email ?? t("settings.unavailable")}</span>
               </p>
             </CardContent>
           </Card>

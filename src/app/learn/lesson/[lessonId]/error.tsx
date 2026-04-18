@@ -1,6 +1,7 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function Error({
   reset,
@@ -8,10 +9,12 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="The lesson session could not be loaded"
-      description="A problem occurred while preparing the learner study experience."
+      title={t("errors.learnLessonTitle")}
+      description={t("errors.learnLessonDescription")}
       reset={reset}
     />
   );

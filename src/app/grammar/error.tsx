@@ -1,6 +1,7 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function Error({
   reset,
@@ -8,10 +9,12 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="Grammar content could not be loaded"
-      description="A problem occurred while fetching published grammar content."
+      title={t("errors.grammarTitle")}
+      description={t("errors.grammarDescription")}
       reset={reset}
     />
   );

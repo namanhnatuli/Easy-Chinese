@@ -6,38 +6,40 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteGrammarAction, listGrammarPoints } from "@/features/admin/grammar";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 
 export default async function AdminGrammarPage() {
   await requireAdminUser();
+  const { t, link } = await getServerI18n();
   const grammarPoints = await listGrammarPoints();
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Admin Grammar"
-        title="Grammar points"
-        description="Manage explanations, publish state, and example sentences for grammar content."
+        eyebrow={t("admin.grammar.eyebrow")}
+        title={t("admin.grammar.title")}
+        description={t("admin.grammar.description")}
         actions={
           <Button asChild>
-            <Link href="/admin/grammar/new">New grammar point</Link>
+            <Link href={link("/admin/grammar/new")}>{t("admin.grammar.new")}</Link>
           </Button>
         }
       />
 
       {grammarPoints.length === 0 ? (
-        <EmptyState title="No grammar points yet" description="Add the first grammar entry to start structuring lessons." />
+        <EmptyState title={t("admin.grammar.emptyTitle")} description={t("admin.grammar.emptyDescription")} />
       ) : (
         <section className="surface-panel overflow-hidden">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>HSK</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("admin.grammar.columns.title")}</TableHead>
+                <TableHead>{t("admin.grammar.columns.slug")}</TableHead>
+                <TableHead>{t("admin.grammar.columns.hsk")}</TableHead>
+                <TableHead>{t("admin.grammar.columns.status")}</TableHead>
+                <TableHead>{t("admin.grammar.columns.updated")}</TableHead>
+                <TableHead className="text-right">{t("admin.grammar.columns.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -48,7 +50,7 @@ export default async function AdminGrammarPage() {
                   <TableCell>HSK {point.hsk_level}</TableCell>
                   <TableCell>
                     <Badge variant={point.is_published ? "success" : "warning"}>
-                      {point.is_published ? "Published" : "Draft"}
+                      {point.is_published ? t("admin.status.published") : t("admin.status.draft")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -57,12 +59,12 @@ export default async function AdminGrammarPage() {
                   <TableCell>
                     <div className="flex justify-end gap-3">
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/admin/grammar/${point.id}/edit`}>Edit</Link>
+                        <Link href={link(`/admin/grammar/${point.id}/edit`)}>{t("common.edit")}</Link>
                       </Button>
                       <form action={deleteGrammarAction}>
                         <input type="hidden" name="id" value={point.id} />
                         <Button type="submit" variant="ghost" size="sm" className="text-rose-600 hover:text-rose-600">
-                          Delete
+                          {t("common.delete")}
                         </Button>
                       </form>
                     </div>

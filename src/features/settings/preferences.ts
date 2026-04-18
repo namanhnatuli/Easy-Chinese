@@ -1,9 +1,10 @@
 import type { Profile, PreferredFont, PreferredTheme } from "@/types/domain";
 
 import type { SupportedLanguage, UserSettingsInput } from "@/features/settings/types";
+import { localeLabels } from "@/i18n/config";
 
 export function normalizeLanguage(value: string | null | undefined): SupportedLanguage {
-  return value === "en" ? "en" : "vi";
+  return value === "vi" || value === "zh" ? value : "en";
 }
 
 export function normalizeThemePreference(
@@ -27,7 +28,7 @@ export function getInitialUserSettings(profile: Profile): UserSettingsInput {
 }
 
 export function getLanguageLabel(language: SupportedLanguage) {
-  return language === "vi" ? "Tiếng Việt" : "English-ready";
+  return localeLabels[language];
 }
 
 export function getThemeLabel(theme: PreferredTheme) {

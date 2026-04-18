@@ -1,7 +1,8 @@
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName } from "@/components/admin/form-primitives";
 import type { RadicalListItem } from "@/features/admin/radicals";
+import { getServerI18n } from "@/i18n/server";
 
-export function RadicalForm({
+export async function RadicalForm({
   action,
   initialValue,
   submitLabel,
@@ -10,33 +11,34 @@ export function RadicalForm({
   initialValue?: RadicalListItem | null;
   submitLabel: string;
 }) {
+  const { t } = await getServerI18n();
   return (
     <form action={action}>
       <input type="hidden" name="id" defaultValue={initialValue?.id ?? ""} />
-      <AdminFormCard title={initialValue ? "Edit radical" : "New radical"}>
+      <AdminFormCard title={initialValue ? t("admin.radicals.form.editTitle") : t("admin.radicals.form.newTitle")}>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Radical">
+          <Field label={t("admin.radicals.form.radical")}>
             <input
               name="radical"
               defaultValue={initialValue?.radical ?? ""}
               className={inputClassName()}
             />
           </Field>
-          <Field label="Pinyin">
+          <Field label={t("admin.radicals.form.pinyin")}>
             <input
               name="pinyin"
               defaultValue={initialValue?.pinyin ?? ""}
               className={inputClassName()}
             />
           </Field>
-          <Field label="Vietnamese meaning">
+          <Field label={t("admin.radicals.form.meaning")}>
             <input
               name="meaning_vi"
               defaultValue={initialValue?.meaning_vi ?? ""}
               className={inputClassName()}
             />
           </Field>
-          <Field label="Stroke count">
+          <Field label={t("admin.radicals.form.strokes")}>
             <input
               name="stroke_count"
               type="number"

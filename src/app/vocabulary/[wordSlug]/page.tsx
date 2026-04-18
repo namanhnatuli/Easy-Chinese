@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublicWordBySlug } from "@/features/public/vocabulary";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
@@ -35,6 +36,7 @@ export default async function VocabularyDetailPage({
 }) {
   const { wordSlug } = await params;
   const word = await getPublicWordBySlug(wordSlug);
+  const { t, link } = await getServerI18n();
 
   if (!word) {
     notFound();
@@ -43,13 +45,13 @@ export default async function VocabularyDetailPage({
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Vocabulary detail"
+        eyebrow={t("vocabulary.detailEyebrow")}
         badge={`HSK ${word.hskLevel}`}
         title={word.hanzi}
         description={word.notes ?? word.vietnameseMeaning}
         actions={
           <Button asChild>
-            <Link href="/vocabulary">Back to vocabulary</Link>
+            <Link href={link("/vocabulary")}>{t("common.backToVocabulary")}</Link>
           </Button>
         }
       />
@@ -59,19 +61,19 @@ export default async function VocabularyDetailPage({
           <CardContent className="space-y-4 p-6 sm:p-8">
             <p className="text-pinyin">{word.pinyin}</p>
             <p className="text-2xl font-semibold text-foreground">{word.vietnameseMeaning}</p>
-            {word.hanViet ? <p className="text-sm text-muted-foreground">Hán Việt: {word.hanViet}</p> : null}
-            {word.englishMeaning ? <p className="text-sm text-muted-foreground">English: {word.englishMeaning}</p> : null}
+            {word.hanViet ? <p className="text-sm text-muted-foreground">{t("vocabulary.hanViet", { value: word.hanViet })}</p> : null}
+            {word.englishMeaning ? <p className="text-sm text-muted-foreground">{t("vocabulary.englishMeaning", { value: word.englishMeaning })}</p> : null}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Metadata</CardTitle>
+            <CardTitle>{t("vocabulary.metadata")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Slug: {word.slug}</Badge>
-            <Badge variant="secondary">Simplified: {word.simplified}</Badge>
-            <Badge variant="secondary">Traditional: {word.traditional ?? "—"}</Badge>
+            <Badge variant="secondary">{t("vocabulary.slug", { value: word.slug })}</Badge>
+            <Badge variant="secondary">{t("vocabulary.simplified", { value: word.simplified })}</Badge>
+            <Badge variant="secondary">{t("vocabulary.traditional", { value: word.traditional ?? "—" })}</Badge>
             {word.topic ? <Badge variant="outline">{word.topic.name}</Badge> : null}
             {word.radical ? (
               <Badge variant="outline">
@@ -85,11 +87,11 @@ export default async function VocabularyDetailPage({
       <section>
         <Card>
           <CardHeader>
-            <CardTitle>Examples</CardTitle>
+            <CardTitle>{t("vocabulary.examples")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {word.examples.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No public examples have been published for this word yet.</p>
+              <p className="text-sm text-muted-foreground">{t("vocabulary.noExamples")}</p>
             ) : (
               word.examples.map((example) => (
                 <div key={example.id} className="rounded-[1.5rem] bg-muted/50 p-4">

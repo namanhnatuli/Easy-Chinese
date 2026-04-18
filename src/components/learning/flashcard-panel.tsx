@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { FlashcardPrompt, StudyFeedback } from "@/features/learning/types";
+import { useI18n } from "@/i18n/client";
 
 export function FlashcardPanel({
   prompt,
@@ -26,12 +27,13 @@ export function FlashcardPanel({
   onSkip: () => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   const isLocked = feedback !== null;
 
   return (
     <section className="rounded-[2rem] bg-slate-950 text-white">
       <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
-        <span>Flashcard</span>
+        <span>{t("learning.flashcard")}</span>
         <span>
           {currentIndex} / {total}
         </span>
@@ -43,7 +45,7 @@ export function FlashcardPanel({
 
         {revealed ? (
           <div className="mt-6 space-y-2">
-            <p className="text-sm uppercase tracking-[0.24em] text-emerald-300">Answer</p>
+            <p className="text-sm uppercase tracking-[0.24em] text-emerald-300">{t("learning.answer")}</p>
             <p className="text-hanzi mt-1 text-emerald-100">{prompt.back.hanzi}</p>
             <p className="text-pinyin text-slate-200">{prompt.back.pinyin}</p>
             <p className="text-meaning text-slate-200">{prompt.back.vietnameseMeaning}</p>
@@ -55,7 +57,7 @@ export function FlashcardPanel({
             </p>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-slate-400">Reveal the answer when you have it in mind.</p>
+          <p className="mt-6 text-sm text-slate-400">{t("learning.revealAnswer")}</p>
         )}
       </div>
 
@@ -77,7 +79,7 @@ export function FlashcardPanel({
             className="bg-white text-slate-950 hover:bg-white/90"
             disabled={isLocked}
           >
-            Reveal answer
+            {t("learning.revealAnswer")}
           </Button>
         ) : (
           <>
@@ -87,7 +89,7 @@ export function FlashcardPanel({
               className="bg-emerald-300 text-slate-950 hover:bg-emerald-200"
               disabled={isLocked}
             >
-              Know
+              {t("learning.know")}
             </Button>
             <Button
               onClick={onDontKnow}
@@ -95,7 +97,7 @@ export function FlashcardPanel({
               className="bg-amber-300 text-slate-950 hover:bg-amber-200"
               disabled={isLocked}
             >
-              Don&apos;t know
+              {t("learning.dontKnow")}
             </Button>
             <Button
               onClick={onSkip}
@@ -103,7 +105,7 @@ export function FlashcardPanel({
               className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
               disabled={isLocked}
             >
-              Skip
+              {t("learning.skip")}
             </Button>
           </>
         )}
@@ -114,7 +116,7 @@ export function FlashcardPanel({
             variant="outline"
             className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
-            Next word
+            {t("learning.nextWord")}
           </Button>
         ) : null}
       </div>

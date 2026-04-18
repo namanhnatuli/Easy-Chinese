@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarClock, CheckCircle2, Flame, LayoutDashboard, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarClock,
+  CheckCircle2,
+  Flame,
+  LayoutDashboard,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
 
 import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
@@ -8,13 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardData, LessonProgressSummary } from "@/features/progress/types";
+import { getServerI18n } from "@/i18n/server";
 
-function formatDateTime(value: string | null) {
+function formatDateTime(value: string | null, locale: string, notYetLabel: string) {
   if (!value) {
-    return "Not yet";
+    return notYetLabel;
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -22,17 +32,23 @@ function formatDateTime(value: string | null) {
 
 function LessonProgressList({
   lessons,
+  locale,
+  link,
+  t,
 }: {
   lessons: LessonProgressSummary[];
+  locale: string;
+  link: (href: string) => string;
+  t: Awaited<ReturnType<typeof getServerI18n>>["t"];
 }) {
   if (lessons.length === 0) {
     return (
       <EmptyState
-        title="No lesson progress yet"
-        description="Start a lesson to unlock completion tracking, recent study history, and review recommendations."
+        title={t("dashboard.noLessonProgress")}
+        description={t("dashboard.noLessonProgressDescription")}
         action={
           <Button asChild>
-            <Link href="/lessons">Browse lessons</Link>
+            <Link href={link("/lessons")}>{t("common.browseLessons")}</Link>
           </Button>
         }
       />
@@ -44,7 +60,7 @@ function LessonProgressList({
       {lessons.map((lesson) => (
         <Link
           key={lesson.lessonId}
-          href={`/lessons/${lesson.slug}`}
+          href={link(`/lessons/${lesson.slug}`)}
           className="block rounded-2xl border border-border/80 bg-card/80 p-4 transition-colors hover:bg-muted/50"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -52,16 +68,16 @@ function LessonProgressList({
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-semibold text-foreground">{lesson.title}</h3>
                 <Badge variant="secondary">HSK {lesson.hskLevel}</Badge>
-                {lesson.completedAt ? <Badge variant="default">Completed</Badge> : null}
+                {lesson.completedAt ? <Badge variant="default">{t("dashboard.completed")}</Badge> : null}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {lesson.wordCount} words · {lesson.grammarCount} grammar points
+                {t("lessons.vocabularyItems", { count: lesson.wordCount })} · {t("lessons.grammarPoints", { count: lesson.grammarCount })}
               </p>
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold">{Math.round(lesson.completionPercent)}%</p>
               <p className="text-xs text-muted-foreground">
-                {formatDateTime(lesson.lastStudiedAt)}
+                {formatDateTime(lesson.lastStudiedAt, locale, t("dashboard.notYet"))}
               </p>
             </div>
           </div>
@@ -77,11 +93,12 @@ function LessonProgressList({
   );
 }
 
-export function DashboardOverview({
+export async function DashboardOverview({
   data,
 }: {
   data: DashboardData;
 }) {
+  const { t, link, locale } = await getServerI18n();
   const continueLesson = data.recentLessonProgress.find(
     (lesson) => lesson.completionPercent > 0 && lesson.completionPercent < 100,
   );
@@ -89,27 +106,25 @@ export function DashboardOverview({
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Dashboard"
-        badge="Authenticated"
-        title="Your study progress"
-        description="See what is due now, how your lesson path is moving, and where to focus next."
+        eyebrow={t("dashboard.eyebrow")}
+        badge={t("common.authenticated")}
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
         actions={
           <HeaderActions
             secondary={
-              <HeaderLinkButton href="/lessons" variant="outline">
-                Browse lessons
+              <HeaderLinkButton href={link("/lessons")} variant="outline">
+                {t("common.browseLessons")}
               </HeaderLinkButton>
             }
             primary={
               <>
                 {continueLesson ? (
-                  <HeaderLinkButton href={`/learn/lesson/${continueLesson.lessonId}`} variant="outline">
-                    Continue learning
+                  <HeaderLinkButton href={link(`/learn/lesson/${continueLesson.lessonId}`)} variant="outline">
+                    {t("common.continueLearning")}
                   </HeaderLinkButton>
                 ) : null}
-                <HeaderLinkButton href="/review">
-                  Continue review
-                </HeaderLinkButton>
+                <HeaderLinkButton href={link("/review")}>{t("common.continueReview")}</HeaderLinkButton>
               </>
             }
           />
@@ -118,34 +133,34 @@ export function DashboardOverview({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard
-          label="Total studied"
+          label={t("dashboard.totalStudied")}
           value={String(data.summary.totalStudied)}
-          description="Words with saved progress"
+          description={t("dashboard.totalStudiedDescription")}
           icon={<LayoutDashboard className="size-5" />}
         />
         <StatCard
-          label="New"
+          label={t("dashboard.new")}
           value={String(data.summary.newCount)}
-          description="Saved but barely touched"
+          description={t("dashboard.newDescription")}
           icon={<Sparkles className="size-5" />}
         />
         <StatCard
-          label="Learning"
+          label={t("dashboard.learning")}
           value={String(data.summary.learningCount)}
-          description="Still in active rotation"
+          description={t("dashboard.learningDescription")}
           icon={<BookOpen className="size-5" />}
         />
         <StatCard
-          label="Review due"
+          label={t("dashboard.reviewDue")}
           value={String(data.summary.reviewDueCount)}
-          description="Ready to review now"
+          description={t("dashboard.reviewDueDescription")}
           accent="warning"
           icon={<RotateCcw className="size-5" />}
         />
         <StatCard
-          label="Mastered"
+          label={t("dashboard.mastered")}
           value={String(data.summary.masteredCount)}
-          description="Stable long-term words"
+          description={t("dashboard.masteredDescription")}
           accent="success"
           icon={<CheckCircle2 className="size-5" />}
         />
@@ -154,29 +169,32 @@ export function DashboardOverview({
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
-            <CardTitle>Lesson progress</CardTitle>
+            <CardTitle>{t("dashboard.lessonProgress")}</CardTitle>
             <CardDescription>
-              {data.completedLessonsCount} completed · {data.inProgressLessonsCount} in progress
+              {t("dashboard.lessonProgressSummary", {
+                completed: data.completedLessonsCount,
+                inProgress: data.inProgressLessonsCount,
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LessonProgressList lessons={data.recentLessonProgress} />
+            <LessonProgressList lessons={data.recentLessonProgress} locale={locale} link={link} t={t} />
           </CardContent>
         </Card>
 
         <div className="grid gap-4">
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Review readiness</CardTitle>
-              <CardDescription>What needs attention before the day ends.</CardDescription>
+              <CardTitle>{t("dashboard.reviewReadiness")}</CardTitle>
+              <CardDescription>{t("dashboard.reviewReadinessDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-2xl bg-amber-50 p-4">
-                <p className="text-sm font-medium text-amber-900">Due today</p>
+                <p className="text-sm font-medium text-amber-900">{t("dashboard.dueToday")}</p>
                 <p className="mt-2 text-3xl font-semibold text-amber-950">{data.summary.dueTodayCount}</p>
               </div>
               <div className="rounded-2xl bg-rose-50 p-4">
-                <p className="text-sm font-medium text-rose-900">Overdue now</p>
+                <p className="text-sm font-medium text-rose-900">{t("dashboard.overdueNow")}</p>
                 <p className="mt-2 text-3xl font-semibold text-rose-950">{data.summary.overdueCount}</p>
               </div>
             </CardContent>
@@ -184,32 +202,32 @@ export function DashboardOverview({
 
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
-              <CardTitle>Daily activity</CardTitle>
-              <CardDescription>Small momentum signals from recent review work.</CardDescription>
+              <CardTitle>{t("dashboard.dailyActivity")}</CardTitle>
+              <CardDescription>{t("dashboard.dailyActivityDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
               <div className="rounded-2xl border border-border/80 p-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Flame className="size-4 text-orange-500" />
-                  Current streak
+                  {t("dashboard.currentStreak")}
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{data.dailyActivity.currentStreakDays} days</p>
+                <p className="mt-2 text-2xl font-semibold">{data.dailyActivity.currentStreakDays}</p>
               </div>
               <div className="rounded-2xl border border-border/80 p-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarClock className="size-4 text-primary" />
-                  Reviews today
+                  {t("dashboard.reviewsToday")}
                 </div>
                 <p className="mt-2 text-2xl font-semibold">{data.dailyActivity.reviewsToday}</p>
               </div>
               <div className="rounded-2xl border border-border/80 p-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <RotateCcw className="size-4 text-emerald-600" />
-                  Last 7 days
+                  {t("dashboard.last7Days")}
                 </div>
                 <p className="mt-2 text-2xl font-semibold">{data.dailyActivity.reviewsLast7Days}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Active on {data.dailyActivity.activeDaysLast7Days} day(s)
+                  {t("dashboard.activeDays", { count: data.dailyActivity.activeDaysLast7Days })}
                 </p>
               </div>
             </CardContent>
@@ -220,14 +238,14 @@ export function DashboardOverview({
       <section className="grid gap-4 xl:grid-cols-2">
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
-            <CardTitle>Recent review activity</CardTitle>
-            <CardDescription>Latest saved answers from your study sessions.</CardDescription>
+            <CardTitle>{t("dashboard.recentReviewActivity")}</CardTitle>
+            <CardDescription>{t("dashboard.recentReviewDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             {data.recentReviewActivity.length === 0 ? (
               <EmptyState
-                title="No review activity yet"
-                description="Review events will appear here after you finish a lesson or clear items from the review queue."
+                title={t("dashboard.noReviewActivity")}
+                description={t("dashboard.noReviewActivityDescription")}
               />
             ) : (
               <div className="space-y-3">
@@ -255,7 +273,7 @@ export function DashboardOverview({
                         {event.result}
                       </Badge>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {event.mode.replace("_", " ")} · {formatDateTime(event.reviewedAt)}
+                        {event.mode.replace("_", " ")} · {formatDateTime(event.reviewedAt, locale, t("dashboard.notYet"))}
                       </p>
                     </div>
                   </div>
@@ -267,17 +285,17 @@ export function DashboardOverview({
 
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
-            <CardTitle>Recent studied lessons</CardTitle>
-            <CardDescription>Jump back into the path you touched most recently.</CardDescription>
+            <CardTitle>{t("dashboard.lessonProgress")}</CardTitle>
+            <CardDescription>{t("dashboard.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             {data.recentLessonProgress.length === 0 ? (
               <EmptyState
-                title="No studied lessons yet"
-                description="Open a published lesson and start a study session to build your learning history."
+                title={t("dashboard.noLessonProgress")}
+                description={t("dashboard.noLessonProgressDescription")}
                 action={
                   <Button asChild>
-                    <Link href="/lessons">Browse lessons</Link>
+                    <Link href={link("/lessons")}>{t("common.browseLessons")}</Link>
                   </Button>
                 }
               />
@@ -286,13 +304,13 @@ export function DashboardOverview({
                 {data.recentLessonProgress.map((lesson) => (
                   <Link
                     key={lesson.lessonId}
-                    href={`/learn/lesson/${lesson.lessonId}`}
+                    href={link(`/learn/lesson/${lesson.lessonId}`)}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 p-4 transition-colors hover:bg-muted/50"
                   >
                     <div>
                       <p className="text-sm font-semibold">{lesson.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        HSK {lesson.hskLevel} · {Math.round(lesson.completionPercent)}% complete
+                        HSK {lesson.hskLevel} · {Math.round(lesson.completionPercent)}%
                       </p>
                     </div>
                     <ArrowRight className="size-4 text-muted-foreground" />

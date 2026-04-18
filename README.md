@@ -34,7 +34,9 @@ A web app for learning Chinese vocabulary and grammar with:
   - `preferred_font`
 - anonymous visitors still get the default public experience and are not required to save settings
 - theme and font preferences are applied across the main app shell, dashboard, review queue, and focused study surfaces
-- language preference is persisted now and applied to document language / future i18n-ready structure
+- language preference now supports `en`, `vi`, and `zh`
+- locale-aware routes use a visible locale prefix such as `/en/lessons` or `/zh/review`, while middleware rewrites them back to the existing App Router pages internally
+- authenticated users persist language to `profiles.preferred_language`; anonymous users keep it in a cookie/localStorage fallback
 
 ## Product concept
 The app organizes content by:
@@ -56,7 +58,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ADMIN_EMAILS=
 NEXT_PUBLIC_APP_NAME=Chinese Learning App
-NEXT_PUBLIC_DEFAULT_LOCALE=vi
+NEXT_PUBLIC_DEFAULT_LOCALE=en
 ```
 
 Environment values are validated at runtime for the core Supabase/public app settings. Invalid or missing required values now fail early instead of producing silent auth or data errors.
@@ -108,7 +110,7 @@ ADMIN_EMAILS=admin@example.com,second-admin@example.com
 - user settings are profile-backed and should be tested once in each environment after deployment:
   - sign in
   - save theme / font / language
-  - reload `/dashboard`, `/review`, and `/settings`
+  - reload `/en/dashboard`, `/en/review`, and `/en/settings` or the equivalent current locale routes
   - verify preferences still apply
 
 ## Testing
@@ -130,6 +132,7 @@ Current automated coverage focuses on high-value logic:
 - progress and review summary aggregation
 - review queue due-item filtering
 - bulk import parsing and duplicate detection
+- locale resolution and locale-aware routing helpers
 
 ## Bulk import runbook
 Admins can import vocabulary from `/admin/import`.
@@ -169,7 +172,7 @@ Import behavior:
 
 ## Deployment checklist
 Before launch:
-1. Apply all Supabase migrations, including `0004_phase9_query_hardening.sql`.
+1. Apply all Supabase migrations, including `0004_phase9_query_hardening.sql` and `0005_default_profile_locale_en.sql`.
 2. Verify Google OAuth redirect URLs in Supabase for local and production environments.
 3. Confirm `ADMIN_EMAILS` and `SUPABASE_SERVICE_ROLE_KEY` are set in production.
 4. Run `npm test` and `npm run typecheck`.
@@ -182,6 +185,7 @@ Before launch:
    - `/review` is driven by due `next_review_at`
    - `/dashboard` loads user-scoped stats
    - `/settings` persists theme/font/language
+   - locale switcher preserves the current page while moving between `/en/*`, `/vi/*`, and `/zh/*`
    - `/admin/import` can import a small template file
 7. Check structured logs for:
    - auth callback

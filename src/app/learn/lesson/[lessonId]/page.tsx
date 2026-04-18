@@ -4,6 +4,7 @@ import { LessonStudyExperience } from "@/components/learning/lesson-study-experi
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { getPublicLessonById } from "@/features/public/lessons";
+import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function LearnLessonPage({
@@ -16,27 +17,28 @@ export default async function LearnLessonPage({
     getPublicLessonById(lessonId),
     getCurrentUser(),
   ]);
+  const { t, link } = await getServerI18n();
 
   if (!lesson) {
     notFound();
   }
 
-  const signInHref = `/auth/sign-in?next=${encodeURIComponent(`/learn/lesson/${lesson.id}`)}`;
+  const signInHref = `${link("/auth/sign-in")}?next=${encodeURIComponent(link(`/learn/lesson/${lesson.id}`))}`;
 
   return (
     <div className="page-shell">
       <PageHeader
-        eyebrow="Learning session"
-        badge="Phase 6 learner engine"
+        eyebrow={t("learn.eyebrow")}
+        badge={t("learn.badge")}
         title={lesson.title}
-        description="Study lesson vocabulary with flashcards, multiple choice, and typing. Signed-in learners save progress, while anonymous learners can practice without persistence."
+        description={t("learn.description")}
       />
 
       {lesson.words.length === 0 ? (
         <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-5 text-white shadow-panel sm:p-6 lg:p-8">
           <EmptyState
-            title="This lesson is not ready for study"
-            description="Attach published words to the lesson before starting a learner session."
+            title={t("learn.notReadyTitle")}
+            description={t("learn.notReadyDescription")}
           />
         </section>
       ) : (

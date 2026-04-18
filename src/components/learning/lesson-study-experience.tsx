@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LessonStudyWord, StudyOutcomeSubmission } from "@/features/learning/types";
 import { useStudySession } from "@/features/learning/use-study-session";
 import type { ReviewMode } from "@/types/domain";
+import { useI18n } from "@/i18n/client";
 
 export function LessonStudyExperience({
   lesson,
@@ -31,6 +32,7 @@ export function LessonStudyExperience({
   isAuthenticated: boolean;
   signInHref: string;
 }) {
+  const { t, link } = useI18n();
   const [showAnonymousNotice, setShowAnonymousNotice] = useState(false);
   const session = useStudySession({
     items: words,
@@ -58,17 +60,17 @@ export function LessonStudyExperience({
 
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { message?: string } | null;
-      toast.error(body?.message ?? "Progress could not be saved.");
+      toast.error(body?.message ?? t("learning.progressSaveFailed"));
     }
     },
-    incorrectMessage: "Marked for more review.",
+    incorrectMessage: t("learning.needsMoreReview"),
   });
 
   if (session.totalItems === 0) {
     return (
       <EmptyState
-        title="This lesson has no study words yet"
-        description="Return to the lesson overview and attach published vocabulary before starting a learner session."
+        title={t("learning.emptyLesson.title")}
+        description={t("learning.emptyLesson.description")}
       />
     );
   }
@@ -79,25 +81,25 @@ export function LessonStudyExperience({
         <div className="space-y-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Session complete
+              {t("learning.studySession.completeEyebrow")}
             </p>
             <h2 className="mt-2 text-3xl font-semibold">{lesson.title}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              You finished the lesson study pass. Review the summary below or restart the session.
+              {t("learning.studySession.completeDescription")}
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-[1.5rem] bg-emerald-400/10 p-4">
-              <p className="text-sm text-emerald-200">Known</p>
+              <p className="text-sm text-emerald-200">{t("learning.studySession.known")}</p>
               <p className="mt-2 text-3xl font-semibold">{session.summary.correct}</p>
             </div>
             <div className="rounded-[1.5rem] bg-amber-400/10 p-4">
-              <p className="text-sm text-amber-200">Needs work</p>
+              <p className="text-sm text-amber-200">{t("learning.studySession.needsWork")}</p>
               <p className="mt-2 text-3xl font-semibold">{session.summary.incorrect}</p>
             </div>
             <div className="rounded-[1.5rem] bg-slate-400/10 p-4">
-              <p className="text-sm text-slate-200">Skipped</p>
+              <p className="text-sm text-slate-200">{t("learning.reviewSession.skipped")}</p>
               <p className="mt-2 text-3xl font-semibold">{session.summary.skipped}</p>
             </div>
           </div>
@@ -111,10 +113,10 @@ export function LessonStudyExperience({
               }}
               className="bg-white text-slate-950 hover:bg-white/90"
             >
-              Restart lesson
+              {t("learning.studySession.restart")}
             </Button>
             <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <Link href={`/lessons/${lesson.slug}`}>Back to lesson</Link>
+              <Link href={link(`/lessons/${lesson.slug}`)}>{t("common.backToLesson")}</Link>
             </Button>
           </div>
         </div>
@@ -128,18 +130,18 @@ export function LessonStudyExperience({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Study session
+              {t("learning.studySession.eyebrow")}
             </p>
             <h2 className="text-3xl font-semibold">{lesson.title}</h2>
             <p className="max-w-2xl text-sm leading-6 text-slate-300">
-              Move through the lesson in study order. Switch modes whenever you want without losing your place.
+              {t("learning.studySession.description")}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{session.index + 1} / {session.totalItems}</Badge>
-            <Badge variant="secondary">{session.completionPercent}% complete</Badge>
-            <Badge variant="outline">{session.isSaving ? "Saving…" : "Progress autosaves"}</Badge>
+            <Badge variant="secondary">{session.completionPercent}%</Badge>
+            <Badge variant="outline">{session.isSaving ? t("learning.saving") : t("learning.autosaves")}</Badge>
           </div>
         </div>
 
@@ -153,13 +155,13 @@ export function LessonStudyExperience({
         <Tabs value={session.mode} onValueChange={(value) => session.setMode(value as ReviewMode)} className="flex flex-col gap-6">
           <TabsList className="w-fit bg-white/10 text-slate-300">
             <TabsTrigger value="flashcard" className="data-[state=active]:bg-white data-[state=active]:text-slate-950">
-              Flashcard
+              {t("learning.flashcard")}
             </TabsTrigger>
             <TabsTrigger value="multiple_choice" className="data-[state=active]:bg-white data-[state=active]:text-slate-950">
-              Multiple choice
+              {t("learning.multipleChoice")}
             </TabsTrigger>
             <TabsTrigger value="typing" className="data-[state=active]:bg-white data-[state=active]:text-slate-950">
-              Typing
+              {t("learning.typing")}
             </TabsTrigger>
           </TabsList>
 
@@ -189,7 +191,7 @@ export function LessonStudyExperience({
                   feedback={session.feedback}
                   onSelect={session.setSelectedChoice}
                   onSubmit={session.handleMultipleChoiceSubmit}
-                  onSkip={() => session.handleOutcome("skipped", "Skipped for now.")}
+                  onSkip={() => session.handleOutcome("skipped", t("learning.skippedForNow"))}
                   onNext={session.goToNextItem}
                 />
               ) : null}
@@ -203,7 +205,7 @@ export function LessonStudyExperience({
                   feedback={session.feedback}
                   onChange={session.setTypingValue}
                   onSubmit={session.handleTypingSubmit}
-                  onSkip={() => session.handleOutcome("skipped", "Skipped for now.")}
+                  onSkip={() => session.handleOutcome("skipped", t("learning.skippedForNow"))}
                   onNext={session.goToNextItem}
                 />
               ) : null}
@@ -212,7 +214,7 @@ export function LessonStudyExperience({
             <aside className="space-y-4 rounded-[1.75rem] border border-white/10 bg-white/5 p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Current word
+                  {t("learning.currentWord")}
                 </p>
                 <p className="text-hanzi mt-3">{session.currentItem.hanzi}</p>
                 <p className="text-pinyin mt-2 text-slate-300">{session.currentItem.pinyin}</p>
@@ -222,40 +224,40 @@ export function LessonStudyExperience({
               <div className="rounded-[1.25rem] bg-black/20 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-white">
                   <Keyboard className="size-4" />
-                  Shortcuts
+                  {t("learning.shortcuts")}
                 </div>
                 <div className="mt-3 space-y-2 text-sm text-slate-300">
-                  <p>`1/2/3` score flashcards</p>
-                  <p>`1-4` choose multiple-choice answers</p>
-                  <p>`Enter` check or continue</p>
-                  <p>`Space` reveal flashcards</p>
+                  <p>{t("learning.flashcardShortcut")}</p>
+                  <p>{t("learning.multipleChoiceShortcut")}</p>
+                  <p>{t("learning.enterShortcut")}</p>
+                  <p>{t("learning.spaceShortcut")}</p>
                 </div>
               </div>
 
               <div className="space-y-2 rounded-[1.25rem] bg-black/20 p-4 text-sm">
                 <div className="flex items-center gap-2 text-emerald-300">
                   <CheckCircle2 className="size-4" />
-                  {session.summary.correct} known
+                  {session.summary.correct} {t("learning.studySession.known")}
                 </div>
                 <div className="flex items-center gap-2 text-amber-300">
                   <XCircle className="size-4" />
-                  {session.summary.incorrect} needs work
+                  {session.summary.incorrect} {t("learning.studySession.needsWork")}
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <SkipForward className="size-4" />
-                  {session.summary.skipped} skipped
+                  {session.summary.skipped} {t("learning.reviewSession.skipped")}
                 </div>
               </div>
 
               {!isAuthenticated || showAnonymousNotice ? (
                 <div className="rounded-[1.25rem] border border-amber-300/20 bg-amber-400/10 p-4">
                   <p className="text-sm font-semibold text-amber-100">
-                    Studying works anonymously, but long-term progress is not saved.
+                    {t("learning.anonymousWarning")}
                   </p>
                   <Button asChild className="mt-3 bg-white text-slate-950 hover:bg-white/90">
                     <Link href={signInHref}>
                       <LogIn className="size-4" />
-                      Sign in to save progress
+                      {t("learning.signInToSave")}
                     </Link>
                   </Button>
                 </div>

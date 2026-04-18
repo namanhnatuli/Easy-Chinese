@@ -1,0 +1,660 @@
+{
+  "common": {
+    "appName": "中文学习",
+    "loading": "加载中…",
+    "save": "保存",
+    "saving": "保存中…",
+    "applyFilters": "应用筛选",
+    "reset": "重置",
+    "browseLessons": "浏览课程",
+    "browseVocabulary": "浏览词汇",
+    "browseGrammar": "浏览语法",
+    "openDetail": "查看详情",
+    "openLesson": "打开课程",
+    "startLearning": "开始学习",
+    "startLesson": "开始课程",
+    "continueLearning": "继续学习",
+    "continueReview": "继续复习",
+    "dashboard": "学习面板",
+    "review": "复习",
+    "settings": "设置",
+    "admin": "管理",
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "workspace": "工作区",
+    "authenticated": "已登录",
+    "publishedContent": "已发布内容",
+    "backToLesson": "返回课程",
+    "backToVocabulary": "返回词汇",
+    "backToGrammar": "返回语法",
+    "general": "通用",
+    "wordCount": "{count} 个词",
+    "grammarCount": "{count} 个语法点",
+    "minutesShort": "{count} 分钟",
+    "delete": "删除",
+    "edit": "编辑",
+    "cancel": "取消",
+    "tryAgain": "重试",
+    "home": "首页",
+    "notAvailable": "—",
+    "language": "语言",
+    "theme": "主题",
+    "font": "字体"
+  },
+  "languages": {
+    "en": "英语",
+    "vi": "越南语",
+    "zh": "中文"
+  },
+  "navigation": {
+    "explore": "探索",
+    "account": "账户",
+    "manage": "管理",
+    "home": {
+      "label": "首页",
+      "description": "概览与学习路径"
+    },
+    "lessons": {
+      "label": "课程",
+      "description": "结构化课程库"
+    },
+    "vocabulary": {
+      "label": "词汇",
+      "description": "按等级和主题整理的词汇"
+    },
+    "grammar": {
+      "label": "语法",
+      "description": "句式与例句"
+    },
+    "dashboard": {
+      "label": "学习面板",
+      "description": "进度与复习状态"
+    },
+    "review": {
+      "label": "复习",
+      "description": "到期词汇与间隔复习"
+    },
+    "settings": {
+      "label": "设置",
+      "description": "偏好与账户"
+    },
+    "admin": {
+      "label": "管理",
+      "description": "内容管理空间"
+    },
+    "words": {
+      "label": "词汇",
+      "description": "词汇库"
+    },
+    "import": {
+      "label": "导入",
+      "description": "批量上传词汇"
+    },
+    "manageGrammar": {
+      "label": "语法",
+      "description": "语法库"
+    },
+    "manageLessons": {
+      "label": "课程",
+      "description": "课程编排"
+    }
+  },
+  "header": {
+    "skipToContent": "跳到内容",
+    "openNavigation": "打开导航",
+    "browseLessonsAria": "浏览课程",
+    "studyWorkspace": "学习空间",
+    "admin": "管理",
+    "account": "账户",
+    "todayFocus": "今日重点",
+    "focusHeadline": "一节课程，三种练习模式。",
+    "focusBody": "让每次学习都简洁且可重复。",
+    "signedInAs": "当前登录：{name}",
+    "anonymousMode": "匿名模式已开启",
+    "signedInBody": "受保护的学习进度和管理路由会按角色区分。",
+    "anonymousBody": "你可以在不保存进度的情况下浏览课程并学习。",
+    "saveProgressCta": "登录以保存进度",
+    "mobileTitle": "中文学习",
+    "mobileDescription": "在课程、复习页面和管理工具之间切换。",
+    "pageTitles": {
+      "home": {
+        "title": "按自己的节奏学习中文",
+        "description": "课程、词汇、语法和专注练习都集中在一个安静的学习空间里。"
+      },
+      "lessons": {
+        "title": "结构化课程",
+        "description": "按照整理好的课程路径，同时学习词汇和语法。"
+      },
+      "dashboard": {
+        "title": "学习面板",
+        "description": "查看复习状态、课程完成度以及下一步该学什么。"
+      },
+      "review": {
+        "title": "复习队列",
+        "description": "在轻量、专注的会话中清理到期词汇。"
+      },
+      "settings": {
+        "title": "设置",
+        "description": "逐步调整语言、主题和学习偏好。"
+      },
+      "admin": {
+        "title": "管理空间",
+        "description": "通过草稿和发布控制来管理课程内容。"
+      },
+      "lessonDetail": {
+        "title": "课程详情",
+        "description": "在开始专注学习流程之前先查看词汇和语法。"
+      },
+      "studySession": {
+        "title": "学习会话",
+        "description": "面向闪卡、选择题和输入练习的高专注界面。"
+      }
+    }
+  },
+  "home": {
+    "eyebrow": "结构化中文学习",
+    "badge": "多语言学习体验",
+    "title": "用更平静的方式积累中文词汇、语法和日常学习习惯",
+    "description": "先浏览公开课程，立即开始练习；准备好后再解锁已保存的学习进度。整个体验始终保持专注、易读，并围绕清晰的下一步展开。",
+    "exploreLessons": "探索课程",
+    "signInForSavedProgress": "登录以保存进度",
+    "stats": {
+      "modesLabel": "学习模式",
+      "modesDescription": "在同一平台中使用闪卡、选择题和输入练习。",
+      "structureLabel": "课程结构",
+      "structureValue": "词汇 + 语法",
+      "structureDescription": "每节课程把词汇和句式识别结合起来，而不是分离处理。",
+      "toneLabel": "学习氛围",
+      "toneValue": "专注",
+      "toneDescription": "安静的界面、清晰的层级，以及适合练习会话的深色学习面板。"
+    },
+    "studyPath": {
+      "badge": "学习路径",
+      "anonymousBadge": "支持匿名学习",
+      "title": "从浏览自然过渡到有目的的练习",
+      "description": "公开页面让学习者在登录前先浏览课程、词汇和语法。受保护页面则加入已保存进度、设置和内容管理，同时不改变应用的整体心智模型。",
+      "browseTitle": "浏览",
+      "browseBody": "按等级或主题查看课程、词汇和语法。",
+      "practiceTitle": "练习",
+      "practiceBody": "在不丢失课程上下文的前提下切换模式。",
+      "reviewTitle": "复习",
+      "reviewBody": "等你准备好追踪进度时再保存。"
+    },
+    "focusPanel": {
+      "eyebrow": "专注学习面板",
+      "title": "为专注而设计，而不是为杂乱而设计",
+      "description": "练习界面把题目放在中心位置，按钮更大，辅助信息退居次位，让学习者始终停留在练习本身。",
+      "prompt": "提示",
+      "reveal": "显示答案",
+      "next": "下一个"
+    }
+  },
+  "filters": {
+    "hskLevel": "HSK 等级",
+    "topic": "主题",
+    "radical": "部首",
+    "allLevels": "所有等级",
+    "allTopics": "所有主题",
+    "allRadicals": "所有部首"
+  },
+  "lessons": {
+    "eyebrow": "课程",
+    "title": "按照结构化课程路径学习",
+    "description": "课程把已发布的词汇与语法整合成一个清晰的入口，然后再进入专注学习界面。",
+    "emptyTitle": "没有符合这些筛选条件的已发布课程",
+    "emptyDescription": "尝试其他主题或 HSK 等级以扩大课程列表。",
+    "lessonDetails": "课程详情",
+    "lessonOverview": "课程概览",
+    "reviewContentFirst": "先在这里查看课程内容，再在准备好时进入学习界面。",
+    "vocabularyItems": "{count} 个词汇项目",
+    "grammarPoints": "{count} 个语法点",
+    "vocabularyFocus": "词汇重点",
+    "grammarFocus": "语法重点",
+    "noLessonWords": "这节课还没有公开词汇",
+    "noLessonWordsDescription": "该课程已发布，但公开词汇内容仍为空。",
+    "noLessonGrammar": "这节课还没有公开语法",
+    "noLessonGrammarDescription": "该课程已发布，但公开语法内容仍为空。"
+  },
+  "vocabulary": {
+    "eyebrow": "词汇",
+    "title": "为快速识别与清晰阅读而设计的词汇页面",
+    "description": "浏览已发布的词汇，清楚查看汉字、拼音、汉越读音与释义，然后在准备好时进入学习界面。",
+    "emptyTitle": "没有符合这些筛选条件的已发布词汇",
+    "emptyDescription": "尝试其他 HSK 等级、主题或部首以扩大结果。",
+    "openDetail": "查看详情",
+    "detailEyebrow": "词汇详情",
+    "metadata": "元数据",
+    "examples": "例句",
+    "noExamples": "这个词目前还没有公开例句。",
+    "hanViet": "汉越音：{value}",
+    "englishMeaning": "英文释义：{value}",
+    "slug": "Slug：{value}",
+    "simplified": "简体：{value}",
+    "traditional": "繁体：{value}"
+  },
+  "grammar": {
+    "eyebrow": "语法",
+    "title": "用清晰结构解释语法模式",
+    "description": "在进入专注课程练习之前，先浏览已发布的结构模式、解释和例句。",
+    "emptyTitle": "没有符合这些筛选条件的已发布语法点",
+    "emptyDescription": "尝试其他 HSK 等级，或重置筛选以浏览全部公开语法内容。",
+    "openDetail": "查看详情",
+    "detailEyebrow": "语法详情",
+    "structure": "结构",
+    "explanation": "解释",
+    "examples": "例句",
+    "noExamples": "这个语法点目前还没有公开例句。"
+  },
+  "auth": {
+    "signInBadge": "登录",
+    "title": "在保留公开浏览体验的同时保存学习进度",
+    "description": "使用 Google 继续，以创建或刷新学习者资料，解锁学习面板与设置等受保护页面，并同步未来的复习进度。",
+    "continueWithGoogle": "使用 Google 继续",
+    "anonymousVisitors": "匿名访客仍然可以先浏览公开课程并预览学习流程。",
+    "continueAnonymously": "匿名继续",
+    "whySignIn": "为什么登录",
+    "reasons": {
+      "dashboard": "解锁学习面板和设置页面。",
+      "progress": "为后续阶段的已保存复习进度做准备。",
+      "routing": "让普通用户和管理员的角色路由保持一致。"
+    }
+  },
+  "learning": {
+    "flashcard": "闪卡",
+    "multipleChoice": "选择题",
+    "typing": "输入",
+    "answer": "答案",
+    "revealAnswer": "显示答案",
+    "know": "认识",
+    "dontKnow": "不认识",
+    "skip": "跳过",
+    "nextWord": "下一个词",
+    "checkAnswer": "检查答案",
+    "currentWord": "当前词汇",
+    "shortcuts": "快捷键",
+    "flashcardShortcut": "`1/2/3` 为闪卡打分",
+    "multipleChoiceShortcut": "`1-4` 选择答案",
+    "enterShortcut": "`Enter` 检查或继续",
+    "spaceShortcut": "`Space` 显示闪卡答案",
+    "meaningToPinyin": "释义 → 拼音",
+    "pinyinToChinese": "拼音 → 汉字",
+    "hanziToMeaning": "中文 → 释义",
+    "meaningToHanzi": "释义 → 中文",
+    "typeYourAnswer": "输入你的答案",
+    "hint": "提示：{value}",
+    "reviewStatus": "复习状态",
+    "status": "状态：{value}",
+    "due": "到期时间：{value}",
+    "lastReviewed": "上次复习：{value}",
+    "interval": "间隔：{days} 天 · 连续答对：{streak}",
+    "saving": "保存中…",
+    "autosaves": "自动保存进度",
+    "skippedForNow": "暂时跳过。",
+    "progressSaveFailed": "无法保存进度。",
+    "reviewSoon": "已标记为稍后再次复习。",
+    "needsMoreReview": "已标记为需要更多复习。",
+    "anonymousWarning": "匿名学习可以正常使用，但长期进度不会被保存。",
+    "signInToSave": "登录以保存进度",
+    "studySession": {
+      "eyebrow": "学习会话",
+      "description": "按照课程顺序学习。你可以随时切换模式而不会丢失当前位置。",
+      "completeEyebrow": "学习完成",
+      "completeDescription": "你已经完成本节课程的一轮学习。查看下面的总结，或者重新开始。",
+      "restart": "重新学习课程",
+      "known": "已掌握",
+      "needsWork": "需要加强"
+    },
+    "reviewSession": {
+      "eyebrow": "复习队列",
+      "title": "到期词汇",
+      "description": "使用和课程中相同的学习模式，处理已经到期或过期的词汇。",
+      "completeEyebrow": "复习完成",
+      "completeTitle": "队列已清空",
+      "completeDescription": "你已经完成本次会话中的到期复习项目。返回学习面板或浏览更多课程以继续保持节奏。",
+      "restart": "重新开始队列",
+      "backToDashboard": "返回学习面板",
+      "correct": "正确",
+      "incorrect": "错误",
+      "skipped": "跳过"
+    },
+    "reviewPage": {
+      "eyebrow": "复习",
+      "title": "到期复习队列",
+      "description": "清理已经到期或过期的词汇，然后回到课程中获取新的学习内容。",
+      "emptyTitle": "现在没有到期项目",
+      "emptyDescription": "你的已保存队列已经清空。继续一节课程来生成更多复习项目，或者浏览已发布课程寻找新的内容。",
+      "suggestedLessons": "推荐下一节课程",
+      "suggestedDescription": "继续用已发布内容建立复习队列。"
+    },
+    "emptyLesson": {
+      "title": "这节课程还没有可学习的词汇",
+      "description": "请返回课程概览并先添加已发布词汇，然后再开始学习会话。"
+    },
+    "emptyReview": {
+      "title": "现在没有到期项目",
+      "description": "你的复习队列为空。继续一节课程，或浏览课程库来添加更多学习内容。"
+    },
+    "reviewStatusFallbacks": {
+      "noPriorReview": "尚无复习记录"
+    }
+  },
+  "dashboard": {
+    "eyebrow": "学习面板",
+    "title": "你的学习进度",
+    "description": "查看哪些内容现在到期、课程路径进展如何，以及下一步应该关注什么。",
+    "totalStudied": "已学习总数",
+    "totalStudiedDescription": "已保存学习进度的词汇",
+    "new": "新词",
+    "newDescription": "已保存但刚开始接触",
+    "learning": "学习中",
+    "learningDescription": "仍在主动复习循环中",
+    "reviewDue": "到期复习",
+    "reviewDueDescription": "现在就可以复习",
+    "mastered": "已掌握",
+    "masteredDescription": "长期稳定的词汇",
+    "lessonProgress": "课程进度",
+    "lessonProgressSummary": "{completed} 已完成 · {inProgress} 进行中",
+    "completed": "已完成",
+    "notYet": "尚未开始",
+    "noLessonProgress": "还没有课程进度",
+    "noLessonProgressDescription": "开始一节课程，即可解锁完成度追踪、最近学习历史和复习建议。",
+    "reviewReadiness": "复习准备情况",
+    "reviewReadinessDescription": "今天结束前需要注意的内容。",
+    "dueToday": "今日到期",
+    "overdueNow": "当前已过期",
+    "dailyActivity": "每日活动",
+    "dailyActivityDescription": "近期复习工作的一些小型动量信号。",
+    "currentStreak": "当前连续天数",
+    "reviewsToday": "今日复习次数",
+    "last7Days": "最近 7 天",
+    "activeDays": "最近 7 天活跃 {count} 天",
+    "recentReviewActivity": "最近复习活动",
+    "recentReviewDescription": "你最近学习会话中保存的答案。",
+    "noReviewActivity": "还没有复习活动",
+    "noReviewActivityDescription": "当你完成课程或清理复习队列后，复习事件会显示在这里。"
+  },
+  "settings": {
+    "eyebrow": "设置",
+    "title": "偏好与阅读舒适度",
+    "description": "调整语言、主题和阅读风格，并让它们在学习和复习界面中保持一致。",
+    "saveSuccess": "设置已保存。",
+    "saveError": "无法保存设置。",
+    "languageTitle": "语言偏好",
+    "languageDescription": "选择导航、学习界面和设置页面所使用的应用语言。",
+    "appLanguage": "应用语言",
+    "languageHelp": "语言会立即更新、保留当前页面，并在登录后保存到你的个人资料中。",
+    "languageSaveError": "无法保存语言偏好。",
+    "themeTitle": "主题偏好",
+    "themeDescription": "选择固定主题或自动跟随系统外观。",
+    "themeHelp": "主题会在保存后立即生效，并在学习面板、复习和学习页面中保持一致。",
+    "fontTitle": "阅读字体",
+    "fontDescription": "选择适合中文、拼音和译文注释的阅读风格。",
+    "fontHelp": "无衬线字体让界面更清爽；衬线字体在长时间阅读词汇和语法时对比更明显。",
+    "liveSummary": "实时摘要",
+    "liveSummaryDescription": "当前将会应用的内容。",
+    "previewCopy": "预览文字",
+    "previewDescription": "这个预览很小，但设置会应用到主要阅读和学习界面。",
+    "accountStatus": "账户状态",
+    "accountDescription": "受保护的个人资料信息仍由服务器保存。",
+    "learnerFallback": "学习者",
+    "unavailable": "不可用",
+    "signedInAs": "当前登录：{name}",
+    "role": "角色：{value}",
+    "email": "邮箱：{value}",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "sans": "现代无衬线",
+    "serif": "易读衬线"
+  },
+  "errors": {
+    "dashboardTitle": "无法加载学习面板数据",
+    "dashboardDescription": "读取你已保存的进度和复习统计时出现问题。",
+    "lessonsTitle": "无法加载课程",
+    "lessonsDescription": "获取已发布课程内容时出现问题。",
+    "vocabularyTitle": "无法加载词汇",
+    "vocabularyDescription": "获取已发布词汇内容时出现问题。",
+    "grammarTitle": "无法加载语法内容",
+    "grammarDescription": "获取已发布语法内容时出现问题。",
+    "reviewTitle": "无法加载复习队列",
+    "reviewDescription": "读取你账户中的到期复习项目时出现问题。",
+    "settingsTitle": "无法加载设置",
+    "settingsDescription": "读取或准备已保存偏好时出现问题。",
+    "learnLessonTitle": "无法加载课程学习会话",
+    "learnLessonDescription": "准备学习者学习体验时出现问题。",
+    "adminImportTitle": "导入页面不可用",
+    "adminImportDescription": "导入工具无法加载。请重试，或返回管理词汇库。"
+  },
+  "notFound": {
+    "eyebrow": "未找到",
+    "badge": "路由缺失",
+    "title": "此页面不存在",
+    "description": "该地址可能已过期、尚未发布，或输入有误。请返回课程库或主工作区。",
+    "emptyTitle": "这里没有可显示的内容",
+    "emptyDescription": "可以尝试已发布课程、学习面板或首页。"
+  },
+  "learn": {
+    "eyebrow": "学习会话",
+    "badge": "学习者模式",
+    "description": "通过抽认卡、选择题和输入练习来学习课程词汇。已登录用户会保存进度，匿名用户也可以练习但不会持久化保存。",
+    "notReadyTitle": "这节课尚未准备好学习",
+    "notReadyDescription": "开始学习前，请先为课程附加已发布的词汇。"
+  },
+  "admin": {
+    "overview": {
+      "eyebrow": "管理",
+      "title": "内容管理",
+      "description": "在受保护的工作区中管理课程内容、分类和课程编排。",
+      "sections": {
+        "wordsTitle": "词汇",
+        "wordsDescription": "管理词汇、例句、发布状态和分类关联。",
+        "grammarTitle": "语法点",
+        "grammarDescription": "创建语法讲解、例句以及可发布的课程内容。",
+        "lessonsTitle": "课程",
+        "lessonsDescription": "用词汇和语法点编排有顺序的课程内容。",
+        "topicsTitle": "主题",
+        "topicsDescription": "维护课程分类和内容组织。",
+        "radicalsTitle": "部首",
+        "radicalsDescription": "维护词汇条目使用的汉字部首参考数据。"
+      }
+    },
+    "status": {
+      "published": "已发布",
+      "draft": "草稿"
+    },
+    "words": {
+      "eyebrow": "词汇管理",
+      "title": "词汇",
+      "description": "创建、编辑、发布并整理带有例句的词汇条目。",
+      "new": "新建词汇",
+      "emptyTitle": "还没有词汇",
+      "emptyDescription": "创建第一个词汇条目以开始构建词库。",
+      "columns": {
+        "word": "词汇",
+        "meaning": "释义",
+        "hsk": "HSK",
+        "status": "状态",
+        "updated": "更新时间",
+        "actions": "操作"
+      },
+      "form": {
+        "title": "词汇详情",
+        "description": "每行填写一个例句，格式为：Chinese | Pinyin | Vietnamese meaning",
+        "slug": "Slug",
+        "hskLevel": "HSK 等级",
+        "simplified": "简体",
+        "traditional": "繁体",
+        "hanzi": "汉字",
+        "pinyin": "拼音",
+        "hanViet": "汉越音",
+        "englishMeaning": "英文释义",
+        "vietnameseMeaning": "越南语释义",
+        "topic": "主题",
+        "noTopic": "无主题",
+        "radical": "部首",
+        "noRadical": "无部首",
+        "published": "已发布",
+        "notes": "备注",
+        "examples": "例句"
+      },
+      "create": {
+        "title": "新建词汇",
+        "description": "创建一个词汇条目，可选地关联分类并附加例句。",
+        "submit": "创建词汇"
+      },
+      "edit": {
+        "eyebrow": "词汇管理",
+        "description": "更新词汇详情、发布状态和例句。",
+        "submit": "保存词汇"
+      }
+    },
+    "grammar": {
+      "eyebrow": "语法管理",
+      "title": "语法点",
+      "description": "管理语法内容的解释、发布状态和例句。",
+      "new": "新建语法点",
+      "emptyTitle": "还没有语法点",
+      "emptyDescription": "添加第一个语法条目以开始组织课程。",
+      "columns": {
+        "title": "标题",
+        "slug": "Slug",
+        "hsk": "HSK",
+        "status": "状态",
+        "updated": "更新时间",
+        "actions": "操作"
+      },
+      "form": {
+        "title": "语法点详情",
+        "description": "每行填写一个例句，格式为：Chinese | Pinyin | Vietnamese meaning",
+        "titleLabel": "标题",
+        "slug": "Slug",
+        "hskLevel": "HSK 等级",
+        "published": "已发布",
+        "structureText": "结构文本",
+        "vietnameseExplanation": "越南语解释",
+        "notes": "备注",
+        "examples": "例句"
+      },
+      "create": {
+        "title": "新建语法点",
+        "description": "创建带有例句和发布控制的语法解释。",
+        "submit": "创建语法点"
+      },
+      "edit": {
+        "eyebrow": "语法管理",
+        "description": "更新语法解释、例句和发布状态。",
+        "submit": "保存语法点"
+      }
+    },
+    "lessons": {
+      "eyebrow": "课程管理",
+      "title": "课程",
+      "description": "管理可发布课程，并编排有顺序的词汇和语法点。",
+      "new": "新建课程",
+      "emptyTitle": "还没有课程",
+      "emptyDescription": "创建一节课程，开始附加有顺序的词汇和语法点。",
+      "columns": {
+        "lesson": "课程",
+        "hsk": "HSK",
+        "order": "顺序",
+        "status": "状态",
+        "updated": "更新时间",
+        "actions": "操作"
+      },
+      "form": {
+        "detailsTitle": "课程详情",
+        "titleLabel": "标题",
+        "slug": "Slug",
+        "hskLevel": "HSK 等级",
+        "sortOrder": "排序",
+        "topic": "主题",
+        "noTopic": "无主题",
+        "published": "已发布",
+        "description": "描述",
+        "orderedWords": "有序词汇",
+        "orderedGrammar": "有序语法点"
+      },
+      "create": {
+        "title": "新建课程",
+        "description": "创建课程并附加有顺序的词汇和语法点。",
+        "submit": "创建课程"
+      },
+      "edit": {
+        "eyebrow": "课程管理",
+        "description": "更新课程元数据、发布状态和有序内容结构。",
+        "submit": "保存课程"
+      }
+    },
+    "topics": {
+      "eyebrow": "主题管理",
+      "title": "主题",
+      "description": "管理词汇和课程使用的内容分类。",
+      "emptyTitle": "还没有主题",
+      "emptyDescription": "创建一个主题，按主题组织词汇和课程。",
+      "columns": {
+        "name": "名称",
+        "slug": "Slug",
+        "description": "描述",
+        "actions": "操作"
+      },
+      "form": {
+        "newTitle": "新建主题",
+        "editTitle": "编辑主题",
+        "name": "名称",
+        "slug": "Slug",
+        "description": "描述",
+        "create": "创建主题",
+        "save": "保存主题"
+      }
+    },
+    "radicals": {
+      "eyebrow": "部首管理",
+      "title": "部首",
+      "description": "管理词汇条目使用的部首参考数据。",
+      "emptyTitle": "还没有部首",
+      "emptyDescription": "创建部首以支持更丰富的词汇元数据。",
+      "columns": {
+        "radical": "部首",
+        "pinyin": "拼音",
+        "meaning": "含义",
+        "strokes": "笔画",
+        "actions": "操作"
+      },
+      "form": {
+        "newTitle": "新建部首",
+        "editTitle": "编辑部首",
+        "radical": "部首",
+        "pinyin": "拼音",
+        "meaning": "越南语释义",
+        "strokes": "笔画数",
+        "create": "创建部首",
+        "save": "保存部首"
+      }
+    },
+    "import": {
+      "eyebrow": "管理导入",
+      "badge": "批量操作",
+      "title": "从 CSV 或 JSON 导入词汇",
+      "description": "上传经过校验的导入文件，以批量创建词汇条目。无效或重复的行会被跳过，并给出逐行反馈。",
+      "backToWords": "返回词汇列表",
+      "uploadTitle": "上传文件",
+      "uploadDescription": "必填字段：slug、simplified、hanzi、pinyin、vietnamese_meaning、hsk_level。",
+      "importFile": "导入文件",
+      "examplesTitle": "例句支持",
+      "examplesDescription": "JSON 导入可以提供 examples 数组。CSV 导入可以使用包含例句对象 JSON 数组的 examples_json 列。",
+      "runImport": "开始导入",
+      "importing": "导入中…",
+      "templatesTitle": "模板",
+      "templatesDescription": "使用内置模板以避免格式错误。",
+      "csvTemplate": "CSV 模板",
+      "jsonTemplate": "JSON 模板",
+      "latestResult": "最近结果",
+      "latestResultDescription": "导入摘要和逐行校验反馈。",
+      "received": "收到：{count}",
+      "inserted": "已插入：{count}",
+      "skipped": "已跳过：{count}",
+      "issues": "问题：{count}",
+      "noImportYet": "本次会话中还没有执行导入。"
+    }
+  }
+}

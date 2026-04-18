@@ -1,6 +1,7 @@
 "use client";
 
 import { RouteErrorState } from "@/components/shared/route-error-state";
+import { useI18n } from "@/i18n/client";
 
 export default function ReviewError({
   reset,
@@ -8,10 +9,12 @@ export default function ReviewError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <RouteErrorState
-      title="Review queue could not be loaded"
-      description="There was a problem reading the due review items for your account."
+      title={t("errors.reviewTitle")}
+      description={t("errors.reviewDescription")}
       reset={reset}
     />
   );
