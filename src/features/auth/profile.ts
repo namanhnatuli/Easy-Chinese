@@ -7,7 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Profile, StoredUserRole } from "@/types/domain";
 
 const profileThemeSchema = z.enum(["light", "dark", "system"]);
-const profileFontSchema = z.enum(["sans", "serif"]);
+const profileFontSchema = z.enum(["sans", "serif", "kai"]);
 const storedUserRoleSchema = z.enum(["user", "admin"]);
 
 const profileRowSchema = z.object({

@@ -83,7 +83,7 @@ export function AppHeader({ user }: { user: AuthUser | null }) {
   })();
 
   return (
-    <header className="surface-panel sticky top-4 z-30 flex flex-col gap-4 border-border/80 bg-card/85 p-4 backdrop-blur sm:p-5">
+    <header className="surface-panel flex flex-col gap-4 border-border/80 bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 lg:hidden">
           <Sheet>

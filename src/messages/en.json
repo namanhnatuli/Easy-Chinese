@@ -38,8 +38,9 @@
     "home": "Home",
     "notAvailable": "—",
     "language": "Language",
-    "theme": "Theme",
-    "font": "Font"
+    "sans": "Modern Sans",
+    "serif": "Readable Serif",
+    "kai": "Kaiti Brush"
   },
   "languages": {
     "en": "English",
@@ -387,9 +388,9 @@
     "themeTitle": "Theme preference",
     "themeDescription": "Choose a stable theme or follow the system appearance automatically.",
     "themeHelp": "Theme updates apply immediately after save and stay consistent across dashboard, review, and study pages.",
-    "fontTitle": "Reading font",
-    "fontDescription": "Pick a reading style tuned for Chinese text, pinyin, and translated glosses.",
-    "fontHelp": "Sans keeps the interface crisp; serif adds extra reading contrast for longer vocabulary and grammar sessions.",
+    "fontTitle": "Hanzi font",
+    "fontDescription": "Pick a reading style tuned specifically for Chinese characters.",
+    "fontHelp": "Sans keeps characters crisp; Serif provides a traditional look; Kai brings stroke shapes closer to handwriting, which helps with recognition.",
     "liveSummary": "Live summary",
     "liveSummaryDescription": "What will be applied right now.",
     "previewCopy": "Preview copy",
@@ -405,7 +406,8 @@
     "dark": "Dark",
     "system": "System",
     "sans": "Modern Sans",
-    "serif": "Readable Serif"
+    "serif": "Readable Serif",
+    "kai": "Kaiti Brush"
   },
   "errors": {
     "dashboardTitle": "Dashboard data could not be loaded",

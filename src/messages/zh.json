@@ -38,8 +38,9 @@
     "home": "首页",
     "notAvailable": "—",
     "language": "语言",
-    "theme": "主题",
-    "font": "字体"
+    "sans": "现代无衬线 (Sans)",
+    "serif": "易读衬线 (Serif)",
+    "kai": "手写楷体 (Kai)"
   },
   "languages": {
     "en": "英语",
@@ -387,9 +388,9 @@
     "themeTitle": "主题偏好",
     "themeDescription": "选择固定主题或自动跟随系统外观。",
     "themeHelp": "主题会在保存后立即生效，并在学习面板、复习和学习页面中保持一致。",
-    "fontTitle": "阅读字体",
-    "fontDescription": "选择适合中文、拼音和译文注释的阅读风格。",
-    "fontHelp": "无衬线字体让界面更清爽；衬线字体在长时间阅读词汇和语法时对比更明显。",
+    "fontTitle": "汉字字体",
+    "fontDescription": "选择专门为中文字符设计的阅读风格。",
+    "fontHelp": "无衬线字体（Sans）让界面更清爽；衬线字体（Serif）带来传统书籍的阅读体验；楷体（Kai）能表现出更接近手写与毛笔书法的笔画轮廓，有助于字形识别。",
     "liveSummary": "实时摘要",
     "liveSummaryDescription": "当前将会应用的内容。",
     "previewCopy": "预览文字",
@@ -405,7 +406,8 @@
     "dark": "深色",
     "system": "跟随系统",
     "sans": "现代无衬线",
-    "serif": "易读衬线"
+    "serif": "易读衬线",
+    "kai": "手写楷体"
   },
   "errors": {
     "dashboardTitle": "无法加载学习面板数据",

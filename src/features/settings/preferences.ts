@@ -16,7 +16,9 @@ export function normalizeThemePreference(
 export function normalizeFontPreference(
   value: string | null | undefined,
 ): PreferredFont {
-  return value === "serif" ? "serif" : "sans";
+  if (value === "serif") return "serif";
+  if (value === "kai") return "kai";
+  return "sans";
 }
 
 export function getInitialUserSettings(profile: Profile): UserSettingsInput {
@@ -38,5 +40,7 @@ export function getThemeLabel(theme: PreferredTheme) {
 }
 
 export function getFontLabel(font: PreferredFont) {
-  return font === "serif" ? "Readable Serif" : "Modern Sans";
+  if (font === "serif") return "Readable Serif";
+  if (font === "kai") return "Kaiti Brush";
+  return "Modern Sans";
 }

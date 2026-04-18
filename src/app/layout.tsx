@@ -4,8 +4,7 @@ import {
   Inter,
   Noto_Sans_SC,
   Noto_Serif_SC,
-  Sora,
-  Source_Serif_4,
+  Lexend,
 } from "next/font/google";
 
 import "@/app/globals.css";
@@ -22,11 +21,10 @@ import {
   normalizeThemePreference,
 } from "@/features/settings/preferences";
 
-const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter", display: "swap" });
-const sora = Sora({ subsets: ["latin", "latin-ext"], variable: "--font-sora", display: "swap" });
-const notoSansSC = Noto_Sans_SC({ subsets: ["latin"], variable: "--font-noto-sans-sc", display: "swap" });
-const sourceSerif4 = Source_Serif_4({ subsets: ["latin", "latin-ext"], variable: "--font-source-serif-4", display: "swap" });
-const notoSerifSC = Noto_Serif_SC({ subsets: ["latin"], variable: "--font-noto-serif-sc", display: "swap" });
+const inter = Inter({ subsets: ["latin", "latin-ext", "vietnamese"], variable: "--font-inter", display: "swap" });
+const lexend = Lexend({ subsets: ["latin", "latin-ext", "vietnamese"], variable: "--font-sora", display: "swap" });
+const notoSansSC = Noto_Sans_SC({ weight: ["400", "500", "600", "700"], preload: false, variable: "--font-noto-sans-sc", display: "swap" });
+const notoSerifSC = Noto_Serif_SC({ weight: ["400", "500", "600", "700"], preload: false, variable: "--font-noto-serif-sc", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Chinese Learning App",
@@ -49,11 +47,12 @@ export default async function RootLayout({
       data-theme-preference={theme}
       data-theme={theme === "system" ? "light" : theme}
       data-font-preference={font}
+      className={`${inter.variable} ${lexend.variable} ${notoSansSC.variable} ${notoSerifSC.variable}`}
       suppressHydrationWarning
     >
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${sora.variable} ${notoSansSC.variable} ${sourceSerif4.variable} ${notoSerifSC.variable} min-h-screen antialiased`}
+        className="min-h-screen antialiased"
       >
         <a
           href="#main-content"

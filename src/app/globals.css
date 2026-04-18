@@ -56,9 +56,11 @@
   }
 
   html[data-font-preference="serif"] {
-    --font-sans: var(--font-source-serif-4);
-    --font-display: var(--font-source-serif-4);
-    --font-chinese: var(--font-noto-serif-sc);
+    --font-chinese: var(--font-noto-serif-sc), "Songti SC", "SimSun", "宋体", serif;
+  }
+
+  html[data-font-preference="kai"] {
+    --font-chinese: "Kaiti SC", "STKaiti", "KaiTi", "楷体", var(--font-noto-serif-sc), serif;
   }
 
   * {

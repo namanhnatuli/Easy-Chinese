@@ -6,7 +6,7 @@ export type ReviewResult = "correct" | "incorrect" | "skipped";
 
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
 export type PreferredTheme = "light" | "dark" | "system";
-export type PreferredFont = "sans" | "serif";
+export type PreferredFont = "sans" | "serif" | "kai";
 
 export interface TimestampedEntity {
   createdAt: string;

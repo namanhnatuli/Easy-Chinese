@@ -38,8 +38,9 @@
     "home": "Trang chủ",
     "notAvailable": "—",
     "language": "Ngôn ngữ",
-    "theme": "Giao diện",
-    "font": "Phông chữ"
+    "sans": "Sans hiện đại",
+    "serif": "Serif dễ đọc",
+    "kai": "Khải Thư (Bút lông)"
   },
   "languages": {
     "en": "Tiếng Anh",
@@ -387,9 +388,9 @@
     "themeTitle": "Tùy chọn giao diện",
     "themeDescription": "Chọn giao diện cố định hoặc theo cài đặt hệ thống.",
     "themeHelp": "Giao diện được áp dụng ngay sau khi lưu và giữ nhất quán trên bảng tiến độ, ôn tập và trang học.",
-    "fontTitle": "Phông chữ đọc",
-    "fontDescription": "Chọn kiểu đọc phù hợp với chữ Hán, pinyin và phần nghĩa đã dịch.",
-    "fontHelp": "Sans giúp giao diện gọn gàng; serif tăng tương phản khi đọc các phiên từ vựng và ngữ pháp dài hơn.",
+    "fontTitle": "Phông chữ Hán",
+    "fontDescription": "Chọn kiểu chữ thiết kế riêng để hiển thị các ký tự tiếng Trung.",
+    "fontHelp": "Sans giúp nét chữ hiện đại, rõ ràng; Serif mang lại cảm giác chữ in truyền thống; Khải thư (Kai) mô phỏng lại nét bút lông và viết tay, giúp ích rất nhiều cho việc nhận diện nét chữ.",
     "liveSummary": "Tóm tắt trực tiếp",
     "liveSummaryDescription": "Những gì sẽ được áp dụng ngay bây giờ.",
     "previewCopy": "Đoạn xem trước",
@@ -405,7 +406,8 @@
     "dark": "Tối",
     "system": "Theo hệ thống",
     "sans": "Sans hiện đại",
-    "serif": "Serif dễ đọc"
+    "serif": "Serif dễ đọc",
+    "kai": "Khải Thư (Bút lông)"
   },
   "errors": {
     "dashboardTitle": "Không thể tải dữ liệu bảng tiến độ",

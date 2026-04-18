@@ -190,6 +190,7 @@ export function SettingsForm({
                 <SelectContent>
                   <SelectItem value="sans">{t("settings.sans")}</SelectItem>
                   <SelectItem value="serif">{t("settings.serif")}</SelectItem>
+                  <SelectItem value="kai">{t("settings.kai")}</SelectItem>
                 </SelectContent>
               </Select>
               <p id="font-help" className="text-sm text-muted-foreground">
