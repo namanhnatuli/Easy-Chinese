@@ -1,0 +1,46 @@
+[
+  {
+    "slug": "ni-hao",
+    "simplified": "你好",
+    "traditional": "你好",
+    "hanzi": "你好",
+    "pinyin": "nǐ hǎo",
+    "han_viet": "nhĩ hảo",
+    "vietnamese_meaning": "xin chào",
+    "english_meaning": "hello",
+    "hsk_level": 1,
+    "topic_slug": "greetings",
+    "radical": "女",
+    "published": true,
+    "notes": "Common greeting",
+    "examples": [
+      {
+        "chineseText": "你好！",
+        "pinyin": "nǐ hǎo",
+        "vietnameseMeaning": "Xin chào!"
+      }
+    ]
+  },
+  {
+    "slug": "xie-xie",
+    "simplified": "谢谢",
+    "traditional": "謝謝",
+    "hanzi": "谢谢",
+    "pinyin": "xiè xie",
+    "han_viet": "tạ tạ",
+    "vietnamese_meaning": "cảm ơn",
+    "english_meaning": "thank you",
+    "hsk_level": 1,
+    "topic_slug": "greetings",
+    "radical": "讠",
+    "published": true,
+    "notes": "Used in polite conversation",
+    "examples": [
+      {
+        "chineseText": "谢谢你。",
+        "pinyin": "xiè xie nǐ",
+        "vietnameseMeaning": "Cảm ơn bạn."
+      }
+    ]
+  }
+]

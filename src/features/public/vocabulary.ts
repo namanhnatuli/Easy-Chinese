@@ -165,6 +165,7 @@ export async function listPublicWords(filters: VocabularyFilters): Promise<Publi
     .select(
       "id, slug, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, topics(id, name, slug), radicals(id, radical, meaning_vi)",
     )
+    .eq("is_published", true)
     .order("hsk_level")
     .order("hanzi");
 
@@ -197,6 +198,7 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
       "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, notes, topics(id, name, slug), radicals(id, radical, meaning_vi)",
     )
     .eq("slug", slug)
+    .eq("is_published", true)
     .maybeSingle();
 
   if (wordError) {

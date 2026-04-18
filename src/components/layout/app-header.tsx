@@ -40,6 +40,10 @@ const pageTitles: Record<string, { title: string; description: string }> = {
     title: "Progress dashboard",
     description: "Track review status, lesson completion, and what to study next.",
   },
+  "/review": {
+    title: "Review queue",
+    description: "Clear due words with a lightweight focused session.",
+  },
   "/settings": {
     title: "Settings",
     description: "Adjust language, theme, and study preferences over time.",

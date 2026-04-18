@@ -7,6 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --import ./tests/register-alias-hooks.mjs --test $(find tests -name '*.test.ts' -print)",
+    "test:coverage": "node --import ./tests/register-alias-hooks.mjs --experimental-test-coverage --test $(find tests -name '*.test.ts' -print)",
     "typecheck": "tsc --noEmit",
     "supabase": "supabase",
     "supabase:start": "supabase start",

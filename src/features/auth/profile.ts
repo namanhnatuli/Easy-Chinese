@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { resolveBootstrapRole } from "@/lib/admin-bootstrap";
+import { logger } from "@/lib/logger";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Profile, StoredUserRole } from "@/types/domain";
 
@@ -123,8 +124,20 @@ export async function ensureProfileForUser(
     .single();
 
   if (error) {
+    logger.error("profile_bootstrap_failed", error, {
+      userId: user.id,
+      email: user.email ?? null,
+      desiredRole,
+    });
     throw error;
   }
+
+  logger.info("profile_bootstrap_completed", {
+    userId: user.id,
+    email: user.email ?? null,
+    desiredRole,
+    usedAdminClient: writeClient !== supabase,
+  });
 
   return mapProfileRow(profileRowSchema.parse(data));
 }

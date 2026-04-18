@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --font-sans: "Inter";
-    --font-display: "Sora";
-    --font-chinese: "Noto Sans SC";
+    --font-sans: var(--font-inter);
+    --font-display: var(--font-sora);
+    --font-chinese: var(--font-noto-sans-sc);
 
     --background: 210 38% 98%;
     --foreground: 222 47% 11%;
@@ -31,6 +31,36 @@
     --warning: 35 92% 52%;
   }
 
+  html[data-theme="dark"] {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 38% 11%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 38% 11%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 173 72% 42%;
+    --primary-foreground: 222 47% 10%;
+    --secondary: 217 26% 17%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 24% 15%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 42 72% 18%;
+    --accent-foreground: 42 92% 84%;
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 217 20% 22%;
+    --input: 217 20% 22%;
+    --ring: 173 72% 42%;
+    --success: 160 70% 40%;
+    --warning: 35 88% 58%;
+  }
+
+  html[data-font-preference="serif"] {
+    --font-sans: var(--font-source-serif-4);
+    --font-display: var(--font-source-serif-4);
+    --font-chinese: var(--font-noto-serif-sc);
+  }
+
   * {
     @apply border-border;
   }
@@ -43,13 +73,20 @@
     @apply bg-background text-foreground antialiased;
     background-image: radial-gradient(circle at top, rgba(13, 148, 136, 0.08), transparent 24%),
       linear-gradient(180deg, #fbfdff 0%, #f4f7fb 100%);
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  html[data-theme="dark"] body {
+    background-image: radial-gradient(circle at top, rgba(45, 212, 191, 0.12), transparent 22%),
+      linear-gradient(180deg, #111827 0%, #0f172a 100%);
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-display tracking-tight;
+    @apply tracking-tight;
+    font-family: var(--font-display), system-ui, sans-serif;
   }
 
   button,
@@ -57,6 +94,10 @@
   select,
   textarea {
     @apply outline-none;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
   }
 }
 
@@ -75,10 +116,21 @@
 
   .text-pinyin {
     @apply text-sm font-medium tracking-wide text-muted-foreground;
+    font-family: var(--font-sans), system-ui, sans-serif;
   }
 
   .text-hanzi {
-    @apply font-chinese text-3xl font-semibold leading-none tracking-tight sm:text-4xl;
+    @apply text-3xl font-semibold leading-none tracking-tight sm:text-4xl;
+    font-family: var(--font-chinese), "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .text-reading {
+    @apply text-base leading-7 text-foreground;
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  .text-meaning {
+    @apply text-sm leading-6 text-muted-foreground sm:text-base;
   }
 
   .focus-ring {

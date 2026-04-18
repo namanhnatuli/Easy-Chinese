@@ -52,6 +52,8 @@ export interface PublicLessonListItem {
 export interface PublicLessonWord {
   id: string;
   slug: string;
+  simplified: string;
+  traditional: string | null;
   hanzi: string;
   pinyin: string;
   hanViet: string | null;
@@ -109,6 +111,7 @@ export async function listPublicLessons(filters: LessonFilters): Promise<PublicL
     .select(
       "id, title, slug, description, hsk_level, sort_order, topics(id, name, slug), lesson_words(word_id), lesson_grammar_points(grammar_point_id)",
     )
+    .eq("is_published", true)
     .order("sort_order")
     .order("title");
 
@@ -166,6 +169,7 @@ async function getLessonBaseByColumn(
     .from("lessons")
     .select("id, title, slug, description, hsk_level, sort_order, topics(id, name, slug)")
     .eq(column, value)
+    .eq("is_published", true)
     .maybeSingle();
 
   if (error) {
@@ -181,7 +185,7 @@ async function getLessonComposition(lessonId: string) {
     await Promise.all([
       supabase
         .from("lesson_words")
-        .select("sort_order, words(id, slug, hanzi, pinyin, han_viet, vietnamese_meaning)")
+        .select("sort_order, words(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning)")
         .eq("lesson_id", lessonId)
         .order("sort_order"),
       supabase
@@ -210,6 +214,8 @@ async function getLessonComposition(lessonId: string) {
         return {
           id: word.id,
           slug: word.slug,
+          simplified: word.simplified,
+          traditional: word.traditional,
           hanzi: word.hanzi,
           pinyin: word.pinyin,
           hanViet: word.han_viet,

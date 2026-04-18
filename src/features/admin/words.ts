@@ -11,6 +11,7 @@ import {
   revalidateAdminPaths,
   redirectTo,
 } from "@/features/admin/shared";
+import { logger } from "@/lib/logger";
 
 const wordSchema = z.object({
   id: z.string().uuid().optional(),
@@ -170,6 +171,12 @@ export async function saveWordAction(formData: FormData) {
   if (wordId) {
     const { error } = await supabase.from("words").update(payload).eq("id", wordId);
     if (error) throw error;
+    logger.info("admin_word_updated", {
+      userId: auth.user?.id ?? null,
+      wordId,
+      slug: parsed.slug,
+      published: parsed.isPublished,
+    });
   } else {
     const { data, error } = await supabase
       .from("words")
@@ -182,6 +189,12 @@ export async function saveWordAction(formData: FormData) {
 
     if (error) throw error;
     wordId = data.id;
+    logger.info("admin_word_created", {
+      userId: auth.user?.id ?? null,
+      wordId,
+      slug: parsed.slug,
+      published: parsed.isPublished,
+    });
   }
 
   const examples = parseExamplesTextarea(formData.get("examples_text"));
@@ -207,11 +220,16 @@ export async function saveWordAction(formData: FormData) {
 }
 
 export async function deleteWordAction(formData: FormData) {
-  const { supabase } = await requireAdminSupabase();
+  const { supabase, auth } = await requireAdminSupabase();
   const id = requiredText(formData.get("id"));
   const { error } = await supabase.from("words").delete().eq("id", id);
 
   if (error) throw error;
+
+  logger.info("admin_word_deleted", {
+    userId: auth.user?.id ?? null,
+    wordId: id,
+  });
 
   revalidateAdminPaths(["/admin", "/admin/words"]);
   redirectTo("/admin/words");

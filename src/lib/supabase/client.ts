@@ -1,5 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+import { getPublicEnv } from "@/lib/env";
+
 let browserClient: ReturnType<typeof createBrowserClient> | undefined;
 
 export function createSupabaseBrowserClient() {
@@ -7,9 +9,10 @@ export function createSupabaseBrowserClient() {
     return browserClient;
   }
 
+  const env = getPublicEnv();
   browserClient = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   );
 
   return browserClient;

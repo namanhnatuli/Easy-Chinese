@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, LayoutDashboard, LibraryBig, Settings, Shield, Sparkles } from "lucide-react";
+import { BookOpen, LayoutDashboard, LibraryBig, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,12 +26,14 @@ const publicLinks: SidebarLink[] = [
 
 const authenticatedLinks: SidebarLink[] = [
   { href: "/dashboard", label: "Dashboard", description: "Progress and review status", icon: LayoutDashboard },
+  { href: "/review", label: "Review", description: "Due words and spaced repetition", icon: RotateCcw },
   { href: "/settings", label: "Settings", description: "Preferences and account", icon: Settings },
 ];
 
 const adminLinks: SidebarLink[] = [
   { href: "/admin", label: "Admin", description: "Content workspace", icon: Shield },
   { href: "/admin/words", label: "Words", description: "Vocabulary library", icon: LibraryBig },
+  { href: "/admin/import", label: "Import", description: "Bulk word upload", icon: Upload },
   { href: "/admin/grammar", label: "Grammar", description: "Grammar library", icon: BookOpen },
   { href: "/admin/lessons", label: "Lessons", description: "Lesson composition", icon: LayoutDashboard },
 ];
@@ -59,6 +61,7 @@ function SidebarNavList({
             <Link
               key={link.href}
               href={link.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "focus-ring flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors",
                 active
@@ -102,11 +105,11 @@ function SidebarNavList({
 
 export function SidebarNavigation({ user }: { user: AuthUser | null }) {
   return (
-    <div className="flex flex-col gap-6">
+    <nav aria-label="Primary navigation" className="flex flex-col gap-6">
       <SidebarNavList title="Explore" links={publicLinks} />
       {user ? <SidebarNavList title="Account" links={authenticatedLinks} /> : null}
       {user?.role === "admin" ? <SidebarNavList title="Manage" links={adminLinks} /> : null}
-    </div>
+    </nav>
   );
 }
 

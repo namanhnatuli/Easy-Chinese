@@ -19,9 +19,14 @@ export default async function AdminWordsPage() {
         title="Vocabulary"
         description="Create, edit, publish, and organize vocabulary entries with attached examples."
         actions={
-          <Button asChild>
-            <Link href="/admin/words/new">New word</Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline">
+              <Link href="/admin/import">Import words</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/words/new">New word</Link>
+            </Button>
+          </div>
         }
       />
 
