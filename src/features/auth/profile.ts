@@ -96,7 +96,7 @@ export async function ensureProfileForUser(
   const existingProfile = await getProfileForUserId(supabase, user.id);
   const desiredRole = resolveBootstrapRole(user.email, existingProfile?.role ?? null);
   const writeClient =
-    desiredRole === "admin" && existingProfile?.role !== "admin"
+    desiredRole === "admin"
       ? createSupabaseAdminClient()
       : supabase;
 

@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
+            request.cookies.set(name, value);
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            } as any);
           });
         },
       },

@@ -52,6 +52,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${sora.variable} ${notoSansSC.variable} ${sourceSerif4.variable} ${notoSerifSC.variable} min-h-screen antialiased`}
       >
         <a

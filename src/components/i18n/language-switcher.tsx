@@ -14,8 +14,6 @@ import {
 } from "@/i18n/config";
 import { replaceLocaleInPathname } from "@/i18n/navigation";
 import { useI18n } from "@/i18n/client";
-import { dispatchPreferenceUpdate } from "@/components/settings/preferences-provider";
-import { normalizeFontPreference, normalizeThemePreference } from "@/features/settings/preferences";
 
 export function LanguageSwitcher({
   authenticated = false,
@@ -37,44 +35,29 @@ export function LanguageSwitcher({
     window.localStorage.setItem(localeStorageKey, localeValue);
   }
 
-  function applyImmediateLocale(localeValue: AppLocale) {
-    dispatchPreferenceUpdate({
-      language: localeValue,
-      theme: normalizeThemePreference(document.documentElement.dataset.themePreference),
-      font: normalizeFontPreference(document.documentElement.dataset.fontPreference),
-    });
-  }
 
   function handleChange(nextLocale: string) {
     const localeValue = nextLocale as AppLocale;
+    persistLocale(localeValue);
+    onLocaleChange?.(localeValue);
 
-    startTransition(async () => {
-      persistLocale(localeValue);
-      applyImmediateLocale(localeValue);
-      onLocaleChange?.(localeValue);
+    const nextPathname = replaceLocaleInPathname(pathname, localeValue);
+    const search = searchParams.toString();
+    const nextHref = search ? `${nextPathname}?${search}` : nextPathname;
 
-      if (authenticated) {
-        const response = await fetch("/api/i18n/locale", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ locale: localeValue }),
-        });
+    if (authenticated) {
+      // Fire and forget API call so we don't block the UI navigation
+      fetch("/api/i18n/locale", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ locale: localeValue }),
+      }).catch(console.error);
+    }
 
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as { message?: string } | null;
-          toast.error(body?.message ?? t("settings.languageSaveError"));
-        }
-      }
-
-      const nextPathname = replaceLocaleInPathname(pathname, localeValue);
-      const search = searchParams.toString();
-      const nextHref = search ? `${nextPathname}?${search}` : nextPathname;
-
-      router.replace(nextHref);
-      router.refresh();
-    });
+    // Force a full page reload to guarantee fresh layout data from middleware
+    window.location.href = nextHref;
   }
 
   return (
