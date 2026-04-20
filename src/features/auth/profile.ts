@@ -95,15 +95,7 @@ export async function ensureProfileForUser(
 ): Promise<Profile> {
   const existingProfile = await getProfileForUserId(supabase, user.id);
   const desiredRole = resolveBootstrapRole(user.email, existingProfile?.role ?? null);
-  const writeClient =
-    desiredRole === "admin"
-      ? createSupabaseAdminClient()
-      : supabase;
 
-  // Role assignment stays server-side only. We never trust client-controlled
-  // user metadata for admin elevation. The server resolves admin status from
-  // the deployment allowlist and only escalates through the server-only admin
-  // client when an actual admin promotion is required.
   const payload = {
     id: user.id,
     email: user.email ?? null,
@@ -114,6 +106,23 @@ export async function ensureProfileForUser(
     preferred_theme: existingProfile?.preferredTheme ?? ("system" as const),
     preferred_font: existingProfile?.preferredFont ?? ("sans" as const),
   };
+
+  // Skip upsert if the profile exists and critical fields haven't changed.
+  // This avoids redundant DB writes and excessive logging on every request.
+  if (
+    existingProfile &&
+    existingProfile.role === desiredRole &&
+    existingProfile.email === payload.email &&
+    existingProfile.displayName === payload.display_name &&
+    existingProfile.avatarUrl === payload.avatar_url
+  ) {
+    return existingProfile;
+  }
+
+  const writeClient =
+    desiredRole === "admin"
+      ? createSupabaseAdminClient()
+      : supabase;
 
   const { data, error } = await writeClient
     .from("profiles")

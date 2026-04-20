@@ -20,17 +20,27 @@ export function ContentSyncStartForm({
   };
 }) {
   return (
-    <form action={action} className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+    <form action={action} className="grid gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_auto] lg:items-start">
       <Field label={labels.spreadsheetId} hint={labels.spreadsheetHint}>
-        <input name="spreadsheet_id" className={inputClassName()} placeholder="1abc..." />
+        <input
+          name="spreadsheet_id"
+          className={inputClassName()}
+          placeholder="1abc..."
+        />
       </Field>
       <Field label={labels.sheetName} hint={labels.sheetHint}>
-        <input name="sheet_name" className={inputClassName()} placeholder="Vocabulary" required />
+        <input
+          name="sheet_name"
+          className={inputClassName()}
+          placeholder="Vocabulary"
+        />
       </Field>
-      <Button type="submit">
-        <DatabaseZap className="size-4" />
-        {labels.submit}
-      </Button>
+      <div className="lg:pt-7">
+        <Button type="submit" className="w-full lg:w-auto">
+          <DatabaseZap className="size-4" />
+          {labels.submit}
+        </Button>
+      </div>
     </form>
   );
 }

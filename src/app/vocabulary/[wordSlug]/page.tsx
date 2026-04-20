@@ -75,11 +75,11 @@ export default async function VocabularyDetailPage({
             <Badge variant="secondary">{t("vocabulary.simplified", { value: word.simplified })}</Badge>
             <Badge variant="secondary">{t("vocabulary.traditional", { value: word.traditional ?? "—" })}</Badge>
             {word.topic ? <Badge variant="outline">{word.topic.name}</Badge> : null}
-            {word.radical ? (
-              <Badge variant="outline">
-                {word.radical.radical} · {word.radical.meaningVi}
+            {word.radicals.map((radical) => (
+              <Badge key={`${word.id}-${radical.id}`} variant="outline">
+                {radical.radical} · {radical.meaningVi}
               </Badge>
-            ) : null}
+            ))}
           </CardContent>
         </Card>
       </section>

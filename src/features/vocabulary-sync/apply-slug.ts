@@ -1,4 +1,4 @@
-import type { NormalizedVocabSyncPayload } from "@/features/vocabulary-sync/normalize";
+import type { NormalizedVocabSyncPayload } from "@/features/vocabulary-sync/types";
 
 function stripDiacritics(value: string) {
   return value

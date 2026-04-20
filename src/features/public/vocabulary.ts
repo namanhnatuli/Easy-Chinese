@@ -36,7 +36,7 @@ export interface PublicWordListItem {
   hskLevel: number;
   notes: string | null;
   topic: PublicTopicFilterOption | null;
-  radical: PublicRadicalFilterOption | null;
+  radicals: PublicRadicalFilterOption[];
 }
 
 export interface PublicWordDetail extends PublicWordListItem {
@@ -83,13 +83,8 @@ function mapWordListItem(row: {
   hsk_level: number;
   notes: string | null;
   topics: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null;
-  radicals:
-    | { id: string; radical: string; meaning_vi: string }
-    | { id: string; radical: string; meaning_vi: string }[]
-    | null;
 }): PublicWordListItem {
   const topic = normalizeRelation(row.topics);
-  const radical = normalizeRelation(row.radicals);
 
   return {
     id: row.id,
@@ -107,14 +102,58 @@ function mapWordListItem(row: {
           slug: topic.slug,
         }
       : null,
-    radical: radical
-      ? {
-          id: radical.id,
-          radical: radical.radical,
-          meaningVi: radical.meaning_vi,
-        }
-      : null,
+    radicals: [],
   };
+}
+
+async function listWordRadicals(wordIds: string[]) {
+  if (wordIds.length === 0) {
+    return new Map<string, PublicRadicalFilterOption[]>();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("word_radicals")
+    .select("word_id, sort_order, radicals(id, radical, meaning_vi)")
+    .in("word_id", wordIds)
+    .order("sort_order");
+
+  if (error) {
+    throw error;
+  }
+
+  const grouped = new Map<string, PublicRadicalFilterOption[]>();
+
+  for (const row of (data ?? []) as Array<{
+    word_id: string;
+    sort_order: number;
+    radicals:
+      | { id: string; radical: string; meaning_vi: string }
+      | Array<{ id: string; radical: string; meaning_vi: string }>
+      | null;
+  }>) {
+    const radical = normalizeRelation(row.radicals);
+    if (!radical) {
+      continue;
+    }
+
+    const current = grouped.get(row.word_id) ?? [];
+    current.push({
+      id: radical.id,
+      radical: radical.radical,
+      meaningVi: radical.meaning_vi,
+    });
+    grouped.set(row.word_id, current);
+  }
+
+  return grouped;
+}
+
+function attachRadicals<T extends PublicWordListItem>(words: T[], radicalsByWordId: Map<string, PublicRadicalFilterOption[]>) {
+  return words.map((word) => ({
+    ...word,
+    radicals: radicalsByWordId.get(word.id) ?? [],
+  }));
 }
 
 export function parseVocabularyFilters(searchParams: Record<string, string | string[] | undefined>) {
@@ -160,10 +199,29 @@ export async function listVocabularyFilterOptions(): Promise<{
 
 export async function listPublicWords(filters: VocabularyFilters): Promise<PublicWordListItem[]> {
   const supabase = await createSupabaseServerClient();
+  let filteredWordIds: string[] | null = null;
+
+  if (filters.radical) {
+    const { data: radicalLinks, error: radicalLinksError } = await supabase
+      .from("word_radicals")
+      .select("word_id")
+      .eq("radical_id", filters.radical);
+
+    if (radicalLinksError) {
+      throw radicalLinksError;
+    }
+
+    filteredWordIds = [...new Set((radicalLinks ?? []).map((row) => row.word_id))];
+
+    if (filteredWordIds.length === 0) {
+      return [];
+    }
+  }
+
   let query = supabase
     .from("words")
     .select(
-      "id, slug, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, topics(id, name, slug), radicals(id, radical, meaning_vi)",
+      "id, slug, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, topics(id, name, slug)",
     )
     .eq("is_published", true)
     .order("hsk_level")
@@ -177,8 +235,8 @@ export async function listPublicWords(filters: VocabularyFilters): Promise<Publi
     query = query.eq("topics.slug", filters.topic);
   }
 
-  if (filters.radical) {
-    query = query.eq("radical_id", filters.radical);
+  if (filteredWordIds) {
+    query = query.in("id", filteredWordIds);
   }
 
   const { data, error } = await query;
@@ -187,7 +245,9 @@ export async function listPublicWords(filters: VocabularyFilters): Promise<Publi
     throw error;
   }
 
-  return (data ?? []).map(mapWordListItem);
+  const words = (data ?? []).map(mapWordListItem);
+  const radicalsByWordId = await listWordRadicals(words.map((word) => word.id));
+  return attachRadicals(words, radicalsByWordId);
 }
 
 export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetail | null> {
@@ -195,7 +255,7 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
   const { data: word, error: wordError } = await supabase
     .from("words")
     .select(
-      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, notes, topics(id, name, slug), radicals(id, radical, meaning_vi)",
+      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, notes, topics(id, name, slug)",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -229,11 +289,13 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
     hsk_level: word.hsk_level,
     notes: word.notes,
     topics: word.topics,
-    radicals: word.radicals,
   });
 
+  const radicalsByWordId = await listWordRadicals([word.id]);
+  const [wordWithRadicals] = attachRadicals([mapped], radicalsByWordId);
+
   return {
-    ...mapped,
+    ...wordWithRadicals,
     simplified: word.simplified,
     traditional: word.traditional,
     englishMeaning: word.english_meaning,

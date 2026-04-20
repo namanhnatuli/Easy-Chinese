@@ -1,22 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildWordSlugBase } from "@/features/vocabulary-sync/apply-slug";
+import { resolveMainRadicalsAgainstAliases } from "@/features/vocabulary-sync/radical-alias";
 
-test("buildWordSlugBase prefers ASCII-safe pinyin slugs", () => {
-  const slug = buildWordSlugBase({
-    normalizedText: "打电话",
-    pinyin: "dǎ diànhuà",
-  });
+test("resolveMainRadicalsAgainstAliases maps seeded aliases to canonical radicals", () => {
+  const resolved = resolveMainRadicalsAgainstAliases(
+    ["yêu (爫)", "tâm", "心"],
+    [
+      {
+        radical: "爪",
+        display_label: "Trảo 爪 (爫)",
+        han_viet_name: "trảo",
+        meaning_vi: "yêu",
+        variant_forms: ["爫"],
+      },
+      {
+        radical: "心",
+        display_label: "Tâm 心 (忄, ⺗)",
+        han_viet_name: "tâm",
+        meaning_vi: "tim",
+        variant_forms: ["忄", "⺗"],
+      },
+    ],
+  );
 
-  assert.equal(slug, "da-dianhua");
-});
-
-test("buildWordSlugBase falls back to normalized text codepoints when needed", () => {
-  const slug = buildWordSlugBase({
-    normalizedText: "你",
-    pinyin: null,
-  });
-
-  assert.equal(slug, "word-4f60");
+  assert.deepEqual(resolved, ["爪", "心"]);
 });

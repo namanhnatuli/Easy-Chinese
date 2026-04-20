@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
+import { SearchableMultiSelect } from "@/components/admin/searchable-multi-select";
 import { buttonVariants } from "@/components/ui/button";
 import type { AdminSelectOption, AdminWordEditor } from "@/features/admin/words";
 import { getServerI18n } from "@/i18n/server";
@@ -97,14 +98,14 @@ export async function WordForm({
             </select>
           </Field>
           <Field label={t("admin.words.form.radical")}>
-            <select name="radical_id" defaultValue={word?.radical_id ?? ""} className={inputClassName()}>
-              <option value="">{t("admin.words.form.noRadical")}</option>
-              {radicals.map((radical) => (
-                <option key={radical.id} value={radical.id}>
-                  {radical.label}
-                </option>
-              ))}
-            </select>
+            <SearchableMultiSelect
+              name="radical_ids"
+              options={radicals.map((radical) => ({
+                value: radical.id,
+                label: radical.label,
+              }))}
+              defaultValue={word?.radical_ids ?? []}
+            />
           </Field>
           <label className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
             <input

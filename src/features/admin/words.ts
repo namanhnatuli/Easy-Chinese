@@ -11,6 +11,7 @@ import {
   revalidateAdminPaths,
   redirectTo,
 } from "@/features/admin/shared";
+import { splitPipeDelimited } from "@/features/admin/content-sync-utils";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { logger } from "@/lib/logger";
 
@@ -26,7 +27,7 @@ const wordSchema = z.object({
   englishMeaning: z.string().nullable(),
   hskLevel: z.number().int().min(1).max(9),
   topicId: z.string().uuid().nullable(),
-  radicalId: z.string().uuid().nullable(),
+  radicalIds: z.array(z.string().uuid()).default([]),
   notes: z.string().nullable(),
   isPublished: z.boolean(),
 });
@@ -56,6 +57,7 @@ export interface AdminWordEditor {
     hsk_level: number;
     topic_id: string | null;
     radical_id: string | null;
+    radical_ids: string[];
     external_source: string | null;
     external_id: string | null;
     source_row_key: string | null;
@@ -118,8 +120,27 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
 
   if (examplesError) throw examplesError;
 
+  const { data: radicalLinks, error: radicalLinksError } = await supabase
+    .from("word_radicals")
+    .select("radical_id, is_main, sort_order")
+    .eq("word_id", id)
+    .order("sort_order");
+
+  if (radicalLinksError) throw radicalLinksError;
+
+  const radicalIds =
+    radicalLinks?.map((link) => link.radical_id).filter((value): value is string => Boolean(value)) ?? [];
+
   return {
-    word,
+    word: {
+      ...word,
+      radical_ids:
+        radicalIds.length > 0
+          ? radicalIds
+          : word.radical_id
+            ? [word.radical_id]
+            : [],
+    },
     examplesText: examplesToTextarea(
       (examples ?? []).map((example) => ({
         chineseText: example.chinese_text,
@@ -167,10 +188,12 @@ export async function saveWordAction(formData: FormData) {
     englishMeaning: optionalText(formData.get("english_meaning")),
     hskLevel: Number(requiredText(formData.get("hsk_level"))),
     topicId: optionalText(formData.get("topic_id")),
-    radicalId: optionalText(formData.get("radical_id")),
+    radicalIds: splitPipeDelimited(optionalText(formData.get("radical_ids"))),
     notes: optionalText(formData.get("notes")),
     isPublished: formData.get("is_published") === "on",
   });
+
+  const primaryRadicalId = parsed.radicalIds[0] ?? null;
 
   const payload = {
     slug: parsed.slug,
@@ -186,7 +209,7 @@ export async function saveWordAction(formData: FormData) {
     traditional_variant: parsed.traditional,
     hsk_level: parsed.hskLevel,
     topic_id: parsed.topicId,
-    radical_id: parsed.radicalId,
+    radical_id: primaryRadicalId,
     review_status: "approved" as const,
     ai_status: "done" as const,
     source_confidence: "high" as const,
@@ -241,6 +264,22 @@ export async function saveWordAction(formData: FormData) {
       slug: parsed.slug,
       published: parsed.isPublished,
     });
+  }
+
+  const { error: deleteRadicalsError } = await supabase.from("word_radicals").delete().eq("word_id", wordId);
+  if (deleteRadicalsError) throw deleteRadicalsError;
+
+  if (parsed.radicalIds.length > 0) {
+    const { error: insertRadicalsError } = await supabase.from("word_radicals").insert(
+      parsed.radicalIds.map((radicalId, index) => ({
+        word_id: wordId,
+        radical_id: radicalId,
+        is_main: index === 0,
+        sort_order: index,
+      })),
+    );
+
+    if (insertRadicalsError) throw insertRadicalsError;
   }
 
   const examples = parseExamplesTextarea(formData.get("examples_text"));

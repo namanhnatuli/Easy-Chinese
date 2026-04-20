@@ -14,6 +14,7 @@ const serverEnvSchema = publicEnvSchema.extend({
   GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().min(20).optional(),
   GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID: z.string().min(1).optional(),
+  GOOGLE_SHEETS_DEFAULT_SHEET_NAME: z.string().min(1).optional(),
 });
 
 let cachedPublicEnv: z.infer<typeof publicEnvSchema> | null = null;
@@ -45,6 +46,7 @@ export function getServerEnv() {
     GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,
     GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
     GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID: process.env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID,
+    GOOGLE_SHEETS_DEFAULT_SHEET_NAME: process.env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_DEFAULT_LOCALE: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
   });

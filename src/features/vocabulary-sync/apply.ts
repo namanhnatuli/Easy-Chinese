@@ -8,9 +8,13 @@ import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { resolveVocabSyncMatch } from "@/features/vocabulary-sync/matching";
 import {
   buildSourceRowKey,
-  type NormalizedVocabSyncPayload,
   type ParsedVocabSyncRow,
 } from "@/features/vocabulary-sync/normalize";
+import {
+  resolveMainRadicalsAgainstAliases,
+  type RadicalAliasRow,
+} from "@/features/vocabulary-sync/radical-alias";
+import type { NormalizedVocabSyncPayload } from "@/features/vocabulary-sync/types";
 import { getVocabSyncRow, listVocabSyncRowsForBatch, updateVocabSyncRow } from "@/features/vocabulary-sync/repository";
 import type { VocabSyncRow } from "@/features/vocabulary-sync/types";
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
@@ -76,6 +80,26 @@ export interface ApplyVocabSyncRowsResult {
   failed: number;
   skipped: number;
   results: ApplyVocabSyncRowResult[];
+}
+
+async function normalizePayloadMainRadicals(payload: NormalizedVocabSyncPayload) {
+  if (payload.mainRadicals.length === 0) {
+    return payload;
+  }
+
+  const { supabase } = await requireAdminSupabase();
+  const { data, error } = await supabase
+    .from("radicals")
+    .select("radical, display_label, han_viet_name, meaning_vi, variant_forms");
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    ...payload,
+    mainRadicals: resolveMainRadicalsAgainstAliases(payload.mainRadicals, data ?? []),
+  };
 }
 
 async function buildUniqueWordSlug(payload: Pick<NormalizedVocabSyncPayload, "normalizedText" | "pinyin">) {
@@ -237,6 +261,7 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
 
   try {
     payload = getEffectivePayload(row);
+    payload = await normalizePayloadMainRadicals(payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Approved payload is invalid.";
     return markRowApplyFailed(row, message);

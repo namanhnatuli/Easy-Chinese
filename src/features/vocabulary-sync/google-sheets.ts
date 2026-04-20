@@ -39,7 +39,18 @@ async function fetchGoogleJson<T>(url: string) {
 
   if (!response.ok) {
     const responseText = await response.text();
-    throw new Error(`Google Sheets request failed: ${response.status} ${responseText}`);
+    let message = `Google Sheets request failed (${response.status})`;
+
+    try {
+      const json = JSON.parse(responseText);
+      if (json.error?.message) {
+        message = json.error.message;
+      }
+    } catch {
+      message = `${message}: ${responseText}`;
+    }
+
+    throw new Error(message);
   }
 
   return (await response.json()) as T;

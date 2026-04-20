@@ -7,6 +7,42 @@ export type VocabSyncBatchStatus = "pending" | "running" | "completed" | "failed
 export type VocabSyncChangeKind = "new" | "changed" | "unchanged" | "conflict" | "invalid";
 export type VocabSyncApplyStatus = "pending" | "applied" | "failed" | "skipped";
 
+export interface NormalizedExample {
+  chineseText: string;
+  pinyin: string | null;
+  vietnameseMeaning: string;
+  sortOrder: number;
+}
+
+export interface NormalizedVocabSyncPayload {
+  externalId: string | null;
+  inputText: string | null;
+  normalizedText: string | null;
+  pinyin: string | null;
+  meaningsVi: string | null;
+  hanViet: string | null;
+  traditionalVariant: string | null;
+  mainRadicals: string[];
+  componentBreakdownJson: unknown;
+  radicalSummary: string | null;
+  hskLevel: number | null;
+  partOfSpeech: string | null;
+  topicTags: string[];
+  examples: NormalizedExample[];
+  similarChars: string[];
+  characterStructureType: string | null;
+  structureExplanation: string | null;
+  mnemonic: string | null;
+  notes: string | null;
+  sourceConfidence: WordSourceConfidence | null;
+  ambiguityFlag: boolean;
+  ambiguityNote: string | null;
+  readingCandidates: string | null;
+  reviewStatus: WordReviewStatus;
+  aiStatus: WordAiStatus;
+  sourceUpdatedAt: string | null;
+}
+
 export interface WordTag extends TimestampedEntity {
   id: string;
   slug: string;

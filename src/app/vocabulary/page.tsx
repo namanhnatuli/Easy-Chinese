@@ -113,11 +113,11 @@ export default async function VocabularyPage({
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">HSK {word.hskLevel}</Badge>
                     {word.topic ? <Badge variant="outline">{word.topic.name}</Badge> : null}
-                    {word.radical ? (
-                      <Badge variant="outline">
-                        {word.radical.radical} · {word.radical.meaningVi}
+                    {word.radicals.map((radical) => (
+                      <Badge key={`${word.id}-${radical.id}`} variant="outline">
+                        {radical.radical} · {radical.meaningVi}
                       </Badge>
-                    ) : null}
+                    ))}
                   </div>
                   <p className="mt-4 text-hanzi">{word.hanzi}</p>
                   <p className="mt-2 text-pinyin">{word.pinyin}</p>

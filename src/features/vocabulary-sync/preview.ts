@@ -13,17 +13,18 @@ import {
   createVocabSyncBatch,
   createVocabSyncRows,
   getVocabSyncBatch,
-  listVocabSyncRowsForBatch,
   listVocabSyncBatches,
+  listVocabSyncRowsForBatch,
+  listVocabSyncRowsGlobal,
   updateVocabSyncBatch,
 } from "@/features/vocabulary-sync/repository";
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
-import type { WordReviewStatus } from "@/features/vocabulary-sync/types";
+import type { VocabSyncRow, WordReviewStatus } from "@/features/vocabulary-sync/types";
 import { z } from "zod";
 
 export const vocabSyncPreviewRequestSchema = z.object({
   spreadsheetId: z.string().trim().min(1).optional(),
-  sheetName: z.string().trim().min(1),
+  sheetName: z.string().trim().min(1).optional(),
 });
 
 function requireSpreadsheetId(inputSpreadsheetId?: string) {
@@ -38,14 +39,21 @@ function requireSpreadsheetId(inputSpreadsheetId?: string) {
 }
 
 export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPreviewRequestSchema>) {
+  const env = getServerEnv();
   const spreadsheetId = requireSpreadsheetId(input.spreadsheetId);
+  const sheetName = input.sheetName?.trim() || env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME;
+
+  if (!sheetName) {
+    throw new Error("Sheet name is required. Provide it in the request or set GOOGLE_SHEETS_DEFAULT_SHEET_NAME.");
+  }
+
   const batch = await createVocabSyncBatch({
     externalSource: "google_sheets",
     sourceDocumentId: spreadsheetId,
-    sourceSheetName: input.sheetName,
+    sourceSheetName: sheetName,
     rawBatchPayload: {
       spreadsheetId,
-      requestedSheetName: input.sheetName,
+      requestedSheetName: sheetName,
     },
     notes: "Preview sync generated from Google Sheets.",
     totalRows: 0,
@@ -59,7 +67,7 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
 
     const sheet = await readGoogleSheetRows({
       spreadsheetId,
-      sheetName: input.sheetName,
+      sheetName,
     });
 
     const parsedRows = sheet.rows.map((row) =>
@@ -174,7 +182,7 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
     logger.error("vocab_sync_preview_failed", error, {
       batchId: batch.id,
       spreadsheetId,
-      sheetName: input.sheetName,
+      sheetName,
     });
 
     await updateVocabSyncBatch(batch.id, {
@@ -201,6 +209,18 @@ export async function getVocabSyncPreviewRows(
   } = {},
 ) {
   return listVocabSyncRowsForBatch(batchId, filters);
+}
+
+export async function getGlobalVocabSyncPreviewRows(
+  filters: {
+    batchId?: string;
+    changeType?: VocabSyncRow["changeClassification"];
+    reviewStatuses?: WordReviewStatus[];
+    applyStatus?: VocabSyncRow["applyStatus"];
+    limit?: number;
+  } = {},
+) {
+  return listVocabSyncRowsGlobal(filters);
 }
 
 export async function getRecentVocabSyncPreviewBatches(limit = 20) {

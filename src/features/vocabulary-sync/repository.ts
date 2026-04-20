@@ -252,6 +252,53 @@ export async function listVocabSyncRows(batchId: string) {
   return (data ?? []).map(mapRow);
 }
 
+export async function listVocabSyncRowsGlobal(
+  filters: {
+    batchId?: string;
+    changeType?: VocabSyncRow["changeClassification"];
+    reviewStatuses?: VocabSyncRow["reviewStatus"][];
+    applyStatus?: VocabSyncRow["applyStatus"];
+    limit?: number;
+  } = {},
+) {
+  const { supabase } = await requireAdminSupabase();
+  let query = supabase
+    .from("vocab_sync_rows")
+    .select(
+      "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+    )
+    .order("created_at", { ascending: false })
+    .order("source_row_number", { ascending: true, nullsFirst: false });
+
+  if (filters.batchId) {
+    query = query.eq("batch_id", filters.batchId);
+  }
+
+  if (filters.changeType) {
+    query = query.eq("change_classification", filters.changeType);
+  }
+
+  if (filters.reviewStatuses && filters.reviewStatuses.length > 0) {
+    query = query.in("review_status", filters.reviewStatuses);
+  }
+
+  if (filters.applyStatus) {
+    query = query.eq("apply_status", filters.applyStatus);
+  }
+
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(mapRow);
+}
+
 export async function getVocabSyncBatch(batchId: string) {
   const { supabase } = await requireAdminSupabase();
   const { data, error } = await supabase
