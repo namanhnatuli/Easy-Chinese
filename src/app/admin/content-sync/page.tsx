@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   approveAllEligibleContentSyncRowsAction,
   approveContentSyncRowAction,
@@ -28,12 +27,13 @@ import {
 } from "@/features/admin/content-sync";
 import { listRadicals } from "@/features/admin/radicals";
 import { parseContentSyncFilters } from "@/features/admin/content-sync-utils";
-import { getVocabSyncPreviewRows } from "@/features/vocabulary-sync/preview";
+import { getVocabSyncPreviewRows, getVocabSyncStagedRowCounts } from "@/features/vocabulary-sync/preview";
 import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 import { getServerEnv } from "@/lib/env";
 import { ContentSyncDetailDialog } from "@/components/admin/content-sync-detail-dialog";
 import { ContentSyncBatchDialog } from "@/components/admin/content-sync-batch-dialog";
+import { ContentSyncBatchHistoryTable } from "@/components/admin/content-sync-batch-history-table";
 import { ContentSyncReviewModule } from "@/components/admin/content-sync-review-module";
 import { buildContentSyncPath } from "@/features/admin/content-sync-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,6 +52,7 @@ export default async function AdminContentSyncPage({
   const viewBatchId = typeof searchParamsValue.viewBatch === "string" ? searchParamsValue.viewBatch : null;
   const viewBatch = viewBatchId ? data.batches.find((b) => b.id === viewBatchId) || null : null;
   const viewBatchRows = viewBatch ? await getVocabSyncPreviewRows(viewBatch.id) : [];
+  const batchRowCounts = await getVocabSyncStagedRowCounts(data.batches.map((batch) => batch.id));
 
   const env = getServerEnv();
   const radicals = await listRadicals();
@@ -98,8 +99,7 @@ export default async function AdminContentSyncPage({
           {data.selectedBatch && (
             <TabsTrigger value="stats">Detailed Insights</TabsTrigger>
           )}
-          <TabsTrigger value="history">Batch History</TabsTrigger>
-          <TabsTrigger value="new">New Sync</TabsTrigger>
+          <TabsTrigger value="batch-sync">Batch Sync</TabsTrigger>
         </TabsList>
 
         <TabsContent value={data.filters.view === "resolved" ? "resolved" : "queue"}>
@@ -251,85 +251,56 @@ export default async function AdminContentSyncPage({
           </TabsContent>
         )}
 
-        <TabsContent value="history" className="pt-6">
-          <Card className="border-border/80 bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="size-5" />
-                Batch history
-              </CardTitle>
-              <CardDescription>Recent preview runs available for review.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {data.batches.length === 0 ? (
-                <EmptyState title="No sync history" description="Start your first preview to begin." />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {data.batches.map((batch) => {
-                    const active = batch.id === data.selectedBatch?.id;
+        <TabsContent value="batch-sync" className="pt-6">
+          <div className="space-y-6">
+            <Card className="border-border/80 bg-card/95">
+              <CardHeader>
+                <CardTitle>Start preview sync</CardTitle>
+                <CardDescription>
+                  Enter a spreadsheet ID and sheet name to pull rows into the staged review queue.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ContentSyncStartForm
+                  action={startContentSyncPreviewAction}
+                  labels={{
+                    spreadsheetId: "Spreadsheet ID",
+                    spreadsheetHint: env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID
+                      ? `Optional. Defaults to ${env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID.slice(0, 10)}...`
+                      : "Required if GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID is not set.",
+                    sheetName: "Sheet name",
+                    sheetHint: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME
+                      ? `Optional. Defaults to "${env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME}".`
+                      : "Required if GOOGLE_SHEETS_DEFAULT_SHEET_NAME is not set.",
+                    submit: "Start preview",
+                    pending: "Starting preview…",
+                  }}
+                />
+              </CardContent>
+            </Card>
 
-                    return (
-                      <Link
-                        key={batch.id}
-                        href={link(`/admin/content-sync?viewBatch=${batch.id}${data.selectedBatch ? `&batch=${data.selectedBatch.id}` : ""}`)}
-                        className={`group block space-y-3 rounded-2xl border p-5 transition-all hover:bg-muted/50 ${
-                          active ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" : "bg-card shadow-sm border-border/80"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="min-w-0">
-                            <h4 className="font-semibold truncate">{batch.sourceSheetName || "Untagged"}</h4>
-                            <p className="mt-1 text-[10px] text-muted-foreground lowercase truncate">
-                              {batch.sourceDocumentId}
-                            </p>
-                          </div>
-                          <Badge variant={batch.status === "completed" ? "success" : batch.status === "failed" ? "warning" : "secondary"}>
-                            {batch.status}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{batch.totalRows} rows</span>
-                          <span>Pending {batch.pendingRows}</span>
-                          <span>Approved {batch.approvedRows}</span>
-                          <span>Applied {batch.appliedRows}</span>
-                          <span>Errors {batch.errorRows}</span>
-                          <span>Rejected {batch.rejectedRows}</span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="new" className="max-w-xl mx-auto pt-6">
-          <Card className="border-border/80 bg-card/95">
-            <CardHeader>
-              <CardTitle>Start preview sync</CardTitle>
-              <CardDescription>
-                Enter a spreadsheet ID and sheet name to pull rows into the staged review queue.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ContentSyncStartForm
-                action={startContentSyncPreviewAction}
-                labels={{
-                  spreadsheetId: "Spreadsheet ID",
-                  spreadsheetHint: env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID
-                    ? `Optional. Defaults to ${env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID.slice(0, 10)}...`
-                    : "Required if GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID is not set.",
-                  sheetName: "Sheet name",
-                  sheetHint: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME
-                    ? `Optional. Defaults to "${env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME}".`
-                    : "Required if GOOGLE_SHEETS_DEFAULT_SHEET_NAME is not set.",
-                  submit: "Start preview",
-                  pending: "Starting preview…",
-                }}
-              />
-            </CardContent>
-          </Card>
+            <Card className="border-border/80 bg-card/95">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="size-5" />
+                  Batch history
+                </CardTitle>
+                <CardDescription>Recent preview runs available for review.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {data.batches.length === 0 ? (
+                  <EmptyState title="No sync history" description="Start your first preview to begin." />
+                ) : (
+                  <ContentSyncBatchHistoryTable
+                    batches={data.batches}
+                    batchRowCounts={Object.fromEntries(batchRowCounts)}
+                    activeBatchId={data.selectedBatch?.id ?? null}
+                    selectedBatchId={data.filters.batchId}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

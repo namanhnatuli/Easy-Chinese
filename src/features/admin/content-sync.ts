@@ -334,7 +334,7 @@ export async function startContentSyncPreviewAction(formData: FormData) {
   }
 
   if (result) {
-    redirectTo(buildContentSyncPath({ batchId: result.batch.id }));
+    redirectTo(buildContentSyncPath({}));
   }
 }
 

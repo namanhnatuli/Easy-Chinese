@@ -46,6 +46,22 @@ test("parseAndNormalizeVocabSyncRow normalizes sheet payloads", () => {
   assert.ok(row.contentHash);
 });
 
+test("parseAndNormalizeVocabSyncRow derives source_row_key from text, pinyin, and part of speech even with external_id", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 4,
+    values: {
+      external_id: "sheet-row-4",
+      normalized_text: "看",
+      pinyin: "kàn",
+      meanings_vi: "nhìn",
+      part_of_speech: "dong_tu",
+    },
+  });
+
+  assert.equal(row.parseErrors.length, 0);
+  assert.equal(row.sourceRowKey, "看::kàn::dong_tu");
+});
+
 test("parseAndNormalizeVocabSyncRow records parse errors for invalid payloads", () => {
   const row = parseAndNormalizeVocabSyncRow({
     rowNumber: 3,

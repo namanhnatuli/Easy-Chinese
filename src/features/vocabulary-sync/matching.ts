@@ -17,6 +17,7 @@ export interface ExistingWordPreviewSnapshot {
   externalSource: string | null;
   externalId: string | null;
   sourceRowKey: string | null;
+  contentHash: string | null;
   normalizedText: string | null;
   simplified: string;
   hanzi: string;
@@ -90,6 +91,21 @@ function createExistingWordHash(word: ExistingWordPreviewSnapshot) {
         vietnameseMeaning: example.vietnameseMeaning,
       })),
   });
+}
+
+function isSourceRowStale(row: ParsedVocabSyncRow, word: ExistingWordPreviewSnapshot) {
+  if (!row.normalizedPayload.sourceUpdatedAt || !word.lastSourceUpdatedAt) {
+    return false;
+  }
+
+  const sourceUpdatedAt = Date.parse(row.normalizedPayload.sourceUpdatedAt);
+  const lastSourceUpdatedAt = Date.parse(word.lastSourceUpdatedAt);
+
+  if (Number.isNaN(sourceUpdatedAt) || Number.isNaN(lastSourceUpdatedAt)) {
+    return false;
+  }
+
+  return sourceUpdatedAt <= lastSourceUpdatedAt;
 }
 
 function summarizeDiff(row: ParsedVocabSyncRow, word: ExistingWordPreviewSnapshot) {
@@ -321,7 +337,24 @@ export function classifyVocabSyncRow(
   }
 
   const [matchedWord] = candidates;
-  const existingContentHash = createExistingWordHash(matchedWord);
+  if (isSourceRowStale(row, matchedWord)) {
+    return {
+      sourceRowKey: row.sourceRowKey,
+      changeClassification: "unchanged",
+      matchResult: resolvedMatch.matchResult,
+      matchedWordIds: [matchedWord.id],
+      diffSummary: {
+        matchedWordId: matchedWord.id,
+        matchedWordSlug: matchedWord.slug,
+        reason: "stale_source_timestamp",
+        sourceUpdatedAt: row.normalizedPayload.sourceUpdatedAt,
+        existingLastSourceUpdatedAt: matchedWord.lastSourceUpdatedAt,
+      },
+      errorMessage: null,
+    };
+  }
+
+  const existingContentHash = matchedWord.contentHash ?? createExistingWordHash(matchedWord);
 
   if (row.contentHash && row.contentHash === existingContentHash) {
     return {

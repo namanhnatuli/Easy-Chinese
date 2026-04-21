@@ -38,6 +38,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
         externalSource: row.external_source,
         externalId: row.external_id,
         sourceRowKey: row.source_row_key,
+        contentHash: row.content_hash,
         normalizedText: row.normalized_text,
         simplified: row.simplified,
         hanzi: row.hanzi,
@@ -72,7 +73,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
       supabase
         .from("words")
         .select(
-          "id, slug, external_source, external_id, source_row_key, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
         )
         .eq("external_source", "google_sheets")
         .in("external_id", externalIds),
@@ -84,7 +85,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
       supabase
         .from("words")
         .select(
-          "id, slug, external_source, external_id, source_row_key, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
         )
         .eq("external_source", "google_sheets")
         .in("source_row_key", sourceRowKeys),
@@ -96,7 +97,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
       supabase
         .from("words")
         .select(
-          "id, slug, external_source, external_id, source_row_key, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
         )
         .in("normalized_text", normalizedTexts),
     );

@@ -316,6 +316,30 @@ export async function getVocabSyncBatch(batchId: string) {
   return data ? mapBatchRow(data) : null;
 }
 
+export async function getLatestCompletedVocabSyncBatch(excludeBatchId?: string) {
+  const { supabase } = await requireAdminSupabase();
+  let query = supabase
+    .from("vocab_sync_batches")
+    .select(
+      "id, external_source, source_document_id, source_sheet_name, source_sheet_gid, status, initiated_by, raw_batch_payload, total_rows, pending_rows, approved_rows, rejected_rows, applied_rows, error_rows, notes, started_at, completed_at, created_at, updated_at",
+    )
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false, nullsFirst: false })
+    .limit(1);
+
+  if (excludeBatchId) {
+    query = query.neq("id", excludeBatchId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? mapBatchRow(data) : null;
+}
+
 export async function getVocabSyncRow(rowId: string) {
   const { supabase } = await requireAdminSupabase();
   const { data, error } = await supabase
@@ -376,6 +400,92 @@ export async function listVocabSyncRowsForBatch(
   return (data ?? []).map(mapRow);
 }
 
+export async function listLatestOpenVocabSyncRowsBySourceKeys(sourceRowKeys: string[]) {
+  const uniqueSourceRowKeys = [...new Set(sourceRowKeys.filter(Boolean))];
+
+  if (uniqueSourceRowKeys.length === 0) {
+    return [];
+  }
+
+  const { supabase } = await requireAdminSupabase();
+  const { data, error } = await supabase
+    .from("vocab_sync_rows")
+    .select(
+      "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+    )
+    .in("source_row_key", uniqueSourceRowKeys)
+    .in("review_status", ["pending", "needs_review", "approved"])
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const latestBySourceRowKey = new Map<string, VocabSyncRow>();
+
+  for (const row of (data ?? []).map(mapRow)) {
+    if (!latestBySourceRowKey.has(row.sourceRowKey)) {
+      latestBySourceRowKey.set(row.sourceRowKey, row);
+    }
+  }
+
+  return [...latestBySourceRowKey.values()];
+}
+
+export async function listLatestVocabSyncRowsBySourceKeys(sourceRowKeys: string[]) {
+  const uniqueSourceRowKeys = [...new Set(sourceRowKeys.filter(Boolean))];
+
+  if (uniqueSourceRowKeys.length === 0) {
+    return [];
+  }
+
+  const { supabase } = await requireAdminSupabase();
+  const { data, error } = await supabase
+    .from("vocab_sync_rows")
+    .select(
+      "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+    )
+    .in("source_row_key", uniqueSourceRowKeys)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const latestBySourceRowKey = new Map<string, VocabSyncRow>();
+
+  for (const row of (data ?? []).map(mapRow)) {
+    if (!latestBySourceRowKey.has(row.sourceRowKey)) {
+      latestBySourceRowKey.set(row.sourceRowKey, row);
+    }
+  }
+
+  return [...latestBySourceRowKey.values()];
+}
+
+export async function getVocabSyncRowCountsForBatches(batchIds: string[]) {
+  const uniqueBatchIds = [...new Set(batchIds.filter(Boolean))];
+
+  if (uniqueBatchIds.length === 0) {
+    return new Map<string, number>();
+  }
+
+  const { supabase } = await requireAdminSupabase();
+  const { data, error } = await supabase
+    .from("vocab_sync_rows")
+    .select("batch_id")
+    .in("batch_id", uniqueBatchIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).reduce<Map<string, number>>((result, row) => {
+    result.set(row.batch_id, (result.get(row.batch_id) ?? 0) + 1);
+    return result;
+  }, new Map());
+}
+
 export async function updateVocabSyncBatch(
   batchId: string,
   patch: Partial<{
@@ -424,13 +534,25 @@ export async function updateVocabSyncBatch(
 export async function updateVocabSyncRow(
   rowId: string,
   patch: Partial<{
+    batchId: string;
+    externalSource: string;
+    externalId: string | null;
     adminEditedPayload: Record<string, unknown> | null;
     sourceRowKey: string;
+    sourceRowNumber: number | null;
+    sourceUpdatedAt: string | null;
+    rawPayload: Record<string, unknown>;
+    normalizedPayload: Record<string, unknown>;
     contentHash: string | null;
+    changeClassification: VocabSyncRow["changeClassification"];
+    matchResult: string | null;
+    matchedWordIds: string[];
+    parseErrors: string[];
     reviewStatus: VocabSyncRow["reviewStatus"];
     applyStatus: VocabSyncRow["applyStatus"];
     aiStatus: VocabSyncRow["aiStatus"];
     sourceConfidence: VocabSyncRow["sourceConfidence"];
+    diffSummary: Record<string, unknown> | null;
     reviewNote: string | null;
     approvedBy: string | null;
     approvedAt: string | null;
@@ -444,13 +566,25 @@ export async function updateVocabSyncRow(
   const { data, error } = await supabase
     .from("vocab_sync_rows")
     .update({
+      batch_id: patch.batchId,
+      external_source: patch.externalSource,
+      external_id: patch.externalId,
       admin_edited_payload: patch.adminEditedPayload,
       source_row_key: patch.sourceRowKey,
+      source_row_number: patch.sourceRowNumber,
+      source_updated_at: patch.sourceUpdatedAt,
+      raw_payload: patch.rawPayload,
+      normalized_payload: patch.normalizedPayload,
       content_hash: patch.contentHash,
+      change_classification: patch.changeClassification,
+      match_result: patch.matchResult,
+      matched_word_ids: patch.matchedWordIds,
+      parse_errors: patch.parseErrors,
       review_status: patch.reviewStatus,
       apply_status: patch.applyStatus,
       ai_status: patch.aiStatus,
       source_confidence: patch.sourceConfidence,
+      diff_summary: patch.diffSummary,
       review_note: patch.reviewNote,
       approved_by: patch.approvedBy,
       approved_at: patch.approvedAt,

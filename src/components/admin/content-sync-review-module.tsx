@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Eye } from "lucide-react";
 
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TablePaginationControls } from "@/components/shared/table-pagination-controls";
 import type { VocabSyncRow } from "@/features/vocabulary-sync/types";
 import type { ContentSyncFilters } from "@/features/admin/content-sync-utils";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ export function ContentSyncReviewModule({
 }: ContentSyncReviewModuleProps) {
   const { t, link } = useI18n();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const showSelectionControls = filters.view === "queue";
 
   // Rows that can actually be selected for review
@@ -55,6 +58,29 @@ export function ContentSyncReviewModule({
 
   const allSelected = selectableRows.length > 0 && selectedIds.size === selectableRows.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
+
+  useEffect(() => {
+    if (!filters.selectedRowId) {
+      return;
+    }
+
+    const targetIndex = rows.findIndex((row) => row.id === filters.selectedRowId);
+    if (targetIndex === -1) {
+      return;
+    }
+
+    setPage(Math.floor(targetIndex / pageSize) + 1);
+  }, [filters.selectedRowId, rows, pageSize]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
   const toggleAll = () => {
     if (allSelected) {
@@ -146,12 +172,13 @@ export function ContentSyncReviewModule({
                 <TableHead>Change</TableHead>
                 <TableHead>Review</TableHead>
                 <TableHead>Apply</TableHead>
+                <TableHead>Batch</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => {
+              {paginatedRows.map((row) => {
                 const isSelected = selectedIds.has(row.id);
                 const isSelectable =
                   row.changeClassification !== "invalid" &&
@@ -203,6 +230,11 @@ export function ContentSyncReviewModule({
                     <TableCell>
                       <ApplyStatusBadge value={row.applyStatus} />
                     </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      <span className="block max-w-[140px] truncate" title={row.batchId}>
+                        {row.batchId}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       #{row.sourceRowNumber ?? t("common.notAvailable")}
                     </TableCell>
@@ -220,6 +252,18 @@ export function ContentSyncReviewModule({
             </TableBody>
           </Table>
         )}
+        <TablePaginationControls
+          page={page}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          totalItems={rows.length}
+          itemLabel="rows"
+          onPageChange={setPage}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Overall Actions Bar (Global) */}

@@ -15,6 +15,7 @@ function createBaseWord(overrides: Partial<ExistingWordPreviewSnapshot> = {}): E
     externalSource: "google_sheets",
     externalId: null,
     sourceRowKey: "打电话::dǎ diànhuà::dong_tu",
+    contentHash: "existing-content-hash",
     lastSourceUpdatedAt: "2026-04-17T00:00:00.000Z",
     normalizedText: "打电话",
     simplified: "打电话",
@@ -87,6 +88,7 @@ test("classifyVocabSyncRow returns unchanged for equivalent content", () => {
     parsed,
     [
       createBaseWord({
+        contentHash: parsed.contentHash,
         reviewStatus: "applied",
         aiStatus: "done",
       }),
@@ -99,11 +101,27 @@ test("classifyVocabSyncRow returns unchanged for equivalent content", () => {
   assert.equal(result.diffSummary?.reason, "matching_content_hash");
 });
 
+test("classifyVocabSyncRow returns unchanged when source timestamp is not newer", () => {
+  const parsed = createParsedRow({
+    updated_at: "2026-04-16T00:00:00.000Z",
+    notes: "Bản sheet cũ hơn nhưng nội dung đã thay đổi.",
+  });
+  const result = classifyVocabSyncRow(parsed, [
+    createBaseWord({
+      contentHash: "older-hash",
+      lastSourceUpdatedAt: "2026-04-17T00:00:00.000Z",
+    }),
+  ]);
+
+  assert.equal(result.changeClassification, "unchanged");
+  assert.equal(result.diffSummary?.reason, "stale_source_timestamp");
+});
+
 test("classifyVocabSyncRow returns changed when content differs", () => {
   const parsed = createParsedRow({
     notes: "Ghi chú mới.",
   });
-  const result = classifyVocabSyncRow(parsed, [createBaseWord()]);
+  const result = classifyVocabSyncRow(parsed, [createBaseWord({ contentHash: "different-hash" })]);
 
   assert.equal(result.changeClassification, "changed");
   assert.ok(result.diffSummary);

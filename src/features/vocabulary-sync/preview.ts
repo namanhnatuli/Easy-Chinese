@@ -12,13 +12,21 @@ import {
 import {
   createVocabSyncBatch,
   createVocabSyncRows,
+  getVocabSyncRowCountsForBatches,
   getVocabSyncBatch,
+  getLatestCompletedVocabSyncBatch,
+  listLatestVocabSyncRowsBySourceKeys,
   listVocabSyncBatches,
   listVocabSyncRowsForBatch,
   listVocabSyncRowsGlobal,
   updateVocabSyncBatch,
+  updateVocabSyncRow,
 } from "@/features/vocabulary-sync/repository";
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
+import {
+  resolveExistingSyncRowAction,
+  wasRowUpdatedAfterLastCompletedBatch,
+} from "@/features/vocabulary-sync/preview-locks";
 import type { VocabSyncRow, WordReviewStatus } from "@/features/vocabulary-sync/types";
 import { z } from "zod";
 
@@ -65,6 +73,13 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       startedAt: new Date().toISOString(),
     });
 
+    const previousCompletedBatch = await getLatestCompletedVocabSyncBatch(batch.id);
+    const lastCompletedBatchRunAt =
+      previousCompletedBatch?.completedAt ??
+      previousCompletedBatch?.startedAt ??
+      previousCompletedBatch?.createdAt ??
+      null;
+
     const sheet = await readGoogleSheetRows({
       spreadsheetId,
       sheetName,
@@ -94,6 +109,14 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
     }
 
     const existingWords = await fetchExistingWordCandidates(parsedRows);
+    const existingRowsBySourceRowKey = new Map(
+      (
+        await listLatestVocabSyncRowsBySourceKeys(
+          parsedRows.map((row) => row.sourceRowKey).filter(Boolean),
+        )
+      ).map((row) => [row.sourceRowKey, row] as const),
+    );
+
     const classifiedRows = parsedRows.map((row) => {
       const classification = classifyVocabSyncRow(row, existingWords);
       const workflow = derivePreviewWorkflowState({
@@ -110,9 +133,68 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       };
     });
 
+    const staleByLastBatchRows = classifiedRows.filter(
+      ({ parsed }) =>
+        !wasRowUpdatedAfterLastCompletedBatch(
+          parsed.normalizedPayload.sourceUpdatedAt,
+          lastCompletedBatchRunAt,
+        ),
+    );
+
+    const rowsNewerThanLastBatch = classifiedRows.filter(
+      ({ parsed }) => {
+        return wasRowUpdatedAfterLastCompletedBatch(
+          parsed.normalizedPayload.sourceUpdatedAt,
+          lastCompletedBatchRunAt,
+        );
+      },
+    );
+
+    const rowsToUpdate = rowsNewerThanLastBatch.filter(({ parsed }) => {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+
+      return resolveExistingSyncRowAction(existingRow) === "update";
+    });
+
+    const closedRows = rowsNewerThanLastBatch.filter(({ parsed }) => {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+
+      return resolveExistingSyncRowAction(existingRow) === "skip_closed";
+    });
+
+    const rowsToCreate = rowsNewerThanLastBatch.filter(({ parsed }) => {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+
+      return resolveExistingSyncRowAction(existingRow) === "create";
+    });
+
+    const createdRows = rowsToCreate.filter(
+      ({ classification }) => classification.changeClassification !== "unchanged",
+    );
+
+    const updatedRows = rowsToUpdate.filter(
+      ({ parsed, classification }) => {
+        const existingRow = parsed.sourceRowKey
+          ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+          : null;
+
+        if (!existingRow) {
+          return false;
+        }
+
+        return classification.changeClassification !== "unchanged" || existingRow.changeClassification !== "unchanged";
+      },
+    );
+
     await createVocabSyncRows(
       batch.id,
-      classifiedRows.map(({ parsed, classification, workflow }) => ({
+      createdRows.map(({ parsed, classification, workflow }) => ({
         externalSource: "google_sheets",
         externalId: parsed.normalizedPayload.externalId,
         sourceRowKey: parsed.sourceRowKey || `row:${parsed.rowNumber}`,
@@ -135,18 +217,59 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       })),
     );
 
+    for (const { parsed, classification, workflow } of updatedRows) {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+
+      if (!existingRow) {
+        continue;
+      }
+
+      await updateVocabSyncRow(existingRow.id, {
+        batchId: batch.id,
+        externalSource: "google_sheets",
+        externalId: parsed.normalizedPayload.externalId,
+        adminEditedPayload: null,
+        sourceRowKey: parsed.sourceRowKey || `row:${parsed.rowNumber}`,
+        sourceRowNumber: parsed.rowNumber,
+        sourceUpdatedAt: parsed.normalizedPayload.sourceUpdatedAt,
+        rawPayload: parsed.rawPayload,
+        normalizedPayload: parsed.normalizedPayload as unknown as Record<string, unknown>,
+        contentHash: parsed.contentHash,
+        changeClassification: classification.changeClassification,
+        matchResult: classification.matchResult,
+        matchedWordIds: classification.matchedWordIds,
+        parseErrors: parsed.parseErrors,
+        reviewStatus: workflow.reviewStatus,
+        applyStatus: workflow.applyStatus,
+        aiStatus: parsed.normalizedPayload.aiStatus,
+        sourceConfidence: parsed.normalizedPayload.sourceConfidence,
+        diffSummary: classification.diffSummary,
+        reviewNote: workflow.reviewNote,
+        approvedBy: null,
+        approvedAt: null,
+        appliedWordId: null,
+        appliedBy: null,
+        appliedAt: null,
+        errorMessage: classification.errorMessage,
+      });
+    }
+
+    const effectiveRows = [...createdRows, ...updatedRows];
+
     const summaryCounts = summarizePreviewRows(
-      classifiedRows.map(({ classification, workflow }) => ({
+      effectiveRows.map(({ classification, workflow }) => ({
         changeClassification: classification.changeClassification,
         reviewStatus: workflow.reviewStatus,
         applyStatus: workflow.applyStatus,
       })),
     );
-    const pendingRows = classifiedRows.filter(
+    const pendingRows = effectiveRows.filter(
       ({ workflow }) => workflow.reviewStatus === "pending" || workflow.reviewStatus === "needs_review",
     ).length;
-    const approvedRows = classifiedRows.filter(({ workflow }) => workflow.reviewStatus === "approved").length;
-    const appliedRows = classifiedRows.filter(
+    const approvedRows = effectiveRows.filter(({ workflow }) => workflow.reviewStatus === "approved").length;
+    const appliedRows = effectiveRows.filter(
       ({ workflow }) => workflow.reviewStatus === "applied" || workflow.applyStatus === "applied" || workflow.applyStatus === "skipped",
     ).length;
     const completedBatch = await updateVocabSyncBatch(batch.id, {
@@ -162,6 +285,19 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
         sheetId: sheet.sheetId,
         headers: sheet.headers,
         summaryCounts,
+        lastCompletedBatchRunAt,
+        updatedExistingReviewRows: updatedRows.length,
+        updatedExistingReviewRowKeys: updatedRows
+          .map(({ parsed }) => parsed.sourceRowKey)
+          .filter((value): value is string => Boolean(value)),
+        skippedClosedReviewRows: closedRows.length,
+        skippedClosedReviewRowKeys: closedRows
+          .map(({ parsed }) => parsed.sourceRowKey)
+          .filter((value): value is string => Boolean(value)),
+        skippedOlderThanLastBatchRows: staleByLastBatchRows.length,
+        skippedOlderThanLastBatchRowKeys: staleByLastBatchRows
+          .map(({ parsed }) => parsed.sourceRowKey)
+          .filter((value): value is string => Boolean(value)),
       },
       completedAt: new Date().toISOString(),
     });
@@ -172,6 +308,10 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       sheetName: input.sheetName,
       totalRows: parsedRows.length,
       summaryCounts,
+      updatedExistingReviewRows: updatedRows.length,
+      skippedClosedReviewRows: closedRows.length,
+      skippedOlderThanLastBatchRows: staleByLastBatchRows.length,
+      lastCompletedBatchRunAt,
     });
 
     return {
@@ -225,4 +365,8 @@ export async function getGlobalVocabSyncPreviewRows(
 
 export async function getRecentVocabSyncPreviewBatches(limit = 20) {
   return listVocabSyncBatches(limit);
+}
+
+export async function getVocabSyncStagedRowCounts(batchIds: string[]) {
+  return getVocabSyncRowCountsForBatches(batchIds);
 }

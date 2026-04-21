@@ -251,10 +251,6 @@ export function buildSourceRowKey(input: {
   pinyin: string | null;
   partOfSpeech: string | null;
 }) {
-  if (input.externalId) {
-    return `external:${input.externalId}`;
-  }
-
   const parts = [
     input.normalizedText,
     input.pinyin?.toLowerCase() ?? null,

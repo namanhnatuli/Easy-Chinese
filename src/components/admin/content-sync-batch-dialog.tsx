@@ -102,7 +102,7 @@ export function ContentSyncBatchDialog({
           <div className="space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">Row processing summary</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <StatCard variant="compact" label="Total" value={String(batch.totalRows)} icon={<FileText className="size-4" />} />
+              <StatCard variant="compact" label="Synced rows" value={String(rows.length)} icon={<FileText className="size-4" />} />
               <StatCard variant="compact" label="Pending" value={String(batch.pendingRows)} icon={<Clock className="size-4" />} />
               <StatCard variant="compact" label="Approved" value={String(batch.approvedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
               <StatCard variant="compact" label="Applied" value={String(batch.appliedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
