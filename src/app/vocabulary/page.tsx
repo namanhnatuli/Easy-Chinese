@@ -7,11 +7,44 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  listPublicWords,
+  formatPublicPartOfSpeech,
+  formatPublicStructureType,
   listVocabularyFilterOptions,
+  listPublicWordsPage,
+  parseVocabularyPage,
   parseVocabularyFilters,
 } from "@/features/public/vocabulary";
 import { getServerI18n } from "@/i18n/server";
+
+const PAGE_SIZE = 12;
+
+function buildVocabularyPath(params: {
+  page?: number;
+  hsk?: number;
+  topic?: string;
+  radical?: string;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (params.hsk) {
+    searchParams.set("hsk", String(params.hsk));
+  }
+
+  if (params.topic) {
+    searchParams.set("topic", params.topic);
+  }
+
+  if (params.radical) {
+    searchParams.set("radical", params.radical);
+  }
+
+  if (params.page && params.page > 1) {
+    searchParams.set("page", String(params.page));
+  }
+
+  const query = searchParams.toString();
+  return query ? `/vocabulary?${query}` : "/vocabulary";
+}
 
 export default async function VocabularyPage({
   searchParams,
@@ -20,11 +53,17 @@ export default async function VocabularyPage({
 }) {
   const resolvedSearchParams = await searchParams;
   const filters = parseVocabularyFilters(resolvedSearchParams);
-  const [{ topics, radicals }, words] = await Promise.all([
+  const page = parseVocabularyPage(resolvedSearchParams.page);
+  const [{ topics, radicals }, wordsPage] = await Promise.all([
     listVocabularyFilterOptions(),
-    listPublicWords(filters),
+    listPublicWordsPage(filters, { page, pageSize: PAGE_SIZE }),
   ]);
   const { t, link } = await getServerI18n();
+  const words = wordsPage.items;
+  const start = wordsPage.totalItems === 0 ? 0 : (wordsPage.page - 1) * wordsPage.pageSize + 1;
+  const end = wordsPage.totalItems === 0
+    ? 0
+    : Math.min(wordsPage.page * wordsPage.pageSize, wordsPage.totalItems);
 
   return (
     <div className="page-shell">
@@ -105,34 +144,139 @@ export default async function VocabularyPage({
           description={t("vocabulary.emptyDescription")}
         />
       ) : (
-        <section className="grid gap-4">
+        <section className="space-y-5">
+          <div className="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card/80 px-5 py-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              {t("common.paginationSummary", {
+                start,
+                end,
+                total: wordsPage.totalItems,
+                itemLabel: t("navigation.vocabulary.label").toLowerCase(),
+              })}
+            </p>
+            <div className="text-sm text-muted-foreground">
+              {t("vocabulary.pageStatus", { page: wordsPage.page, totalPages: wordsPage.pageCount })}
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
           {words.map((word) => (
-            <Card key={word.id} className="border-border/80">
-              <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <Card key={word.id} className="border-border/80 bg-card/95">
+              <CardContent className="flex h-full flex-col gap-5 p-5">
                 <div className="min-w-0">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">HSK {word.hskLevel}</Badge>
                     {word.topic ? <Badge variant="outline">{word.topic.name}</Badge> : null}
+                    {formatPublicStructureType(word.characterStructureType) ? (
+                      <Badge variant="outline">
+                        {t("vocabulary.structureBadge", {
+                          value: formatPublicStructureType(word.characterStructureType)?.label ?? "",
+                        })}
+                      </Badge>
+                    ) : null}
+                    {word.ambiguityFlag ? (
+                      <Badge variant="warning">{t("vocabulary.ambiguousBadge")}</Badge>
+                    ) : null}
+                    {word.sourceConfidence ? (
+                      <Badge variant="outline">
+                        {t(`vocabulary.sourceConfidence.${word.sourceConfidence}` as "vocabulary.sourceConfidence.low")}
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <p className="text-hanzi">{word.hanzi}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                      <span className="text-pinyin">{word.pinyin}</span>
+                      {word.hanViet ? <span>{t("vocabulary.hanViet", { value: word.hanViet })}</span> : null}
+                      {word.traditional ? <span>{t("vocabulary.traditionalShort", { value: word.traditional })}</span> : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <p className="text-base font-semibold text-foreground">{word.vietnameseMeaning}</p>
+                    {word.englishMeaning ? (
+                      <p className="text-sm text-muted-foreground">{word.englishMeaning}</p>
+                    ) : null}
+                    {word.notes ? (
+                      <p className="text-sm leading-6 text-muted-foreground">{word.notes}</p>
+                    ) : null}
+                    {word.radicalSummary ? (
+                      <p className="text-sm leading-6 text-muted-foreground">{word.radicalSummary}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {word.radicals.map((radical) => (
                       <Badge key={`${word.id}-${radical.id}`} variant="outline">
                         {radical.radical} · {radical.meaningVi}
                       </Badge>
                     ))}
-                  </div>
-                  <p className="mt-4 text-hanzi">{word.hanzi}</p>
-                  <p className="mt-2 text-pinyin">{word.pinyin}</p>
-                  <p className="mt-3 text-base font-medium text-foreground">{word.vietnameseMeaning}</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    {word.hanViet ? <span>Hán Việt: {word.hanViet}</span> : null}
-                    {word.notes ? <span>{word.notes}</span> : null}
+                    {formatPublicPartOfSpeech(word.partOfSpeech).map((entry) => (
+                      <Badge key={`${word.id}-${entry.value}`} variant="secondary">
+                        {entry.label}
+                      </Badge>
+                    ))}
+                    {word.topicTags.map((tag) => (
+                      <Badge key={`${word.id}-${tag.slug}`} variant="secondary">
+                        #{tag.label}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-                <Button asChild variant="outline">
-                  <Link href={link(`/vocabulary/${word.slug}`)}>{t("vocabulary.openDetail")}</Link>
-                </Button>
+
+                <div className="mt-auto flex justify-end">
+                  <Button asChild variant="outline">
+                    <Link href={link(`/vocabulary/${word.slug}`)}>{t("vocabulary.openDetail")}</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card/80 px-5 py-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              {t("vocabulary.pageStatus", { page: wordsPage.page, totalPages: wordsPage.pageCount })}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm" disabled={wordsPage.page <= 1}>
+                <Link
+                  href={link(
+                    buildVocabularyPath({
+                      page: wordsPage.page - 1,
+                      hsk: filters.hsk,
+                      topic: filters.topic,
+                      radical: filters.radical,
+                    }),
+                  )}
+                  aria-disabled={wordsPage.page <= 1}
+                  tabIndex={wordsPage.page <= 1 ? -1 : undefined}
+                >
+                  {t("common.previous")}
+                </Link>
+              </Button>
+              <div className="min-w-16 text-center text-sm text-muted-foreground">
+                {wordsPage.page} / {wordsPage.pageCount}
+              </div>
+              <Button asChild variant="outline" size="sm" disabled={wordsPage.page >= wordsPage.pageCount}>
+                <Link
+                  href={link(
+                    buildVocabularyPath({
+                      page: wordsPage.page + 1,
+                      hsk: filters.hsk,
+                      topic: filters.topic,
+                      radical: filters.radical,
+                    }),
+                  )}
+                  aria-disabled={wordsPage.page >= wordsPage.pageCount}
+                  tabIndex={wordsPage.page >= wordsPage.pageCount ? -1 : undefined}
+                >
+                  {t("common.next")}
+                </Link>
+              </Button>
+            </div>
+          </div>
         </section>
       )}
     </div>

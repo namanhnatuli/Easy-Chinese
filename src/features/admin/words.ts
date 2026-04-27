@@ -25,10 +25,25 @@ const wordSchema = z.object({
   hanViet: z.string().nullable(),
   vietnameseMeaning: z.string().min(1, "Vietnamese meaning is required."),
   englishMeaning: z.string().nullable(),
+  normalizedText: z.string().min(1, "Normalized text is required."),
+  meaningsVi: z.string().min(1, "Vietnamese meanings are required."),
+  traditionalVariant: z.string().nullable(),
   hskLevel: z.number().int().min(1).max(9),
   topicId: z.string().uuid().nullable(),
   radicalIds: z.array(z.string().uuid()).default([]),
+  topicTags: z.array(z.string().min(1)).default([]),
+  partOfSpeech: z.string().nullable(),
+  componentBreakdownJson: z.string().nullable(),
+  radicalSummary: z.string().nullable(),
+  mnemonic: z.string().nullable(),
+  characterStructureType: z.string().nullable(),
+  structureExplanation: z.string().nullable(),
   notes: z.string().nullable(),
+  ambiguityFlag: z.boolean(),
+  ambiguityNote: z.string().nullable(),
+  readingCandidates: z.string().nullable(),
+  aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]),
+  sourceConfidence: z.enum(["low", "medium", "high"]).nullable(),
   isPublished: z.boolean(),
 });
 
@@ -41,6 +56,14 @@ export interface AdminWordListItem {
   hsk_level: number;
   is_published: boolean;
   updated_at: string;
+}
+
+export interface AdminWordListPage {
+  items: AdminWordListItem[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 }
 
 export interface AdminWordEditor {
@@ -58,6 +81,7 @@ export interface AdminWordEditor {
     topic_id: string | null;
     radical_id: string | null;
     radical_ids: string[];
+    topic_tags: string[];
     external_source: string | null;
     external_id: string | null;
     source_row_key: string | null;
@@ -90,15 +114,43 @@ export interface AdminSelectOption {
   label: string;
 }
 
-export async function listWords(): Promise<AdminWordListItem[]> {
+export async function listWordsPage(input: {
+  page: number;
+  pageSize: number;
+}): Promise<AdminWordListPage> {
   const { supabase } = await requireAdminSupabase();
+  const requestedPage = Number.isFinite(input.page) && input.page > 0 ? Math.floor(input.page) : 1;
+  const pageSize =
+    Number.isFinite(input.pageSize) && input.pageSize > 0 ? Math.floor(input.pageSize) : 10;
+  const { count, error: countError } = await supabase
+    .from("words")
+    .select("id", {
+      count: "exact",
+      head: true,
+    });
+
+  if (countError) throw countError;
+
+  const totalItems = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(requestedPage, pageCount);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
   const { data, error } = await supabase
     .from("words")
     .select("id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published, updated_at")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return data ?? [];
+
+  return {
+    items: data ?? [],
+    totalItems,
+    page,
+    pageSize,
+    pageCount,
+  };
 }
 
 export async function getWordEditor(id: string): Promise<AdminWordEditor | null> {
@@ -131,6 +183,21 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
   const radicalIds =
     radicalLinks?.map((link) => link.radical_id).filter((value): value is string => Boolean(value)) ?? [];
 
+  const { data: tagLinks, error: tagLinksError } = await supabase
+    .from("word_tag_links")
+    .select("word_tags(slug)")
+    .eq("word_id", id);
+
+  if (tagLinksError) throw tagLinksError;
+
+  const topicTags =
+    (tagLinks ?? [])
+      .map((tagLink) => {
+        const relation = tagLink.word_tags as { slug: string } | Array<{ slug: string }> | null;
+        return Array.isArray(relation) ? relation[0]?.slug : relation?.slug;
+      })
+      .filter((value): value is string => Boolean(value)) ?? [];
+
   return {
     word: {
       ...word,
@@ -140,6 +207,7 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
           : word.radical_id
             ? [word.radical_id]
             : [],
+      topic_tags: topicTags,
     },
     examplesText: examplesToTextarea(
       (examples ?? []).map((example) => ({
@@ -186,12 +254,44 @@ export async function saveWordAction(formData: FormData) {
     hanViet: optionalText(formData.get("han_viet")),
     vietnameseMeaning: requiredText(formData.get("vietnamese_meaning")),
     englishMeaning: optionalText(formData.get("english_meaning")),
+    normalizedText: requiredText(formData.get("normalized_text")),
+    meaningsVi: requiredText(formData.get("meanings_vi")),
+    traditionalVariant: optionalText(formData.get("traditional_variant")),
     hskLevel: Number(requiredText(formData.get("hsk_level"))),
     topicId: optionalText(formData.get("topic_id")),
     radicalIds: splitPipeDelimited(optionalText(formData.get("radical_ids"))),
+    topicTags: splitPipeDelimited(optionalText(formData.get("topic_tags"))),
+    partOfSpeech: optionalText(formData.get("part_of_speech")),
+    componentBreakdownJson: optionalText(formData.get("component_breakdown_json")),
+    radicalSummary: optionalText(formData.get("radical_summary")),
+    mnemonic: optionalText(formData.get("mnemonic")),
+    characterStructureType: optionalText(formData.get("character_structure_type")),
+    structureExplanation: optionalText(formData.get("structure_explanation")),
     notes: optionalText(formData.get("notes")),
+    ambiguityFlag: formData.get("ambiguity_flag") === "on",
+    ambiguityNote: optionalText(formData.get("ambiguity_note")),
+    readingCandidates: optionalText(formData.get("reading_candidates")),
+    aiStatus:
+      optionalText(formData.get("ai_status")) as
+        | "pending"
+        | "processing"
+        | "done"
+        | "failed"
+        | "skipped"
+        | null,
+    sourceConfidence:
+      (optionalText(formData.get("source_confidence")) as "low" | "medium" | "high" | null) ?? null,
     isPublished: formData.get("is_published") === "on",
   });
+
+  let componentBreakdownJson: unknown = null;
+  if (parsed.componentBreakdownJson) {
+    try {
+      componentBreakdownJson = JSON.parse(parsed.componentBreakdownJson);
+    } catch {
+      throw new Error("Component breakdown JSON must be valid JSON.");
+    }
+  }
 
   const primaryRadicalId = parsed.radicalIds[0] ?? null;
 
@@ -204,34 +304,45 @@ export async function saveWordAction(formData: FormData) {
     han_viet: parsed.hanViet,
     vietnamese_meaning: parsed.vietnameseMeaning,
     english_meaning: parsed.englishMeaning,
-    normalized_text: parsed.simplified,
-    meanings_vi: parsed.vietnameseMeaning,
-    traditional_variant: parsed.traditional,
+    normalized_text: parsed.normalizedText,
+    meanings_vi: parsed.meaningsVi,
+    traditional_variant: parsed.traditionalVariant,
     hsk_level: parsed.hskLevel,
     topic_id: parsed.topicId,
     radical_id: primaryRadicalId,
     review_status: "approved" as const,
-    ai_status: "done" as const,
-    source_confidence: "high" as const,
+    ai_status: parsed.aiStatus,
+    source_confidence: parsed.sourceConfidence,
+    part_of_speech: parsed.partOfSpeech,
+    component_breakdown_json: componentBreakdownJson,
+    radical_summary: parsed.radicalSummary,
+    mnemonic: parsed.mnemonic,
+    character_structure_type: parsed.characterStructureType,
+    structure_explanation: parsed.structureExplanation,
     notes: parsed.notes,
+    ambiguity_flag: parsed.ambiguityFlag,
+    ambiguity_note: parsed.ambiguityNote,
+    reading_candidates: parsed.readingCandidates,
     content_hash: buildWordContentHash({
-      normalizedText: parsed.simplified,
+      normalizedText: parsed.normalizedText,
       pinyin: parsed.pinyin,
-      meaningsVi: parsed.vietnameseMeaning,
+      meaningsVi: parsed.meaningsVi,
       hanViet: parsed.hanViet,
-      traditionalVariant: parsed.traditional,
+      traditionalVariant: parsed.traditionalVariant,
       hskLevel: parsed.hskLevel,
-      partOfSpeech: null,
-      componentBreakdownJson: null,
-      radicalSummary: null,
-      mnemonic: null,
-      characterStructureType: null,
-      structureExplanation: null,
+      partOfSpeech: parsed.partOfSpeech,
+      componentBreakdownJson,
+      radicalSummary: parsed.radicalSummary,
+      mnemonic: parsed.mnemonic,
+      characterStructureType: parsed.characterStructureType,
+      structureExplanation: parsed.structureExplanation,
       notes: parsed.notes,
-      ambiguityFlag: false,
-      ambiguityNote: null,
-      readingCandidates: null,
-    }),
+      ambiguityFlag: parsed.ambiguityFlag,
+      ambiguityNote: parsed.ambiguityNote,
+      readingCandidates: parsed.readingCandidates,
+      mainRadicals: parsed.radicalIds,
+      topicTags: parsed.topicTags,
+      }),
     is_published: parsed.isPublished,
   };
 
@@ -280,6 +391,49 @@ export async function saveWordAction(formData: FormData) {
     );
 
     if (insertRadicalsError) throw insertRadicalsError;
+  }
+
+  if (parsed.topicTags.length > 0) {
+    const { error: upsertTagsError } = await supabase.from("word_tags").upsert(
+      parsed.topicTags.map((slug) => ({
+        slug,
+        label: slug
+          .split(/[_-]+/)
+          .filter(Boolean)
+          .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+          .join(" "),
+      })),
+      { onConflict: "slug" },
+    );
+
+    if (upsertTagsError) throw upsertTagsError;
+  }
+
+  const { error: deleteTagLinksError } = await supabase.from("word_tag_links").delete().eq("word_id", wordId);
+  if (deleteTagLinksError) throw deleteTagLinksError;
+
+  if (parsed.topicTags.length > 0) {
+    const { data: wordTags, error: selectWordTagsError } = await supabase
+      .from("word_tags")
+      .select("id, slug")
+      .in("slug", parsed.topicTags);
+
+    if (selectWordTagsError) throw selectWordTagsError;
+
+    const tagIdBySlug = new Map((wordTags ?? []).map((tag) => [tag.slug, tag.id]));
+    const missingTags = parsed.topicTags.filter((slug) => !tagIdBySlug.has(slug));
+    if (missingTags.length > 0) {
+      throw new Error(`Missing topic tags after upsert: ${missingTags.join(", ")}`);
+    }
+
+    const { error: insertTagLinksError } = await supabase.from("word_tag_links").insert(
+      parsed.topicTags.map((slug) => ({
+        word_id: wordId,
+        word_tag_id: tagIdBySlug.get(slug) as string,
+      })),
+    );
+
+    if (insertTagLinksError) throw insertTagLinksError;
   }
 
   const examples = parseExamplesTextarea(formData.get("examples_text"));

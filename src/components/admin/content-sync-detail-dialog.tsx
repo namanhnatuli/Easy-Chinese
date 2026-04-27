@@ -43,6 +43,7 @@ interface ContentSyncDetailDialogProps {
   filters: ContentSyncFilters;
   saveAction: any;
   approveAction: any;
+  applyAction: any;
   rejectAction: any;
   radicals: RadicalListItem[];
 }
@@ -53,6 +54,7 @@ export function ContentSyncDetailDialog({
   filters,
   saveAction,
   approveAction,
+  applyAction,
   rejectAction,
   radicals,
 }: ContentSyncDetailDialogProps) {
@@ -62,11 +64,13 @@ export function ContentSyncDetailDialog({
   const formValue = getEditablePayloadForForm(row || ({} as any));
   const [examples, setExamples] = useState(formValue.examples);
   const isResolved =
-    row?.reviewStatus === "approved" ||
     row?.reviewStatus === "rejected" ||
     row?.reviewStatus === "applied" ||
     row?.applyStatus === "applied" ||
     row?.applyStatus === "skipped";
+  const isApprovedPendingApply =
+    row?.reviewStatus === "approved" && row?.applyStatus === "pending";
+  const isEditLocked = isResolved || isApprovedPendingApply;
 
   useEffect(() => {
     if (row) {
@@ -134,7 +138,7 @@ export function ContentSyncDetailDialog({
               <input type="hidden" name="return_apply_status" value={filters.applyStatus} />
               <input type="hidden" name="return_row_id" value={row.id} />
 
-              <fieldset disabled={isResolved} className="grid gap-4 md:grid-cols-2">
+              <fieldset disabled={isEditLocked} className="grid gap-4 md:grid-cols-2">
                 <Field label={t("contentSync.detail.fields.normalizedText")}>
                   <input name="normalized_text" defaultValue={formValue.normalizedText} className={inputClassName()} />
                 </Field>
@@ -295,6 +299,24 @@ export function ContentSyncDetailDialog({
                     <p className="text-xs text-muted-foreground">
                       {t("contentSync.detail.resolvedNotice")}
                     </p>
+                  </div>
+                ) : isApprovedPendingApply ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="rounded-xl border border-dashed bg-muted/30 p-4">
+                      <p className="text-xs text-muted-foreground">
+                        {t("contentSync.detail.pendingApplyNotice")}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="submit"
+                        formAction={applyAction}
+                        className="bg-success hover:bg-success/90"
+                      >
+                        {t("contentSync.detail.actions.applyNow")}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-3">

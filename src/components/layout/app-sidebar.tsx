@@ -36,7 +36,16 @@ function SidebarNavList({
       </p>
       <div className="flex flex-col gap-1">
         {links.map((item) => {
-          const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const matchesItem =
+            pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+          const hasMoreSpecificMatch = links.some((candidate) => {
+            if (candidate.href === item.href || candidate.href.length <= item.href.length) {
+              return false;
+            }
+
+            return pathname === candidate.href || pathname.startsWith(`${candidate.href}/`);
+          });
+          const active = matchesItem && !hasMoreSpecificMatch;
           const Icon = item.icon;
 
           return (

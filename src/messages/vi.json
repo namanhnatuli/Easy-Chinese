@@ -232,7 +232,31 @@
     "emptyTitle": "Không có từ nào khớp với bộ lọc",
     "emptyDescription": "Thử cấp HSK, chủ đề hoặc bộ thủ khác để mở rộng kết quả.",
     "openDetail": "Mở chi tiết",
+    "pageStatus": "Trang {page} / {totalPages}",
+    "structureBadge": "Cấu trúc: {value}",
+    "ambiguousBadge": "Cần lưu ý",
+    "traditionalShort": "Phồn thể: {value}",
     "detailEyebrow": "Chi tiết từ vựng",
+    "forms": "Dạng chữ",
+    "meanings": "Gợi ý ý nghĩa",
+    "simplifiedValue": "Giản thể: {value}",
+    "traditionalValue": "Phồn thể: {value}",
+    "normalizedText": "Chữ chuẩn hóa: {value}",
+    "meaningsVi": "Nghĩa tiếng Việt mở rộng: {value}",
+    "readingCandidates": "Các cách đọc có thể có: {value}",
+    "wordProfile": "Hồ sơ từ",
+    "partOfSpeech": "Từ loại",
+    "radicals": "Bộ thủ",
+    "topicTags": "Thẻ chủ đề",
+    "learningHints": "Gợi ý ghi nhớ",
+    "mnemonic": "Mẹo ghi nhớ",
+    "structureExplanation": "Giải thích cấu trúc",
+    "noLearningHints": "Từ này chưa có ghi chú học tập bổ sung.",
+    "sourceConfidence": {
+      "low": "Độ tin cậy nguồn: thấp",
+      "medium": "Độ tin cậy nguồn: trung bình",
+      "high": "Độ tin cậy nguồn: cao"
+    },
     "metadata": "Thông tin",
     "examples": "Ví dụ",
     "noExamples": "Chưa có ví dụ công khai nào cho từ này.",
@@ -415,6 +439,7 @@
         "traditionalVariant": "Biến thể phồn thể",
         "hskLevel": "Cấp HSK",
         "mainRadicals": "Bộ thủ chính",
+        "radicalSummary": "Tóm tắt bộ thủ",
         "topicTags": "Thẻ chủ đề",
         "topicTagsHint": "Tìm và chọn từ các danh mục định sẵn",
         "partOfSpeech": "Từ loại",
@@ -449,8 +474,10 @@
         "description": "Cần duyệt thủ công do có cách đọc phức tạp hoặc nhiều cách đọc hợp lệ."
       },
       "resolvedNotice": "Dòng này đã được xử lý. Chỉ có thể xem và không còn hành động nào khả dụng.",
+      "pendingApplyNotice": "Dòng này đã được duyệt nhưng vẫn đang chờ áp dụng. Hãy chạy apply để tạo hoặc cập nhật word thật và chuyển dòng này sang applied.",
       "actions": {
         "approveAndSync": "Duyệt và đồng bộ",
+        "applyNow": "Apply ngay",
         "rejectRow": "Từ chối dòng",
         "saveChangesOnly": "Chỉ lưu thay đổi",
         "close": "Đóng"
@@ -741,8 +768,16 @@
         "noTopic": "Không có chủ đề",
         "radical": "Bộ thủ",
         "noRadical": "Không có bộ thủ",
+        "sourceConfidence": "Độ tin cậy nguồn",
+        "sourceConfidenceOptions": {
+          "low": "Thấp",
+          "medium": "Trung bình",
+          "high": "Cao"
+        },
         "published": "Đã xuất bản",
+        "ambiguityFlag": "Đánh dấu là dễ gây nhập nhằng",
         "notes": "Ghi chú",
+        "componentBreakdownJson": "JSON phân tích thành phần",
         "examples": "Ví dụ"
       },
       "create": {
@@ -754,6 +789,11 @@
         "eyebrow": "Quản trị từ vựng",
         "description": "Cập nhật chi tiết từ vựng, trạng thái xuất bản và ví dụ.",
         "submit": "Lưu từ"
+      },
+      "deleteConfirm": {
+        "title": "Xóa từ này?",
+        "description": "Thao tác này sẽ xóa từ \"{word}\" ({slug}) khỏi thư viện. Hành động này không thể hoàn tác.",
+        "confirm": "Xóa từ"
       }
     },
     "grammar": {

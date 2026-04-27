@@ -38,6 +38,35 @@ The product supports:
 17. Anonymous users may access public content but may not persist progress.
 18. Admin users can perform all user operations plus content management.
 
+## Database Architecture Rules
+
+We DO NOT use SQL functions for business logic.
+
+Strict rules:
+- Never create SQL functions for application logic
+- Never use Supabase RPC pattern
+- Never implement business logic in database layer
+- Database is ONLY for:
+  - schema
+  - constraints
+  - indexes
+  - relationships
+  - RLS policies
+
+All business logic must be implemented in:
+- service layer
+- server actions
+- application code
+
+If a task seems to require SQL logic:
+→ implement it in application code instead
+
+SQL functions are ONLY allowed for:
+- trivial utility (e.g. updated_at trigger)
+- and must be explicitly justified
+
+Violating this rule is considered a bug.
+
 ## UI direction
 Use a calm study-product design:
 - left sidebar navigation

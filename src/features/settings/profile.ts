@@ -4,6 +4,7 @@ import { userSettingsSchema } from "@/features/settings/schema";
 import { getProfileForUserId } from "@/features/auth/profile";
 import { normalizeFontPreference, normalizeLanguage, normalizeThemePreference } from "@/features/settings/preferences";
 import type { UserSettingsInput } from "@/features/settings/types";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function updateUserSettings({
   supabase,
@@ -21,7 +22,9 @@ export async function updateUserSettings({
     throw new Error("Profile not found.");
   }
 
-  const { error } = await supabase
+  const adminSupabase = createSupabaseAdminClient();
+
+  const { error } = await adminSupabase
     .from("profiles")
     .update({
       preferred_language: normalizeLanguage(parsed.language),

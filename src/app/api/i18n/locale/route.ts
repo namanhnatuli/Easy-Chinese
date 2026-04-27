@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { localeCookieName } from "@/i18n/config";
 import { normalizeLocale } from "@/i18n/locale";
 import { logger } from "@/lib/logger";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
@@ -32,7 +33,9 @@ export async function POST(request: NextRequest) {
     return response;
   }
 
-  const { error } = await supabase
+  const adminSupabase = createSupabaseAdminClient();
+
+  const { error } = await adminSupabase
     .from("profiles")
     .update({ preferred_language: locale })
     .eq("id", user.id);

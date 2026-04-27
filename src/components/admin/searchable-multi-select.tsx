@@ -66,6 +66,11 @@ export function SearchableMultiSelect({
     );
   }, [normalizedOptions, query]);
 
+  const labelByValue = useMemo(
+    () => new Map(normalizedOptions.map((option) => [option.value, option.label])),
+    [normalizedOptions],
+  );
+
   const toggleOption = (value: string) => {
     if (isMulti) {
       setSelected((prev) =>
@@ -85,22 +90,7 @@ export function SearchableMultiSelect({
   return (
     <div className="relative space-y-2" ref={containerRef}>
       {/* Hidden input for form submission */}
-      <input type="hidden" name={name} value={selected.join(" | ")} />
-
-      <div className="flex flex-wrap gap-2 min-h-6">
-        {selected.map((val) => (
-          <Badge key={val} variant="secondary" className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-primary/10 text-primary border-primary/20">
-            {labelMapping[val] || val}
-            <button
-              type="button"
-              onClick={() => removeOption(val)}
-              className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
-            >
-              <X className="size-3" />
-            </button>
-          </Badge>
-        ))}
-      </div>
+      <input type="hidden" hidden name={name} value={selected.join(" | ")} />
 
       <div className="relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
@@ -144,6 +134,25 @@ export function SearchableMultiSelect({
             })}
           </div>
         )}
+      </div>
+
+      <div className="flex min-h-11 flex-wrap content-start gap-2">
+        {selected.map((val) => (
+          <Badge
+            key={val}
+            variant="secondary"
+            className="flex items-center gap-1 border-primary/20 bg-primary/10 py-0.5 pl-2 pr-1 text-primary"
+          >
+            {labelByValue.get(val) || labelMapping[val] || val}
+            <button
+              type="button"
+              onClick={() => removeOption(val)}
+              className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
+            >
+              <X className="size-3" />
+            </button>
+          </Badge>
+        ))}
       </div>
     </div>
   );

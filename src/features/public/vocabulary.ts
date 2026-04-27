@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { TAG_LABELS } from "@/features/vocabulary-sync/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const vocabularyFilterSchema = z.object({
@@ -20,6 +21,11 @@ export interface PublicRadicalFilterOption {
   meaningVi: string;
 }
 
+export interface PublicWordTag {
+  slug: string;
+  label: string;
+}
+
 export interface VocabularyFilters {
   hsk?: number;
   topic?: string;
@@ -30,19 +36,40 @@ export interface PublicWordListItem {
   id: string;
   slug: string;
   hanzi: string;
+  simplified: string;
+  traditional: string | null;
   pinyin: string;
   hanViet: string | null;
   vietnameseMeaning: string;
+  englishMeaning: string | null;
+  meaningsVi: string | null;
   hskLevel: number;
   notes: string | null;
+  partOfSpeech: string | null;
+  radicalSummary: string | null;
+  characterStructureType: string | null;
+  ambiguityFlag: boolean;
+  sourceConfidence: "low" | "medium" | "high" | null;
   topic: PublicTopicFilterOption | null;
   radicals: PublicRadicalFilterOption[];
+  topicTags: PublicWordTag[];
+}
+
+export interface PublicWordListPage {
+  items: PublicWordListItem[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 }
 
 export interface PublicWordDetail extends PublicWordListItem {
-  simplified: string;
-  traditional: string | null;
-  englishMeaning: string | null;
+  normalizedText: string | null;
+  traditionalVariant: string | null;
+  mnemonic: string | null;
+  structureExplanation: string | null;
+  ambiguityNote: string | null;
+  readingCandidates: string | null;
   examples: Array<{
     id: string;
     chineseText: string;
@@ -73,15 +100,39 @@ function normalizeRelation<T>(value: T | T[] | null): T | null {
   return value;
 }
 
+function parsePipeDelimitedText(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function getHumanLabel(value: string) {
+  return TAG_LABELS[value] ?? value;
+}
+
 function mapWordListItem(row: {
   id: string;
   slug: string;
+  simplified: string;
+  traditional: string | null;
   hanzi: string;
   pinyin: string;
   han_viet: string | null;
   vietnamese_meaning: string;
+  english_meaning: string | null;
+  meanings_vi: string | null;
   hsk_level: number;
   notes: string | null;
+  part_of_speech: string | null;
+  radical_summary: string | null;
+  character_structure_type: string | null;
+  ambiguity_flag: boolean;
+  source_confidence: "low" | "medium" | "high" | null;
   topics: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null;
 }): PublicWordListItem {
   const topic = normalizeRelation(row.topics);
@@ -89,12 +140,21 @@ function mapWordListItem(row: {
   return {
     id: row.id,
     slug: row.slug,
+    simplified: row.simplified,
+    traditional: row.traditional,
     hanzi: row.hanzi,
     pinyin: row.pinyin,
     hanViet: row.han_viet,
     vietnameseMeaning: row.vietnamese_meaning,
+    englishMeaning: row.english_meaning,
+    meaningsVi: row.meanings_vi,
     hskLevel: row.hsk_level,
     notes: row.notes,
+    partOfSpeech: row.part_of_speech,
+    radicalSummary: row.radical_summary,
+    characterStructureType: row.character_structure_type,
+    ambiguityFlag: row.ambiguity_flag,
+    sourceConfidence: row.source_confidence,
     topic: topic
       ? {
           id: topic.id,
@@ -103,6 +163,7 @@ function mapWordListItem(row: {
         }
       : null,
     radicals: [],
+    topicTags: [],
   };
 }
 
@@ -149,10 +210,55 @@ async function listWordRadicals(wordIds: string[]) {
   return grouped;
 }
 
-function attachRadicals<T extends PublicWordListItem>(words: T[], radicalsByWordId: Map<string, PublicRadicalFilterOption[]>) {
+async function listWordTags(wordIds: string[]) {
+  if (wordIds.length === 0) {
+    return new Map<string, PublicWordTag[]>();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("word_tag_links")
+    .select("word_id, word_tags(slug, label)")
+    .in("word_id", wordIds);
+
+  if (error) {
+    throw error;
+  }
+
+  const grouped = new Map<string, PublicWordTag[]>();
+
+  for (const row of (data ?? []) as Array<{
+    word_id: string;
+    word_tags:
+      | { slug: string; label: string }
+      | Array<{ slug: string; label: string }>
+      | null;
+  }>) {
+    const tag = normalizeRelation(row.word_tags);
+    if (!tag) {
+      continue;
+    }
+
+    const current = grouped.get(row.word_id) ?? [];
+    current.push({
+      slug: tag.slug,
+      label: tag.label,
+    });
+    grouped.set(row.word_id, current);
+  }
+
+  return grouped;
+}
+
+function attachWordRelations<T extends PublicWordListItem>(
+  words: T[],
+  radicalsByWordId: Map<string, PublicRadicalFilterOption[]>,
+  tagsByWordId: Map<string, PublicWordTag[]>,
+) {
   return words.map((word) => ({
     ...word,
     radicals: radicalsByWordId.get(word.id) ?? [],
+    topicTags: tagsByWordId.get(word.id) ?? [],
   }));
 }
 
@@ -162,6 +268,12 @@ export function parseVocabularyFilters(searchParams: Record<string, string | str
     topic: optionalQueryValue(searchParams.topic),
     radical: optionalQueryValue(searchParams.radical),
   });
+}
+
+export function parseVocabularyPage(value: string | string[] | undefined) {
+  const normalized = takeFirst(value);
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
 }
 
 export async function listVocabularyFilterOptions(): Promise<{
@@ -197,7 +309,10 @@ export async function listVocabularyFilterOptions(): Promise<{
   };
 }
 
-export async function listPublicWords(filters: VocabularyFilters): Promise<PublicWordListItem[]> {
+export async function listPublicWordsPage(
+  filters: VocabularyFilters,
+  input: { page: number; pageSize: number },
+): Promise<PublicWordListPage> {
   const supabase = await createSupabaseServerClient();
   let filteredWordIds: string[] | null = null;
 
@@ -214,40 +329,77 @@ export async function listPublicWords(filters: VocabularyFilters): Promise<Publi
     filteredWordIds = [...new Set((radicalLinks ?? []).map((row) => row.word_id))];
 
     if (filteredWordIds.length === 0) {
-      return [];
+      return {
+        items: [],
+        totalItems: 0,
+        page: 1,
+        pageSize: input.pageSize,
+        pageCount: 1,
+      };
     }
   }
 
-  let query = supabase
+  let countQuery = supabase
+    .from("words")
+    .select("id, topics(slug)", { count: "exact", head: true })
+    .eq("is_published", true);
+
+  let listQuery = supabase
     .from("words")
     .select(
-      "id, slug, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, topics(id, name, slug)",
+      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, meanings_vi, hsk_level, notes, part_of_speech, radical_summary, character_structure_type, ambiguity_flag, source_confidence, topics(id, name, slug)",
+      { count: "exact" },
     )
     .eq("is_published", true)
     .order("hsk_level")
     .order("hanzi");
 
   if (filters.hsk) {
-    query = query.eq("hsk_level", filters.hsk);
+    countQuery = countQuery.eq("hsk_level", filters.hsk);
+    listQuery = listQuery.eq("hsk_level", filters.hsk);
   }
 
   if (filters.topic) {
-    query = query.eq("topics.slug", filters.topic);
+    countQuery = countQuery.eq("topics.slug", filters.topic);
+    listQuery = listQuery.eq("topics.slug", filters.topic);
   }
 
   if (filteredWordIds) {
-    query = query.in("id", filteredWordIds);
+    countQuery = countQuery.in("id", filteredWordIds);
+    listQuery = listQuery.in("id", filteredWordIds);
   }
 
-  const { data, error } = await query;
+  const { count, error: countError } = await countQuery;
+  if (countError) {
+    throw countError;
+  }
+
+  const pageSize = input.pageSize;
+  const totalItems = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(input.page, pageCount);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error } = await listQuery.range(from, to);
 
   if (error) {
     throw error;
   }
 
   const words = (data ?? []).map(mapWordListItem);
-  const radicalsByWordId = await listWordRadicals(words.map((word) => word.id));
-  return attachRadicals(words, radicalsByWordId);
+  const [radicalsByWordId, tagsByWordId] = await Promise.all([
+    listWordRadicals(words.map((word) => word.id)),
+    listWordTags(words.map((word) => word.id)),
+  ]);
+
+  return {
+    items: attachWordRelations(words, radicalsByWordId, tagsByWordId),
+    totalItems,
+    page,
+    pageSize,
+    pageCount,
+  };
 }
 
 export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetail | null> {
@@ -255,7 +407,7 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
   const { data: word, error: wordError } = await supabase
     .from("words")
     .select(
-      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, hsk_level, notes, topics(id, name, slug)",
+      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, meanings_vi, normalized_text, traditional_variant, hsk_level, notes, part_of_speech, radical_summary, mnemonic, character_structure_type, structure_explanation, ambiguity_flag, ambiguity_note, reading_candidates, source_confidence, topics(id, name, slug)",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -282,23 +434,38 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
   const mapped = mapWordListItem({
     id: word.id,
     slug: word.slug,
+    simplified: word.simplified,
+    traditional: word.traditional,
     hanzi: word.hanzi,
     pinyin: word.pinyin,
     han_viet: word.han_viet,
     vietnamese_meaning: word.vietnamese_meaning,
+    english_meaning: word.english_meaning,
+    meanings_vi: word.meanings_vi,
     hsk_level: word.hsk_level,
     notes: word.notes,
+    part_of_speech: word.part_of_speech,
+    radical_summary: word.radical_summary,
+    character_structure_type: word.character_structure_type,
+    ambiguity_flag: word.ambiguity_flag,
+    source_confidence: word.source_confidence,
     topics: word.topics,
   });
 
-  const radicalsByWordId = await listWordRadicals([word.id]);
-  const [wordWithRadicals] = attachRadicals([mapped], radicalsByWordId);
+  const [radicalsByWordId, tagsByWordId] = await Promise.all([
+    listWordRadicals([word.id]),
+    listWordTags([word.id]),
+  ]);
+  const [wordWithRelations] = attachWordRelations([mapped], radicalsByWordId, tagsByWordId);
 
   return {
-    ...wordWithRadicals,
-    simplified: word.simplified,
-    traditional: word.traditional,
-    englishMeaning: word.english_meaning,
+    ...wordWithRelations,
+    normalizedText: word.normalized_text,
+    traditionalVariant: word.traditional_variant,
+    mnemonic: word.mnemonic,
+    structureExplanation: word.structure_explanation,
+    ambiguityNote: word.ambiguity_note,
+    readingCandidates: word.reading_candidates,
     examples: (examples ?? []).map((example) => ({
       id: example.id,
       chineseText: example.chinese_text,
@@ -306,5 +473,27 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
       vietnameseMeaning: example.vietnamese_meaning,
       sortOrder: example.sort_order,
     })),
+  };
+}
+
+export function formatPublicPartOfSpeech(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return parsePipeDelimitedText(value).map((entry) => ({
+    value: entry,
+    label: getHumanLabel(entry),
+  }));
+}
+
+export function formatPublicStructureType(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return {
+    value,
+    label: getHumanLabel(value),
   };
 }

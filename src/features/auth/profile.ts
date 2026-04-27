@@ -119,10 +119,7 @@ export async function ensureProfileForUser(
     return existingProfile;
   }
 
-  const writeClient =
-    desiredRole === "admin"
-      ? createSupabaseAdminClient()
-      : supabase;
+  const writeClient = createSupabaseAdminClient();
 
   const { data, error } = await writeClient
     .from("profiles")
@@ -145,7 +142,7 @@ export async function ensureProfileForUser(
     userId: user.id,
     email: user.email ?? null,
     desiredRole,
-    usedAdminClient: writeClient !== supabase,
+    usedAdminClient: true,
   });
 
   return mapProfileRow(profileRowSchema.parse(data));

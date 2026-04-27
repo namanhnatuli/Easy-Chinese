@@ -1,28 +1,24 @@
-import assert from "node:assert/strict";
 import test from "node:test";
+import assert from "node:assert/strict";
 
-import { resolveMainRadicalsAgainstAliases } from "@/features/vocabulary-sync/radical-alias";
+import { resolveEffectiveInputTextForApply } from "@/features/vocabulary-sync/apply-payload";
 
-test("resolveMainRadicalsAgainstAliases maps seeded aliases to canonical radicals", () => {
-  const resolved = resolveMainRadicalsAgainstAliases(
-    ["yêu (爫)", "tâm", "心"],
-    [
-      {
-        radical: "爪",
-        display_label: "Trảo 爪 (爫)",
-        han_viet_name: "trảo",
-        meaning_vi: "yêu",
-        variant_forms: ["爫"],
-      },
-      {
-        radical: "心",
-        display_label: "Tâm 心 (忄, ⺗)",
-        han_viet_name: "tâm",
-        meaning_vi: "tim",
-        variant_forms: ["忄", "⺗"],
-      },
-    ],
+test("resolveEffectiveInputTextForApply falls back to normalizedText when inputText is missing", () => {
+  assert.equal(
+    resolveEffectiveInputTextForApply({
+      inputText: null,
+      normalizedText: "你好",
+    }),
+    "你好",
   );
+});
 
-  assert.deepEqual(resolved, ["爪", "心"]);
+test("resolveEffectiveInputTextForApply prefers inputText when provided", () => {
+  assert.equal(
+    resolveEffectiveInputTextForApply({
+      inputText: "妳好",
+      normalizedText: "你好",
+    }),
+    "妳好",
+  );
 });

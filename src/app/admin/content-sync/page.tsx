@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import {
   approveAllEligibleContentSyncRowsAction,
   approveContentSyncRowAction,
+  applyContentSyncRowAction,
   rejectContentSyncRowAction,
   bulkReviewContentSyncRowsAction,
   getContentSyncPageData,
@@ -204,6 +205,7 @@ export default async function AdminContentSyncPage({
                   filters={data.filters}
                   saveAction={saveContentSyncRowEditsAction}
                   approveAction={approveContentSyncRowAction}
+                  applyAction={applyContentSyncRowAction}
                   rejectAction={rejectContentSyncRowAction}
                   radicals={radicals}
                 />

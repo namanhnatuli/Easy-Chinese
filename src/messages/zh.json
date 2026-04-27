@@ -232,7 +232,31 @@
     "emptyTitle": "没有符合这些筛选条件的已发布词汇",
     "emptyDescription": "尝试其他 HSK 等级、主题或部首以扩大结果。",
     "openDetail": "查看详情",
+    "pageStatus": "第 {page} 页，共 {totalPages} 页",
+    "structureBadge": "结构：{value}",
+    "ambiguousBadge": "需留意",
+    "traditionalShort": "繁体：{value}",
     "detailEyebrow": "词汇详情",
+    "forms": "字形形式",
+    "meanings": "释义提示",
+    "simplifiedValue": "简体：{value}",
+    "traditionalValue": "繁体：{value}",
+    "normalizedText": "标准化文本：{value}",
+    "meaningsVi": "扩展越南语释义：{value}",
+    "readingCandidates": "可能读音：{value}",
+    "wordProfile": "词汇档案",
+    "partOfSpeech": "词性",
+    "radicals": "部首",
+    "topicTags": "主题标签",
+    "learningHints": "学习提示",
+    "mnemonic": "记忆法",
+    "structureExplanation": "结构说明",
+    "noLearningHints": "这个词目前还没有补充学习提示。",
+    "sourceConfidence": {
+      "low": "来源置信度：低",
+      "medium": "来源置信度：中",
+      "high": "来源置信度：高"
+    },
     "metadata": "元数据",
     "examples": "例句",
     "noExamples": "这个词目前还没有公开例句。",
@@ -415,6 +439,7 @@
         "traditionalVariant": "繁体变体",
         "hskLevel": "HSK 等级",
         "mainRadicals": "主要部首",
+        "radicalSummary": "部首摘要",
         "topicTags": "主题标签",
         "topicTagsHint": "从预定义分类中搜索并选择",
         "partOfSpeech": "词性",
@@ -449,8 +474,10 @@
         "description": "由于存在复杂或多个有效读音，需要人工审核。"
       },
       "resolvedNotice": "这条记录已经处理完毕。当前为只读状态，不能再执行其他操作。",
+      "pendingApplyNotice": "这条记录已经审核通过，但仍处于待应用状态。请执行 apply，将其创建或更新到正式词库，并把状态转为 applied。",
       "actions": {
         "approveAndSync": "批准并同步",
+        "applyNow": "立即应用",
         "rejectRow": "拒绝该行",
         "saveChangesOnly": "仅保存修改",
         "close": "关闭"
@@ -741,8 +768,16 @@
         "noTopic": "无主题",
         "radical": "部首",
         "noRadical": "无部首",
+        "sourceConfidence": "来源置信度",
+        "sourceConfidenceOptions": {
+          "low": "低",
+          "medium": "中",
+          "high": "高"
+        },
         "published": "已发布",
+        "ambiguityFlag": "标记为有歧义",
         "notes": "备注",
+        "componentBreakdownJson": "部件拆解 JSON",
         "examples": "例句"
       },
       "create": {
@@ -754,6 +789,11 @@
         "eyebrow": "词汇管理",
         "description": "更新词汇详情、发布状态和例句。",
         "submit": "保存词汇"
+      },
+      "deleteConfirm": {
+        "title": "要删除这个词吗？",
+        "description": "此操作会将“{word}”（{slug}）从词库中删除，且无法撤销。",
+        "confirm": "删除词汇"
       }
     },
     "grammar": {

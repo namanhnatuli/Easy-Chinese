@@ -232,7 +232,31 @@
     "emptyTitle": "No published words match these filters",
     "emptyDescription": "Try a different HSK level, topic, or radical filter to widen the results.",
     "openDetail": "Open detail",
+    "pageStatus": "Page {page} of {totalPages}",
+    "structureBadge": "Structure: {value}",
+    "ambiguousBadge": "Needs care",
+    "traditionalShort": "Traditional: {value}",
     "detailEyebrow": "Vocabulary detail",
+    "forms": "Written forms",
+    "meanings": "Meaning guide",
+    "simplifiedValue": "Simplified: {value}",
+    "traditionalValue": "Traditional: {value}",
+    "normalizedText": "Normalized text: {value}",
+    "meaningsVi": "Expanded Vietnamese meaning: {value}",
+    "readingCandidates": "Possible readings: {value}",
+    "wordProfile": "Word profile",
+    "partOfSpeech": "Part of speech",
+    "radicals": "Radicals",
+    "topicTags": "Topic tags",
+    "learningHints": "Learning hints",
+    "mnemonic": "Mnemonic",
+    "structureExplanation": "Structure explanation",
+    "noLearningHints": "No extra study notes have been added for this word yet.",
+    "sourceConfidence": {
+      "low": "Source confidence: low",
+      "medium": "Source confidence: medium",
+      "high": "Source confidence: high"
+    },
     "metadata": "Metadata",
     "examples": "Examples",
     "noExamples": "No public examples have been published for this word yet.",
@@ -415,6 +439,7 @@
         "traditionalVariant": "Traditional variant",
         "hskLevel": "HSK level",
         "mainRadicals": "Main radicals",
+        "radicalSummary": "Radical summary",
         "topicTags": "Topic tags",
         "topicTagsHint": "Search and select from predefined categories",
         "partOfSpeech": "Part of speech",
@@ -449,8 +474,10 @@
         "description": "Requires manual review due to complex or multiple valid readings."
       },
       "resolvedNotice": "This row has already been resolved. It is view-only and no further actions are available.",
+      "pendingApplyNotice": "This row has already been approved, but it is still pending apply. Run apply to create or update the production word and move this row to applied.",
       "actions": {
         "approveAndSync": "Approve and sync",
+        "applyNow": "Apply now",
         "rejectRow": "Reject row",
         "saveChangesOnly": "Save changes only",
         "close": "Close"
@@ -741,8 +768,16 @@
         "noTopic": "No topic",
         "radical": "Radical",
         "noRadical": "No radical",
+        "sourceConfidence": "Source confidence",
+        "sourceConfidenceOptions": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        },
         "published": "Published",
+        "ambiguityFlag": "Mark as ambiguous",
         "notes": "Notes",
+        "componentBreakdownJson": "Component breakdown JSON",
         "examples": "Examples"
       },
       "create": {
@@ -754,6 +789,11 @@
         "eyebrow": "Admin Words",
         "description": "Update vocabulary details, publish state, and examples.",
         "submit": "Save word"
+      },
+      "deleteConfirm": {
+        "title": "Delete this word?",
+        "description": "This will remove \"{word}\" ({slug}) from the library. This action cannot be undone.",
+        "confirm": "Delete word"
       }
     },
     "grammar": {
