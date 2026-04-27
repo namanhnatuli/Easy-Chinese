@@ -34,13 +34,18 @@
     "delete": "Xóa",
     "edit": "Sửa",
     "cancel": "Hủy",
+    "close": "Đóng",
     "tryAgain": "Thử lại",
     "home": "Trang chủ",
     "notAvailable": "—",
     "language": "Ngôn ngữ",
     "sans": "Sans hiện đại",
     "serif": "Serif dễ đọc",
-    "kai": "Khải Thư (Bút lông)"
+    "kai": "Khải Thư (Bút lông)",
+    "paginationSummary": "Hiển thị {start}-{end} trên tổng {total} {itemLabel}",
+    "previous": "Trước",
+    "next": "Sau",
+    "pageSuffix": "/ trang"
   },
   "languages": {
     "en": "Tiếng Anh",
@@ -249,6 +254,241 @@
     "explanation": "Giải thích",
     "examples": "Ví dụ",
     "noExamples": "Chưa có ví dụ công khai nào cho điểm ngữ pháp này."
+  },
+  "contentSync": {
+    "header": {
+      "eyebrow": "Đồng bộ quản trị",
+      "title": "Đồng bộ từ vựng từ Google Sheets",
+      "description": "Xem trước các dòng từ vựng đã stage, kiểm tra thay đổi do AI tạo ra, rồi phê duyệt hoặc từ chối. Các dòng được phê duyệt sẽ đồng bộ vào dữ liệu thật ngay."
+    },
+    "error": {
+      "title": "Lỗi Google Sheets API",
+      "syncError": "Lỗi đồng bộ",
+      "applyError": "Lỗi áp dụng"
+    },
+    "tabs": {
+      "queue": "Hàng chờ duyệt",
+      "resolved": "Lịch sử đã xử lý",
+      "stats": "Phân tích chi tiết",
+      "batchSync": "Đồng bộ batch"
+    },
+    "empty": {
+      "noResolvedRows": "Chưa có dòng đồng bộ nào đã xử lý",
+      "noResolvedRowsDescription": "Chưa có dòng nào được phê duyệt, từ chối hoặc áp dụng. Hãy chọn một batch trong lịch sử hoặc xử lý các dòng trong hàng chờ duyệt.",
+      "noQueueRows": "Không có dòng đồng bộ nào trong hàng chờ duyệt",
+      "noQueueRowsDescription": "Hãy bắt đầu một preview mới hoặc chọn một batch trong lịch sử để xem các dòng đã stage.",
+      "noFilteredRows": "Không có dòng stage nào khớp bộ lọc hiện tại",
+      "noFilteredRowsDescription": "Hãy điều chỉnh ô tìm kiếm hoặc bộ lọc để mở rộng hàng chờ duyệt.",
+      "noHistory": "Chưa có lịch sử đồng bộ",
+      "noHistoryDescription": "Hãy bắt đầu preview đầu tiên để bắt đầu.",
+      "noBatchRows": "Không tìm thấy dòng đồng bộ nào cho batch này.",
+      "noIssues": "Không có vấn đề",
+      "noIssuesDescription": "Chuẩn hóa thành công.",
+      "noDiff": "Không có khác biệt.",
+      "noExamples": "Chưa có ví dụ nào. Nhấn \"Thêm ví dụ\" để tạo."
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm theo chữ đã chuẩn hóa hoặc pinyin",
+      "allChangeTypes": "Tất cả loại thay đổi",
+      "allReviewStates": "Tất cả trạng thái duyệt",
+      "allApplyStates": "Tất cả trạng thái áp dụng"
+    },
+    "overview": {
+      "globalQueueTitle": "Hàng chờ duyệt toàn cục",
+      "globalQueueDescription": "Hiển thị tất cả các dòng đồng bộ trên mọi batch vẫn còn ở trạng thái `pending` hoặc `needs_review`.",
+      "globalResolvedTitle": "Lịch sử đã xử lý toàn cục",
+      "globalResolvedDescription": "Hiển thị tất cả các dòng đồng bộ trên mọi batch không còn ở trạng thái `pending` hoặc `needs_review`."
+    },
+    "stats": {
+      "currentBatch": "Batch hiện tại",
+      "detailDescription": "Phân tích chi tiết và phân bố dòng.",
+      "sourceClassification": "Phân loại dữ liệu nguồn",
+      "reviewAndActionStatus": "Trạng thái duyệt & hành động",
+      "new": {
+        "label": "Mới",
+        "description": "Các dòng chưa có bản ghi khớp trong dữ liệu thật."
+      },
+      "changed": {
+        "label": "Đã thay đổi",
+        "description": "Các dòng đã khớp nhưng nội dung quan trọng có khác biệt."
+      },
+      "unchanged": {
+        "label": "Không đổi",
+        "description": "Các dòng bị bỏ qua tự động vì nội dung stage đã trùng với dữ liệu thật."
+      },
+      "conflict": {
+        "label": "Xung đột",
+        "description": "Các dòng vẫn cần con người phân biệt."
+      },
+      "invalid": {
+        "label": "Không hợp lệ",
+        "description": "Các dòng bị chặn do lỗi parse hoặc validation."
+      },
+      "approved": {
+        "label": "Đã duyệt",
+        "description": "Các dòng đã được duyệt nhưng chưa hoàn tất vì bước đồng bộ vẫn đang chờ hoặc thất bại."
+      },
+      "applied": {
+        "label": "Đã áp dụng",
+        "description": "Các dòng đã được đồng bộ vào dữ liệu thật hoặc bị bỏ qua vì nội dung không đổi."
+      },
+      "rejected": {
+        "label": "Đã từ chối",
+        "description": "Các dòng đã bị từ chối khỏi hàng chờ duyệt."
+      }
+    },
+    "batchSync": {
+      "startTitle": "Bắt đầu preview sync",
+      "startDescription": "Nhập spreadsheet ID và tên sheet để kéo các dòng vào hàng chờ duyệt đã stage.",
+      "spreadsheetId": "Spreadsheet ID",
+      "spreadsheetPlaceholder": "1abc...",
+      "spreadsheetHintDefault": "Tùy chọn. Mặc định dùng {value}...",
+      "spreadsheetHintRequired": "Bắt buộc nếu GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID chưa được thiết lập.",
+      "sheetName": "Tên sheet",
+      "sheetPlaceholder": "Vocabulary",
+      "sheetHintDefault": "Tùy chọn. Mặc định dùng \"{value}\".",
+      "sheetHintRequired": "Bắt buộc nếu GOOGLE_SHEETS_DEFAULT_SHEET_NAME chưa được thiết lập.",
+      "startPreview": "Bắt đầu preview",
+      "startingPreview": "Đang bắt đầu preview…",
+      "historyTitle": "Lịch sử batch",
+      "historyDescription": "Các lần chạy preview gần đây có thể mở ra để duyệt.",
+      "detailsTitle": "Chi tiết batch sync",
+      "detailsDescription": "Cấu hình và trạng thái hiện tại của lần preview từ vựng được chọn.",
+      "sourceSpreadsheet": "Spreadsheet nguồn",
+      "sheetNameLabel": "Tên sheet",
+      "createdAt": "Tạo lúc {value}",
+      "unknownCreatedAt": "Không rõ thời gian tạo",
+      "rowProcessingSummary": "Tóm tắt xử lý dòng",
+      "rowsInBatch": "Các dòng trong batch này",
+      "syncedRows": "Số dòng đã sync"
+    },
+    "queue": {
+      "selectedSingle": "Đã chọn 1 dòng",
+      "selectedMultiple": "Đã chọn {count} dòng",
+      "bulkApprove": "Duyệt hàng loạt",
+      "bulkReject": "Từ chối hàng loạt",
+      "text": "Nội dung",
+      "change": "Thay đổi",
+      "review": "Duyệt",
+      "apply": "Áp dụng",
+      "batch": "Batch",
+      "source": "Nguồn",
+      "action": "Hành động",
+      "detail": "Chi tiết",
+      "rowsLabel": "dòng"
+    },
+    "batchHistory": {
+      "sheet": "Sheet",
+      "spreadsheet": "Spreadsheet",
+      "status": "Trạng thái",
+      "syncedRows": "Số dòng đã sync",
+      "pending": "Đang chờ",
+      "approved": "Đã duyệt",
+      "applied": "Đã áp dụng",
+      "rejected": "Đã từ chối",
+      "errors": "Lỗi",
+      "created": "Tạo lúc",
+      "action": "Hành động",
+      "untagged": "Chưa gắn nhãn",
+      "notAvailable": "N/A",
+      "unknown": "Không rõ",
+      "view": "Xem",
+      "batchesLabel": "batch"
+    },
+    "detail": {
+      "title": "Chi tiết dòng cần duyệt",
+      "description": "Kiểm tra nội dung đã stage và xem payload chuẩn hóa cho dòng sync này.",
+      "rowColumn": "Dòng",
+      "rowLabel": "Dòng #{value}",
+      "matchLabel": "Khớp: {value}",
+      "tabs": {
+        "edit": "Chỉnh sửa",
+        "diff": "Khác biệt",
+        "payloads": "Payload",
+        "issues": "Vấn đề"
+      },
+      "fields": {
+        "normalizedText": "Chữ đã chuẩn hóa",
+        "pinyin": "Pinyin",
+        "meaningsVi": "Nghĩa tiếng Việt",
+        "hanViet": "Hán Việt",
+        "traditionalVariant": "Biến thể phồn thể",
+        "hskLevel": "Cấp HSK",
+        "mainRadicals": "Bộ thủ chính",
+        "topicTags": "Thẻ chủ đề",
+        "topicTagsHint": "Tìm và chọn từ các danh mục định sẵn",
+        "partOfSpeech": "Từ loại",
+        "characterStructureType": "Kiểu cấu trúc chữ",
+        "aiStatus": "Trạng thái AI",
+        "sourceUpdatedAt": "Thời gian nguồn cập nhật",
+        "examples": "Ví dụ",
+        "structureExplanation": "Giải thích cấu trúc",
+        "mnemonic": "Gợi nhớ",
+        "similarChars": "Chữ tương tự",
+        "similarCharsHint": "Phân tách bằng dấu |",
+        "readingCandidates": "Các cách đọc khả dĩ",
+        "ambiguityNote": "Ghi chú mơ hồ",
+        "reviewNote": "Ghi chú duyệt",
+        "notes": "Ghi chú"
+      },
+      "aiStatusOptions": {
+        "pending": "pending",
+        "processing": "processing",
+        "done": "done",
+        "failed": "failed",
+        "skipped": "skipped"
+      },
+      "examples": {
+        "add": "Thêm ví dụ",
+        "chinesePlaceholder": "Chữ Hán",
+        "pinyinPlaceholder": "Pinyin",
+        "meaningPlaceholder": "Nghĩa tiếng Việt"
+      },
+      "ambiguity": {
+        "label": "Đánh dấu là mơ hồ",
+        "description": "Cần duyệt thủ công do có cách đọc phức tạp hoặc nhiều cách đọc hợp lệ."
+      },
+      "resolvedNotice": "Dòng này đã được xử lý. Chỉ có thể xem và không còn hành động nào khả dụng.",
+      "actions": {
+        "approveAndSync": "Duyệt và đồng bộ",
+        "rejectRow": "Từ chối dòng",
+        "saveChangesOnly": "Chỉ lưu thay đổi",
+        "close": "Đóng"
+      },
+      "payloads": {
+        "raw": "Dữ liệu gốc từ Sheet",
+        "normalized": "Dữ liệu chuẩn hóa hiện tại"
+      },
+      "conflictGuidance": "Hướng dẫn xử lý xung đột",
+      "conflictFallback": "Tìm thấy nhiều bản ghi thật khớp. Vui lòng phân biệt thủ công."
+    },
+    "status": {
+      "batch": {
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "pending": "Đang chờ"
+      },
+      "changeType": {
+        "new": "Mới",
+        "changed": "Đã thay đổi",
+        "unchanged": "Không đổi",
+        "conflict": "Xung đột",
+        "invalid": "Không hợp lệ"
+      },
+      "review": {
+        "applied": "Đã áp dụng",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối",
+        "needsReview": "Cần duyệt",
+        "pending": "Đang chờ"
+      },
+      "apply": {
+        "applied": "Đã áp dụng",
+        "skipped": "Đã bỏ qua",
+        "failed": "Thất bại",
+        "pending": "Đang chờ áp dụng"
+      }
+    }
   },
   "auth": {
     "signInBadge": "Đăng nhập",

@@ -36,7 +36,7 @@ export function ContentSyncBatchDialog({
   rows,
 }: ContentSyncBatchDialogProps) {
   const router = useRouter();
-  const { link } = useI18n();
+  const { t, link } = useI18n();
 
   if (!batch) return null;
 
@@ -60,10 +60,10 @@ export function ContentSyncBatchDialog({
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
             <History className="size-5" />
-            <DialogTitle>Batch sync details</DialogTitle>
+            <DialogTitle>{t("contentSync.batchSync.detailsTitle")}</DialogTitle>
           </div>
           <DialogDescription>
-            Configuration and current status of the selected vocabulary preview run.
+            {t("contentSync.batchSync.detailsDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,17 +71,17 @@ export function ContentSyncBatchDialog({
           <div className="rounded-2xl border bg-muted/30 p-4 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Source spreadsheet</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">{t("contentSync.batchSync.sourceSpreadsheet")}</p>
                 <div className="flex items-center gap-2">
                   <FileText className="size-4 text-muted-foreground" />
-                  <p className="text-sm font-medium truncate max-w-[240px]">{batch.sourceDocumentId || "N/A"}</p>
+                  <p className="text-sm font-medium truncate max-w-[240px]">{batch.sourceDocumentId || t("contentSync.batchHistory.notAvailable")}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Sheet name</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">{t("contentSync.batchSync.sheetNameLabel")}</p>
                 <div className="flex items-center gap-2">
                   <LayoutPanelLeft className="size-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">{batch.sourceSheetName || "N/A"}</p>
+                  <p className="text-sm font-medium">{batch.sourceSheetName || t("contentSync.batchHistory.notAvailable")}</p>
                 </div>
               </div>
             </div>
@@ -90,41 +90,47 @@ export function ContentSyncBatchDialog({
               <div className="flex items-center gap-2">
                 <Clock className="size-4 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">
-                  Created {batch.createdAt ? new Date(batch.createdAt).toLocaleString() : "Unknown"}
+                  {batch.createdAt
+                    ? t("contentSync.batchSync.createdAt", { value: new Date(batch.createdAt).toLocaleString() })
+                    : t("contentSync.batchSync.unknownCreatedAt")}
                 </p>
               </div>
               <Badge variant={batch.status === "completed" ? "success" : batch.status === "failed" ? "destructive" : "secondary"}>
-                {batch.status}
+                {batch.status === "completed"
+                  ? t("contentSync.status.batch.completed")
+                  : batch.status === "failed"
+                    ? t("contentSync.status.batch.failed")
+                    : t("contentSync.status.batch.pending")}
               </Badge>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">Row processing summary</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">{t("contentSync.batchSync.rowProcessingSummary")}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <StatCard variant="compact" label="Synced rows" value={String(rows.length)} icon={<FileText className="size-4" />} />
-              <StatCard variant="compact" label="Pending" value={String(batch.pendingRows)} icon={<Clock className="size-4" />} />
-              <StatCard variant="compact" label="Approved" value={String(batch.approvedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
-              <StatCard variant="compact" label="Applied" value={String(batch.appliedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
-              <StatCard variant="compact" label="Errors" value={String(batch.errorRows)} icon={<AlertCircle className="size-4" />} accent="destructive" />
-              <StatCard variant="compact" label="Rejected" value={String(batch.rejectedRows)} icon={<AlertCircle className="size-4" />} />
+              <StatCard variant="compact" label={t("contentSync.batchSync.syncedRows")} value={String(rows.length)} icon={<FileText className="size-4" />} />
+              <StatCard variant="compact" label={t("contentSync.batchHistory.pending")} value={String(batch.pendingRows)} icon={<Clock className="size-4" />} />
+              <StatCard variant="compact" label={t("contentSync.batchHistory.approved")} value={String(batch.approvedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
+              <StatCard variant="compact" label={t("contentSync.batchHistory.applied")} value={String(batch.appliedRows)} icon={<CheckCircle2 className="size-4" />} accent="success" />
+              <StatCard variant="compact" label={t("contentSync.batchHistory.errors")} value={String(batch.errorRows)} icon={<AlertCircle className="size-4" />} accent="destructive" />
+              <StatCard variant="compact" label={t("contentSync.batchHistory.rejected")} value={String(batch.rejectedRows)} icon={<AlertCircle className="size-4" />} />
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">Rows in this batch</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">{t("contentSync.batchSync.rowsInBatch")}</p>
             <div className="max-h-[320px] overflow-auto rounded-2xl border">
               {rows.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">No sync rows found for this batch.</div>
+                <div className="p-4 text-sm text-muted-foreground">{t("contentSync.empty.noBatchRows")}</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Row</TableHead>
-                      <TableHead>Text</TableHead>
-                      <TableHead>Change</TableHead>
-                      <TableHead>Review</TableHead>
-                      <TableHead>Apply</TableHead>
+                      <TableHead>{t("contentSync.detail.rowColumn")}</TableHead>
+                      <TableHead>{t("contentSync.queue.text")}</TableHead>
+                      <TableHead>{t("contentSync.queue.change")}</TableHead>
+                      <TableHead>{t("contentSync.queue.review")}</TableHead>
+                      <TableHead>{t("contentSync.queue.apply")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -138,7 +144,7 @@ export function ContentSyncBatchDialog({
                       return (
                         <TableRow key={row.id}>
                           <TableCell className="text-xs text-muted-foreground">
-                            #{row.sourceRowNumber ?? "-"}
+                            #{row.sourceRowNumber ?? t("common.notAvailable")}
                           </TableCell>
                           <TableCell>
                             <div className="font-chinese text-lg font-semibold">{normalizedText}</div>
@@ -163,7 +169,7 @@ export function ContentSyncBatchDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={handleClose} className="w-full sm:w-auto">Close</Button>
+          <Button variant="ghost" onClick={handleClose} className="w-full sm:w-auto">{t("contentSync.detail.actions.close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

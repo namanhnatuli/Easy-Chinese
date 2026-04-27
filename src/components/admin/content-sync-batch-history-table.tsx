@@ -23,7 +23,7 @@ export function ContentSyncBatchHistoryTable({
   activeBatchId,
   selectedBatchId,
 }: ContentSyncBatchHistoryTableProps) {
-  const { link } = useI18n();
+  const { t, link } = useI18n();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -56,17 +56,17 @@ export function ContentSyncBatchHistoryTable({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>Sheet</TableHead>
-            <TableHead>Spreadsheet</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Synced rows</TableHead>
-            <TableHead>Pending</TableHead>
-            <TableHead>Approved</TableHead>
-            <TableHead>Applied</TableHead>
-            <TableHead>Rejected</TableHead>
-            <TableHead>Errors</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Action</TableHead>
+            <TableHead>{t("contentSync.batchHistory.sheet")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.spreadsheet")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.status")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.syncedRows")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.pending")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.approved")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.applied")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.rejected")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.errors")}</TableHead>
+            <TableHead>{t("contentSync.batchHistory.created")}</TableHead>
+            <TableHead className="text-right">{t("contentSync.batchHistory.action")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -77,11 +77,11 @@ export function ContentSyncBatchHistoryTable({
               <TableRow key={batch.id} className={active ? "bg-primary/5" : undefined}>
                 <TableCell>
                   <div className="min-w-0">
-                    <div className="font-medium">{batch.sourceSheetName || "Untagged"}</div>
+                    <div className="font-medium">{batch.sourceSheetName || t("contentSync.batchHistory.untagged")}</div>
                   </div>
                 </TableCell>
                 <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">
-                  {batch.sourceDocumentId || "N/A"}
+                  {batch.sourceDocumentId || t("contentSync.batchHistory.notAvailable")}
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -90,10 +90,14 @@ export function ContentSyncBatchHistoryTable({
                         ? "success"
                         : batch.status === "failed"
                           ? "warning"
-                          : "secondary"
+                        : "secondary"
                     }
                   >
-                    {batch.status}
+                    {batch.status === "completed"
+                      ? t("contentSync.status.batch.completed")
+                      : batch.status === "failed"
+                        ? t("contentSync.status.batch.failed")
+                        : t("contentSync.status.batch.pending")}
                   </Badge>
                 </TableCell>
                 <TableCell>{batchRowCounts[batch.id] ?? 0}</TableCell>
@@ -103,12 +107,12 @@ export function ContentSyncBatchHistoryTable({
                 <TableCell>{batch.rejectedRows}</TableCell>
                 <TableCell>{batch.errorRows}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">
-                  {batch.createdAt ? new Date(batch.createdAt).toLocaleString() : "Unknown"}
+                  {batch.createdAt ? new Date(batch.createdAt).toLocaleString() : t("contentSync.batchHistory.unknown")}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="ghost" size="sm">
                     <Link href={link(`/admin/content-sync?viewBatch=${batch.id}${selectedBatchId ? `&batch=${selectedBatchId}` : ""}`)}>
-                      View
+                      {t("contentSync.batchHistory.view")}
                     </Link>
                   </Button>
                 </TableCell>
@@ -122,7 +126,7 @@ export function ContentSyncBatchHistoryTable({
         pageCount={pageCount}
         pageSize={pageSize}
         totalItems={batches.length}
-        itemLabel="batches"
+        itemLabel={t("contentSync.batchHistory.batchesLabel")}
         onPageChange={setPage}
         onPageSizeChange={(nextPageSize) => {
           setPageSize(nextPageSize);

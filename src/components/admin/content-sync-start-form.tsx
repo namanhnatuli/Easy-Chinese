@@ -12,8 +12,10 @@ export function ContentSyncStartForm({
   action: (formData: FormData) => void | Promise<void>;
   labels: {
     spreadsheetId: string;
+    spreadsheetPlaceholder: string;
     spreadsheetHint: string;
     sheetName: string;
+    sheetPlaceholder: string;
     sheetHint: string;
     submit: string;
     pending: string;
@@ -25,14 +27,14 @@ export function ContentSyncStartForm({
         <input
           name="spreadsheet_id"
           className={inputClassName()}
-          placeholder="1abc..."
+          placeholder={labels.spreadsheetPlaceholder}
         />
       </Field>
       <Field label={labels.sheetName} hint={labels.sheetHint}>
         <input
           name="sheet_name"
           className={inputClassName()}
-          placeholder="Vocabulary"
+          placeholder={labels.sheetPlaceholder}
         />
       </Field>
       <div className="lg:pt-7">

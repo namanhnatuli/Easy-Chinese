@@ -34,13 +34,18 @@
     "delete": "删除",
     "edit": "编辑",
     "cancel": "取消",
+    "close": "关闭",
     "tryAgain": "重试",
     "home": "首页",
     "notAvailable": "—",
     "language": "语言",
     "sans": "现代无衬线 (Sans)",
     "serif": "易读衬线 (Serif)",
-    "kai": "手写楷体 (Kai)"
+    "kai": "手写楷体 (Kai)",
+    "paginationSummary": "显示第 {start}-{end} 项，共 {total} {itemLabel}",
+    "previous": "上一页",
+    "next": "下一页",
+    "pageSuffix": "/ 页"
   },
   "languages": {
     "en": "英语",
@@ -249,6 +254,241 @@
     "explanation": "解释",
     "examples": "例句",
     "noExamples": "这个语法点目前还没有公开例句。"
+  },
+  "contentSync": {
+    "header": {
+      "eyebrow": "管理同步",
+      "title": "Google Sheets 词汇同步",
+      "description": "预览已暂存的词汇行，检查 AI 生成的变更，并决定批准或拒绝。批准后的行会立即同步到正式数据。"
+    },
+    "error": {
+      "title": "Google Sheets API 错误",
+      "syncError": "同步错误",
+      "applyError": "应用错误"
+    },
+    "tabs": {
+      "queue": "待审核队列",
+      "resolved": "已处理历史",
+      "stats": "详细分析",
+      "batchSync": "批次同步"
+    },
+    "empty": {
+      "noResolvedRows": "还没有已处理的同步行",
+      "noResolvedRowsDescription": "目前还没有任何行被批准、拒绝或应用。请选择历史中的一个批次，或先处理审核队列中的行。",
+      "noQueueRows": "审核队列中没有同步行",
+      "noQueueRowsDescription": "请先开始新的预览，或从历史中选择一个批次来查看已暂存的行。",
+      "noFilteredRows": "没有暂存行匹配当前筛选条件",
+      "noFilteredRowsDescription": "请调整搜索或筛选条件，以扩大审核队列范围。",
+      "noHistory": "还没有同步历史",
+      "noHistoryDescription": "先开始第一次预览吧。",
+      "noBatchRows": "这个批次中没有找到同步行。",
+      "noIssues": "没有问题",
+      "noIssuesDescription": "标准化成功。",
+      "noDiff": "没有可用差异。",
+      "noExamples": "还没有例句。点击“添加例句”来创建。"
+    },
+    "filters": {
+      "searchPlaceholder": "搜索标准化文本或拼音",
+      "allChangeTypes": "所有变更类型",
+      "allReviewStates": "所有审核状态",
+      "allApplyStates": "所有应用状态"
+    },
+    "overview": {
+      "globalQueueTitle": "全局审核队列",
+      "globalQueueDescription": "显示所有批次中仍处于 `pending` 或 `needs_review` 状态的同步行。",
+      "globalResolvedTitle": "全局已处理历史",
+      "globalResolvedDescription": "显示所有批次中已经不再处于 `pending` 或 `needs_review` 状态的同步行。"
+    },
+    "stats": {
+      "currentBatch": "当前批次",
+      "detailDescription": "查看详细分析和行分布。",
+      "sourceClassification": "来源分类",
+      "reviewAndActionStatus": "审核与操作状态",
+      "new": {
+        "label": "新增",
+        "description": "这些行在正式数据中还没有匹配项。"
+      },
+      "changed": {
+        "label": "已变更",
+        "description": "已匹配到正式数据，但关键内容发生变化。"
+      },
+      "unchanged": {
+        "label": "未变更",
+        "description": "由于暂存内容与正式数据一致，这些行被自动跳过。"
+      },
+      "conflict": {
+        "label": "冲突",
+        "description": "这些行仍然需要人工消歧。"
+      },
+      "invalid": {
+        "label": "无效",
+        "description": "这些行因解析或校验问题被阻止。"
+      },
+      "approved": {
+        "label": "已批准",
+        "description": "这些行已经批准，但由于同步仍在等待或失败，因此尚未完全完成。"
+      },
+      "applied": {
+        "label": "已应用",
+        "description": "这些行已经同步到正式数据，或因内容未变而被跳过。"
+      },
+      "rejected": {
+        "label": "已拒绝",
+        "description": "这些行已从暂存审核队列中拒绝。"
+      }
+    },
+    "batchSync": {
+      "startTitle": "开始预览同步",
+      "startDescription": "输入电子表格 ID 和工作表名称，把行拉入暂存审核队列。",
+      "spreadsheetId": "Spreadsheet ID",
+      "spreadsheetPlaceholder": "1abc...",
+      "spreadsheetHintDefault": "可选。默认使用 {value}...",
+      "spreadsheetHintRequired": "如果未设置 GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID，则此项必填。",
+      "sheetName": "工作表名称",
+      "sheetPlaceholder": "Vocabulary",
+      "sheetHintDefault": "可选。默认使用“{value}”。",
+      "sheetHintRequired": "如果未设置 GOOGLE_SHEETS_DEFAULT_SHEET_NAME，则此项必填。",
+      "startPreview": "开始预览",
+      "startingPreview": "正在开始预览…",
+      "historyTitle": "批次历史",
+      "historyDescription": "最近可供查看的预览运行记录。",
+      "detailsTitle": "批次同步详情",
+      "detailsDescription": "查看所选词汇预览运行的配置和当前状态。",
+      "sourceSpreadsheet": "来源电子表格",
+      "sheetNameLabel": "工作表名称",
+      "createdAt": "创建于 {value}",
+      "unknownCreatedAt": "创建时间未知",
+      "rowProcessingSummary": "行处理摘要",
+      "rowsInBatch": "此批次中的行",
+      "syncedRows": "已同步行数"
+    },
+    "queue": {
+      "selectedSingle": "已选择 1 行",
+      "selectedMultiple": "已选择 {count} 行",
+      "bulkApprove": "批量批准",
+      "bulkReject": "批量拒绝",
+      "text": "文本",
+      "change": "变更",
+      "review": "审核",
+      "apply": "应用",
+      "batch": "批次",
+      "source": "来源",
+      "action": "操作",
+      "detail": "详情",
+      "rowsLabel": "行"
+    },
+    "batchHistory": {
+      "sheet": "工作表",
+      "spreadsheet": "电子表格",
+      "status": "状态",
+      "syncedRows": "已同步行数",
+      "pending": "待处理",
+      "approved": "已批准",
+      "applied": "已应用",
+      "rejected": "已拒绝",
+      "errors": "错误",
+      "created": "创建时间",
+      "action": "操作",
+      "untagged": "未命名",
+      "notAvailable": "N/A",
+      "unknown": "未知",
+      "view": "查看",
+      "batchesLabel": "批次"
+    },
+    "detail": {
+      "title": "审核行详情",
+      "description": "检查已暂存的内容，并查看该同步行的标准化 payload。",
+      "rowColumn": "行",
+      "rowLabel": "第 #{value} 行",
+      "matchLabel": "匹配：{value}",
+      "tabs": {
+        "edit": "编辑",
+        "diff": "差异",
+        "payloads": "Payload",
+        "issues": "问题"
+      },
+      "fields": {
+        "normalizedText": "标准化文本",
+        "pinyin": "拼音",
+        "meaningsVi": "越南语释义",
+        "hanViet": "汉越音",
+        "traditionalVariant": "繁体变体",
+        "hskLevel": "HSK 等级",
+        "mainRadicals": "主要部首",
+        "topicTags": "主题标签",
+        "topicTagsHint": "从预定义分类中搜索并选择",
+        "partOfSpeech": "词性",
+        "characterStructureType": "字形结构类型",
+        "aiStatus": "AI 状态",
+        "sourceUpdatedAt": "来源更新时间",
+        "examples": "例句",
+        "structureExplanation": "结构说明",
+        "mnemonic": "记忆法",
+        "similarChars": "相近字",
+        "similarCharsHint": "使用竖线 | 分隔",
+        "readingCandidates": "候选读音",
+        "ambiguityNote": "歧义说明",
+        "reviewNote": "审核备注",
+        "notes": "备注"
+      },
+      "aiStatusOptions": {
+        "pending": "pending",
+        "processing": "processing",
+        "done": "done",
+        "failed": "failed",
+        "skipped": "skipped"
+      },
+      "examples": {
+        "add": "添加例句",
+        "chinesePlaceholder": "中文文本",
+        "pinyinPlaceholder": "拼音",
+        "meaningPlaceholder": "越南语释义"
+      },
+      "ambiguity": {
+        "label": "标记为有歧义",
+        "description": "由于存在复杂或多个有效读音，需要人工审核。"
+      },
+      "resolvedNotice": "这条记录已经处理完毕。当前为只读状态，不能再执行其他操作。",
+      "actions": {
+        "approveAndSync": "批准并同步",
+        "rejectRow": "拒绝该行",
+        "saveChangesOnly": "仅保存修改",
+        "close": "关闭"
+      },
+      "payloads": {
+        "raw": "来自 Sheet 的原始数据",
+        "normalized": "当前标准化数据"
+      },
+      "conflictGuidance": "冲突处理指引",
+      "conflictFallback": "发现多个正式数据匹配项。请手动消歧。"
+    },
+    "status": {
+      "batch": {
+        "completed": "已完成",
+        "failed": "失败",
+        "pending": "处理中"
+      },
+      "changeType": {
+        "new": "新增",
+        "changed": "已变更",
+        "unchanged": "未变更",
+        "conflict": "冲突",
+        "invalid": "无效"
+      },
+      "review": {
+        "applied": "已应用",
+        "approved": "已批准",
+        "rejected": "已拒绝",
+        "needsReview": "需审核",
+        "pending": "待审核"
+      },
+      "apply": {
+        "applied": "已应用",
+        "skipped": "已跳过",
+        "failed": "失败",
+        "pending": "待应用"
+      }
+    }
   },
   "auth": {
     "signInBadge": "登录",

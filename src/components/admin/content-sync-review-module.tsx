@@ -110,7 +110,9 @@ export function ContentSyncReviewModule({
               {selectedIds.size}
             </div>
             <p className="hidden sm:block text-sm font-medium text-foreground">
-              {selectedIds.size === 1 ? "1 row selected" : `${selectedIds.size} rows selected`}
+              {selectedIds.size === 1
+                ? t("contentSync.queue.selectedSingle")
+                : t("contentSync.queue.selectedMultiple", { count: selectedIds.size })}
             </p>
           </div>
 
@@ -127,10 +129,10 @@ export function ContentSyncReviewModule({
             ))}
 
             <Button type="submit" name="decision" value="approve" size="sm">
-              Bulk Approve
+              {t("contentSync.queue.bulkApprove")}
             </Button>
             <Button type="submit" name="decision" value="reject" variant="outline" size="sm">
-              Bulk Reject
+              {t("contentSync.queue.bulkReject")}
             </Button>
             <Button
               type="button"
@@ -148,8 +150,8 @@ export function ContentSyncReviewModule({
       <div className="rounded-2xl border border-border/80 bg-card/95 overflow-hidden">
         {rows.length === 0 ? (
           <EmptyState
-            title="No staged rows match the current filters"
-            description="Adjust the search or filter settings to widen the review queue."
+            title={t("contentSync.empty.noFilteredRows")}
+            description={t("contentSync.empty.noFilteredRowsDescription")}
           />
         ) : (
           <Table>
@@ -168,13 +170,13 @@ export function ContentSyncReviewModule({
                     />
                   </TableHead>
                 ) : null}
-                <TableHead>Text</TableHead>
-                <TableHead>Change</TableHead>
-                <TableHead>Review</TableHead>
-                <TableHead>Apply</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>{t("contentSync.queue.text")}</TableHead>
+                <TableHead>{t("contentSync.queue.change")}</TableHead>
+                <TableHead>{t("contentSync.queue.review")}</TableHead>
+                <TableHead>{t("contentSync.queue.apply")}</TableHead>
+                <TableHead>{t("contentSync.queue.batch")}</TableHead>
+                <TableHead>{t("contentSync.queue.source")}</TableHead>
+                <TableHead className="text-right">{t("contentSync.queue.action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -242,7 +244,7 @@ export function ContentSyncReviewModule({
                       <Button asChild variant="ghost" size="sm" className="gap-2">
                         <Link href={rowHref}>
                           <Eye className="size-3.5" />
-                          Detail
+                          {t("contentSync.queue.detail")}
                         </Link>
                       </Button>
                     </TableCell>
@@ -257,7 +259,7 @@ export function ContentSyncReviewModule({
           pageCount={pageCount}
           pageSize={pageSize}
           totalItems={rows.length}
-          itemLabel="rows"
+          itemLabel={t("contentSync.queue.rowsLabel")}
           onPageChange={setPage}
           onPageSizeChange={(nextPageSize) => {
             setPageSize(nextPageSize);

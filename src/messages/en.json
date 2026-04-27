@@ -34,13 +34,18 @@
     "delete": "Delete",
     "edit": "Edit",
     "cancel": "Cancel",
+    "close": "Close",
     "tryAgain": "Try again",
     "home": "Home",
     "notAvailable": "—",
     "language": "Language",
     "sans": "Modern Sans",
     "serif": "Readable Serif",
-    "kai": "Kaiti Brush"
+    "kai": "Kaiti Brush",
+    "paginationSummary": "Showing {start}-{end} of {total} {itemLabel}",
+    "previous": "Previous",
+    "next": "Next",
+    "pageSuffix": "/ page"
   },
   "languages": {
     "en": "English",
@@ -249,6 +254,241 @@
     "explanation": "Explanation",
     "examples": "Examples",
     "noExamples": "No public examples have been published for this grammar point yet."
+  },
+  "contentSync": {
+    "header": {
+      "eyebrow": "Admin Sync",
+      "title": "Google Sheets vocabulary sync",
+      "description": "Preview staged vocabulary rows, inspect AI-generated changes, and approve or reject them. Approved rows sync into production immediately."
+    },
+    "error": {
+      "title": "Google Sheets API Error",
+      "syncError": "Sync error",
+      "applyError": "Apply error"
+    },
+    "tabs": {
+      "queue": "Review Queue",
+      "resolved": "Resolved History",
+      "stats": "Detailed Insights",
+      "batchSync": "Batch Sync"
+    },
+    "empty": {
+      "noResolvedRows": "No resolved sync rows",
+      "noResolvedRowsDescription": "No rows have been approved, rejected, or applied yet. Choose a batch from history or process rows from the review queue.",
+      "noQueueRows": "No sync rows in review queue",
+      "noQueueRowsDescription": "Start a new preview or choose a batch from history to inspect its staged rows.",
+      "noFilteredRows": "No staged rows match the current filters",
+      "noFilteredRowsDescription": "Adjust the search or filter settings to widen the review queue.",
+      "noHistory": "No sync history",
+      "noHistoryDescription": "Start your first preview to begin.",
+      "noBatchRows": "No sync rows found for this batch.",
+      "noIssues": "No issues",
+      "noIssuesDescription": "Normalization successful.",
+      "noDiff": "No diff available.",
+      "noExamples": "No examples added. Click \"Add Example\" to create one."
+    },
+    "filters": {
+      "searchPlaceholder": "Search normalized text or pinyin",
+      "allChangeTypes": "All change types",
+      "allReviewStates": "All review states",
+      "allApplyStates": "All apply states"
+    },
+    "overview": {
+      "globalQueueTitle": "Global review queue",
+      "globalQueueDescription": "Showing all sync rows across batches that are still in `pending` or `needs_review`.",
+      "globalResolvedTitle": "Global resolved history",
+      "globalResolvedDescription": "Showing all sync rows across batches that are no longer in `pending` or `needs_review`."
+    },
+    "stats": {
+      "currentBatch": "Current Batch",
+      "detailDescription": "Detailed analytical insights and row distribution.",
+      "sourceClassification": "Source Classification",
+      "reviewAndActionStatus": "Review & Action Status",
+      "new": {
+        "label": "New",
+        "description": "Rows with no production match yet."
+      },
+      "changed": {
+        "label": "Changed",
+        "description": "Matched rows where meaningful content differs."
+      },
+      "unchanged": {
+        "label": "Unchanged",
+        "description": "Rows auto-skipped because staged content already matches production."
+      },
+      "conflict": {
+        "label": "Conflict",
+        "description": "Rows that still need human disambiguation."
+      },
+      "invalid": {
+        "label": "Invalid",
+        "description": "Rows blocked by parse or validation issues."
+      },
+      "approved": {
+        "label": "Approved",
+        "description": "Rows approved but not fully completed because sync is still pending or failed."
+      },
+      "applied": {
+        "label": "Applied",
+        "description": "Rows already synced to production or skipped because data was unchanged."
+      },
+      "rejected": {
+        "label": "Rejected",
+        "description": "Rows rejected from the staged review queue."
+      }
+    },
+    "batchSync": {
+      "startTitle": "Start preview sync",
+      "startDescription": "Enter a spreadsheet ID and sheet name to pull rows into the staged review queue.",
+      "spreadsheetId": "Spreadsheet ID",
+      "spreadsheetPlaceholder": "1abc...",
+      "spreadsheetHintDefault": "Optional. Defaults to {value}...",
+      "spreadsheetHintRequired": "Required if GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID is not set.",
+      "sheetName": "Sheet name",
+      "sheetPlaceholder": "Vocabulary",
+      "sheetHintDefault": "Optional. Defaults to \"{value}\".",
+      "sheetHintRequired": "Required if GOOGLE_SHEETS_DEFAULT_SHEET_NAME is not set.",
+      "startPreview": "Start preview",
+      "startingPreview": "Starting preview…",
+      "historyTitle": "Batch history",
+      "historyDescription": "Recent preview runs available for review.",
+      "detailsTitle": "Batch sync details",
+      "detailsDescription": "Configuration and current status of the selected vocabulary preview run.",
+      "sourceSpreadsheet": "Source spreadsheet",
+      "sheetNameLabel": "Sheet name",
+      "createdAt": "Created {value}",
+      "unknownCreatedAt": "Created unknown",
+      "rowProcessingSummary": "Row processing summary",
+      "rowsInBatch": "Rows in this batch",
+      "syncedRows": "Synced rows"
+    },
+    "queue": {
+      "selectedSingle": "1 row selected",
+      "selectedMultiple": "{count} rows selected",
+      "bulkApprove": "Bulk Approve",
+      "bulkReject": "Bulk Reject",
+      "text": "Text",
+      "change": "Change",
+      "review": "Review",
+      "apply": "Apply",
+      "batch": "Batch",
+      "source": "Source",
+      "action": "Action",
+      "detail": "Detail",
+      "rowsLabel": "rows"
+    },
+    "batchHistory": {
+      "sheet": "Sheet",
+      "spreadsheet": "Spreadsheet",
+      "status": "Status",
+      "syncedRows": "Synced rows",
+      "pending": "Pending",
+      "approved": "Approved",
+      "applied": "Applied",
+      "rejected": "Rejected",
+      "errors": "Errors",
+      "created": "Created",
+      "action": "Action",
+      "untagged": "Untagged",
+      "notAvailable": "N/A",
+      "unknown": "Unknown",
+      "view": "View",
+      "batchesLabel": "batches"
+    },
+    "detail": {
+      "title": "Review row detail",
+      "description": "Inspect staged content and review the normalized payload for this sync row.",
+      "rowColumn": "Row",
+      "rowLabel": "Row #{value}",
+      "matchLabel": "Match: {value}",
+      "tabs": {
+        "edit": "Edit",
+        "diff": "Diff",
+        "payloads": "Payloads",
+        "issues": "Issues"
+      },
+      "fields": {
+        "normalizedText": "Normalized text",
+        "pinyin": "Pinyin",
+        "meaningsVi": "Vietnamese meaning",
+        "hanViet": "Han-Viet",
+        "traditionalVariant": "Traditional variant",
+        "hskLevel": "HSK level",
+        "mainRadicals": "Main radicals",
+        "topicTags": "Topic tags",
+        "topicTagsHint": "Search and select from predefined categories",
+        "partOfSpeech": "Part of speech",
+        "characterStructureType": "Character structure type",
+        "aiStatus": "AI status",
+        "sourceUpdatedAt": "Source updated at",
+        "examples": "Examples",
+        "structureExplanation": "Structure explanation",
+        "mnemonic": "Mnemonic",
+        "similarChars": "Similar chars",
+        "similarCharsHint": "Pipe-delimited",
+        "readingCandidates": "Reading candidates",
+        "ambiguityNote": "Ambiguity note",
+        "reviewNote": "Review note",
+        "notes": "Notes"
+      },
+      "aiStatusOptions": {
+        "pending": "pending",
+        "processing": "processing",
+        "done": "done",
+        "failed": "failed",
+        "skipped": "skipped"
+      },
+      "examples": {
+        "add": "Add Example",
+        "chinesePlaceholder": "Chinese text",
+        "pinyinPlaceholder": "Pinyin",
+        "meaningPlaceholder": "Vietnamese meaning"
+      },
+      "ambiguity": {
+        "label": "Mark as ambiguous",
+        "description": "Requires manual review due to complex or multiple valid readings."
+      },
+      "resolvedNotice": "This row has already been resolved. It is view-only and no further actions are available.",
+      "actions": {
+        "approveAndSync": "Approve and sync",
+        "rejectRow": "Reject row",
+        "saveChangesOnly": "Save changes only",
+        "close": "Close"
+      },
+      "payloads": {
+        "raw": "Raw from Sheet",
+        "normalized": "Current Normalized"
+      },
+      "conflictGuidance": "Conflict guidance",
+      "conflictFallback": "Multiple production matches found. Please disambiguate."
+    },
+    "status": {
+      "batch": {
+        "completed": "Completed",
+        "failed": "Failed",
+        "pending": "Pending"
+      },
+      "changeType": {
+        "new": "New",
+        "changed": "Changed",
+        "unchanged": "Unchanged",
+        "conflict": "Conflict",
+        "invalid": "Invalid"
+      },
+      "review": {
+        "applied": "Applied",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "needsReview": "Needs review",
+        "pending": "Pending"
+      },
+      "apply": {
+        "applied": "Applied",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "pending": "Pending apply"
+      }
+    }
   },
   "auth": {
     "signInBadge": "Sign in",

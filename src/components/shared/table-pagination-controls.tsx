@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n/client";
 
 interface TablePaginationControlsProps {
   page: number;
@@ -23,6 +24,8 @@ export function TablePaginationControls({
   onPageChange,
   onPageSizeChange,
 }: TablePaginationControlsProps) {
+  const { t } = useI18n();
+
   if (totalItems === 0) {
     return null;
   }
@@ -33,7 +36,7 @@ export function TablePaginationControls({
   return (
     <div className="flex flex-col gap-3 border-t border-border/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="text-sm text-muted-foreground">
-        Showing {start}-{end} of {totalItems} {itemLabel}
+        {t("common.paginationSummary", { start, end, total: totalItems, itemLabel })}
       </div>
       <div className="flex items-center gap-2">
         <select
@@ -43,18 +46,18 @@ export function TablePaginationControls({
         >
           {PAGE_SIZE_OPTIONS.map((option) => (
             <option key={option} value={option}>
-              {option} / page
+              {option} {t("common.pageSuffix")}
             </option>
           ))}
         </select>
         <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-          Previous
+          {t("common.previous")}
         </Button>
         <div className="min-w-16 text-center text-sm text-muted-foreground">
           {page} / {pageCount}
         </div>
         <Button type="button" variant="outline" size="sm" disabled={page >= pageCount} onClick={() => onPageChange(page + 1)}>
-          Next
+          {t("common.next")}
         </Button>
       </div>
     </div>

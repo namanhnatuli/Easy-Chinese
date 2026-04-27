@@ -93,10 +93,10 @@ export function ContentSyncDetailDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle>Review row detail</DialogTitle>
+            <DialogTitle>{t("contentSync.detail.title")}</DialogTitle>
           </div>
           <DialogDescription>
-            Inspect staged content and review the normalized payload for this sync row.
+            {t("contentSync.detail.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -104,23 +104,23 @@ export function ContentSyncDetailDialog({
           <ChangeTypeBadge value={row.changeClassification} />
           <ReviewStatusBadge value={row.reviewStatus} />
           <ApplyStatusBadge value={row.applyStatus} />
-          <Badge variant="outline">Row #{row.sourceRowNumber ?? t("common.notAvailable")}</Badge>
-          <Badge variant="outline">Match: {row.matchResult ?? t("common.notAvailable")}</Badge>
+          <Badge variant="outline">{t("contentSync.detail.rowLabel", { value: row.sourceRowNumber ?? t("common.notAvailable") })}</Badge>
+          <Badge variant="outline">{t("contentSync.detail.matchLabel", { value: row.matchResult ?? t("common.notAvailable") })}</Badge>
         </div>
 
         {row.errorMessage ? (
           <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm font-semibold text-destructive">Sync error</p>
+            <p className="text-sm font-semibold text-destructive">{t("contentSync.error.syncError")}</p>
             <p className="mt-1 text-sm text-destructive/90">{row.errorMessage}</p>
           </div>
         ) : null}
 
         <Tabs defaultValue="edit" className="mt-4">
           <TabsList>
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="diff">Diff</TabsTrigger>
-            <TabsTrigger value="payloads">Payloads</TabsTrigger>
-            <TabsTrigger value="issues">Issues</TabsTrigger>
+            <TabsTrigger value="edit">{t("contentSync.detail.tabs.edit")}</TabsTrigger>
+            <TabsTrigger value="diff">{t("contentSync.detail.tabs.diff")}</TabsTrigger>
+            <TabsTrigger value="payloads">{t("contentSync.detail.tabs.payloads")}</TabsTrigger>
+            <TabsTrigger value="issues">{t("contentSync.detail.tabs.issues")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="edit" className="space-y-6 pt-4">
@@ -135,25 +135,25 @@ export function ContentSyncDetailDialog({
               <input type="hidden" name="return_row_id" value={row.id} />
 
               <fieldset disabled={isResolved} className="grid gap-4 md:grid-cols-2">
-                <Field label="Normalized text">
+                <Field label={t("contentSync.detail.fields.normalizedText")}>
                   <input name="normalized_text" defaultValue={formValue.normalizedText} className={inputClassName()} />
                 </Field>
-                <Field label="Pinyin">
+                <Field label={t("contentSync.detail.fields.pinyin")}>
                   <input name="pinyin" defaultValue={formValue.pinyin} className={inputClassName()} />
                 </Field>
-                <Field label="Vietnamese meaning">
+                <Field label={t("contentSync.detail.fields.meaningsVi")}>
                   <input name="meanings_vi" defaultValue={formValue.meaningsVi} className={inputClassName()} />
                 </Field>
-                <Field label="Han-Viet">
+                <Field label={t("contentSync.detail.fields.hanViet")}>
                   <input name="han_viet" defaultValue={formValue.hanViet} className={inputClassName()} />
                 </Field>
-                <Field label="Traditional variant">
+                <Field label={t("contentSync.detail.fields.traditionalVariant")}>
                   <input name="traditional_variant" defaultValue={formValue.traditionalVariant} className={inputClassName()} />
                 </Field>
-                <Field label="HSK level">
+                <Field label={t("contentSync.detail.fields.hskLevel")}>
                   <input name="hsk_level" defaultValue={formValue.hskLevel} className={inputClassName()} inputMode="numeric" />
                 </Field>
-                <Field label="Main radicals">
+                <Field label={t("contentSync.detail.fields.mainRadicals")}>
                   <SearchableMultiSelect
                     name="main_radicals"
                     options={radicals.map((r) => ({
@@ -163,7 +163,7 @@ export function ContentSyncDetailDialog({
                     defaultValue={formValue.mainRadicals}
                   />
                 </Field>
-                <Field label="Topic tags" hint="Search and select from predefined categories">
+                <Field label={t("contentSync.detail.fields.topicTags")} hint={t("contentSync.detail.fields.topicTagsHint")}>
                   <SearchableMultiSelect
                     name="topic_tags"
                     options={ALLOWED_TOPIC_TAGS}
@@ -171,7 +171,7 @@ export function ContentSyncDetailDialog({
                     labelMapping={TAG_LABELS}
                   />
                 </Field>
-                <Field label="Part of speech">
+                <Field label={t("contentSync.detail.fields.partOfSpeech")}>
                   <SearchableMultiSelect
                     name="part_of_speech"
                     options={PART_OF_SPEECH_LIST}
@@ -180,7 +180,7 @@ export function ContentSyncDetailDialog({
                     isMulti={true}
                   />
                 </Field>
-                <Field label="Character structure type">
+                <Field label={t("contentSync.detail.fields.characterStructureType")}>
                   <SearchableMultiSelect
                     name="character_structure_type"
                     options={CHARACTER_STRUCTURE_LIST}
@@ -189,21 +189,21 @@ export function ContentSyncDetailDialog({
                     isMulti={false}
                   />
                 </Field>
-                <Field label="AI status">
+                <Field label={t("contentSync.detail.fields.aiStatus")}>
                   <select name="ai_status" defaultValue={formValue.aiStatus} className={inputClassName()}>
-                    <option value="pending">pending</option>
-                    <option value="processing">processing</option>
-                    <option value="done">done</option>
-                    <option value="failed">failed</option>
-                    <option value="skipped">skipped</option>
+                    <option value="pending">{t("contentSync.detail.aiStatusOptions.pending")}</option>
+                    <option value="processing">{t("contentSync.detail.aiStatusOptions.processing")}</option>
+                    <option value="done">{t("contentSync.detail.aiStatusOptions.done")}</option>
+                    <option value="failed">{t("contentSync.detail.aiStatusOptions.failed")}</option>
+                    <option value="skipped">{t("contentSync.detail.aiStatusOptions.skipped")}</option>
                   </select>
                 </Field>
-                <Field label="Source updated at">
+                <Field label={t("contentSync.detail.fields.sourceUpdatedAt")}>
                   <input name="source_updated_at" defaultValue={formValue.sourceUpdatedAt} className={inputClassName()} readOnly disabled />
                 </Field>
                 <div className="md:col-span-2 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Examples</p>
+                    <p className="text-sm font-medium">{t("contentSync.detail.fields.examples")}</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -212,7 +212,7 @@ export function ContentSyncDetailDialog({
                       className="h-8 gap-1 rounded-full px-3"
                     >
                       <Plus className="size-3" />
-                      Add Example
+                      {t("contentSync.detail.examples.add")}
                     </Button>
                   </div>
                   <div className="grid gap-4">
@@ -220,19 +220,19 @@ export function ContentSyncDetailDialog({
                       <div key={i} className="group relative grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3 rounded-2xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
                         <input
                           name={`example_zh_${i}`}
-                          placeholder="Chinese text"
+                          placeholder={t("contentSync.detail.examples.chinesePlaceholder")}
                           defaultValue={ex.chineseText}
                           className={inputClassName("h-9 rounded-xl")}
                         />
                         <input
                           name={`example_py_${i}`}
-                          placeholder="Pinyin"
+                          placeholder={t("contentSync.detail.examples.pinyinPlaceholder")}
                           defaultValue={ex.pinyin ?? ""}
                           className={inputClassName("h-9 rounded-xl")}
                         />
                         <input
                           name={`example_vi_${i}`}
-                          placeholder="Vietnamese meaning"
+                          placeholder={t("contentSync.detail.examples.meaningPlaceholder")}
                           defaultValue={ex.vietnameseMeaning}
                           className={inputClassName("h-9 rounded-xl")}
                         />
@@ -247,30 +247,30 @@ export function ContentSyncDetailDialog({
                     ))}
                     {examples.length === 0 && (
                       <p className="py-4 text-center text-xs text-muted-foreground border-2 border-dashed rounded-2xl">
-                        No examples added. Click "Add Example" to create one.
+                        {t("contentSync.empty.noExamples")}
                       </p>
                     )}
                   </div>
                 </div>
-                <Field label="Structure explanation">
+                <Field label={t("contentSync.detail.fields.structureExplanation")}>
                   <textarea name="structure_explanation" defaultValue={formValue.structureExplanation} className={textareaClassName("min-h-24")} />
                 </Field>
-                <Field label="Mnemonic">
+                <Field label={t("contentSync.detail.fields.mnemonic")}>
                   <textarea name="mnemonic" defaultValue={formValue.mnemonic} className={textareaClassName("min-h-24")} />
                 </Field>
-                <Field label="Similar chars" hint="Pipe-delimited">
+                <Field label={t("contentSync.detail.fields.similarChars")} hint={t("contentSync.detail.fields.similarCharsHint")}>
                   <input name="similar_chars" defaultValue={formValue.similarChars} className={inputClassName()} />
                 </Field>
-                <Field label="Reading candidates">
+                <Field label={t("contentSync.detail.fields.readingCandidates")}>
                   <textarea name="reading_candidates" defaultValue={formValue.readingCandidates} className={textareaClassName("min-h-24")} />
                 </Field>
-                <Field label="Ambiguity note">
+                <Field label={t("contentSync.detail.fields.ambiguityNote")}>
                   <textarea name="ambiguity_note" defaultValue={formValue.ambiguityNote} className={textareaClassName("min-h-24")} />
                 </Field>
-                <Field label="Review note">
+                <Field label={t("contentSync.detail.fields.reviewNote")}>
                   <textarea name="review_note" defaultValue={formValue.reviewNote} className={textareaClassName("min-h-24")} />
                 </Field>
-                <Field label="Notes">
+                <Field label={t("contentSync.detail.fields.notes")}>
                   <textarea name="notes" defaultValue={formValue.notes} className={textareaClassName("min-h-24")} />
                 </Field>
                 <div className="md:col-span-2">
@@ -282,8 +282,8 @@ export function ContentSyncDetailDialog({
                       className={checkboxClassName("size-5 border-amber-400 text-amber-600")}
                     />
                     <div className="space-y-0.5">
-                      <p className="text-sm font-bold text-amber-900">Mark as ambiguous</p>
-                      <p className="text-xs text-amber-700">Requires manual review due to complex or multiple valid readings.</p>
+                      <p className="text-sm font-bold text-amber-900">{t("contentSync.detail.ambiguity.label")}</p>
+                      <p className="text-xs text-amber-700">{t("contentSync.detail.ambiguity.description")}</p>
                     </div>
                   </label>
                 </div>
@@ -293,7 +293,7 @@ export function ContentSyncDetailDialog({
                 {isResolved ? (
                   <div className="rounded-xl border border-dashed bg-muted/30 p-4">
                     <p className="text-xs text-muted-foreground">
-                      This row has already been resolved. It is view-only and no further actions are available.
+                      {t("contentSync.detail.resolvedNotice")}
                     </p>
                   </div>
                 ) : (
@@ -304,19 +304,19 @@ export function ContentSyncDetailDialog({
                         formAction={approveAction}
                         className="bg-success hover:bg-success/90"
                       >
-                        Approve and sync
+                        {t("contentSync.detail.actions.approveAndSync")}
                       </Button>
                       <Button
                         type="submit"
                         formAction={rejectAction}
                         variant="destructive"
                       >
-                        Reject row
+                        {t("contentSync.detail.actions.rejectRow")}
                       </Button>
                     </div>
 
                     <div className="flex gap-3">
-                      <Button type="submit" variant="secondary">Save changes only</Button>
+                      <Button type="submit" variant="secondary">{t("contentSync.detail.actions.saveChangesOnly")}</Button>
                     </div>
                   </div>
                 )}
@@ -326,20 +326,20 @@ export function ContentSyncDetailDialog({
 
           <TabsContent value="diff" className="pt-4">
             <pre className="overflow-x-auto rounded-xl border bg-muted/30 p-4 text-xs">
-              {JSON.stringify(row.diffSummary ?? { message: "No diff available." }, null, 2)}
+              {JSON.stringify(row.diffSummary ?? { message: t("contentSync.empty.noDiff") }, null, 2)}
             </pre>
           </TabsContent>
 
           <TabsContent value="payloads" className="pt-4">
             <div className="grid gap-4 lg:grid-cols-2">
               <div>
-                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase">Raw from Sheet</p>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase">{t("contentSync.detail.payloads.raw")}</p>
                 <pre className="overflow-x-auto rounded-xl border bg-muted/30 p-4 text-xs">
                   {JSON.stringify(row.rawPayload, null, 2)}
                 </pre>
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase">Current Normalized</p>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase">{t("contentSync.detail.payloads.normalized")}</p>
                 <pre className="overflow-x-auto rounded-xl border bg-muted/30 p-4 text-xs">
                   {JSON.stringify(row.adminEditedPayload ?? row.normalizedPayload, null, 2)}
                 </pre>
@@ -351,7 +351,7 @@ export function ContentSyncDetailDialog({
             {row.errorMessage ? (
               <Card className="mb-4 border-destructive/30 bg-destructive/5">
                 <CardHeader>
-                  <CardTitle className="text-sm text-destructive">Apply error</CardTitle>
+                  <CardTitle className="text-sm text-destructive">{t("contentSync.error.applyError")}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-xs text-destructive/90">
                   {row.errorMessage}
@@ -361,12 +361,12 @@ export function ContentSyncDetailDialog({
             {row.changeClassification === "conflict" && (
               <Card className="border-amber-200 bg-amber-50">
                 <CardHeader>
-                  <CardTitle className="text-sm text-amber-800">Conflict guidance</CardTitle>
+                  <CardTitle className="text-sm text-amber-800">{t("contentSync.detail.conflictGuidance")}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-xs text-amber-700">
                   {typeof row.diffSummary?.guidance === "string" 
                     ? row.diffSummary.guidance 
-                    : "Multiple production matches found. Please disambiguate."}
+                    : t("contentSync.detail.conflictFallback")}
                 </CardContent>
               </Card>
             )}
@@ -379,7 +379,7 @@ export function ContentSyncDetailDialog({
                 ))}
               </div>
             ) : (
-              <EmptyState title="No issues" description="Normalization successful." />
+              <EmptyState title={t("contentSync.empty.noIssues")} description={t("contentSync.empty.noIssuesDescription")} />
             )}
           </TabsContent>
         </Tabs>

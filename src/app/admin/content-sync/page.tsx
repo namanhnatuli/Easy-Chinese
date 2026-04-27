@@ -60,9 +60,9 @@ export default async function AdminContentSyncPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Admin Sync"
-        title="Google Sheets vocabulary sync"
-        description="Preview staged vocabulary rows, inspect AI-generated changes, and approve or reject them. Approved rows sync into production immediately."
+        eyebrow={t("contentSync.header.eyebrow")}
+        title={t("contentSync.header.title")}
+        description={t("contentSync.header.description")}
         actions={
           <Button asChild variant="outline">
             <Link href={link("/admin")}>{t("common.admin")}</Link>
@@ -77,7 +77,7 @@ export default async function AdminContentSyncPage({
               <CircleOff className="size-4" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-destructive">Google Sheets API Error</p>
+              <p className="text-sm font-semibold text-destructive">{t("contentSync.error.title")}</p>
               <p className="text-sm text-destructive/80 leading-relaxed">{error}</p>
             </div>
           </CardContent>
@@ -88,29 +88,29 @@ export default async function AdminContentSyncPage({
         <TabsList className="bg-background/50 border rounded-full p-1 h-auto flex flex-wrap justify-start gap-1">
           <TabsTrigger asChild value="queue">
             <Link href={link(buildContentSyncPath({ ...data.filters, view: "queue", reviewStatus: null, applyStatus: null }))}>
-              Review Queue
+              {t("contentSync.tabs.queue")}
             </Link>
           </TabsTrigger>
           <TabsTrigger asChild value="resolved">
             <Link href={link(buildContentSyncPath({ ...data.filters, view: "resolved", reviewStatus: null, applyStatus: null }))}>
-              Resolved History
+              {t("contentSync.tabs.resolved")}
             </Link>
           </TabsTrigger>
           {data.selectedBatch && (
-            <TabsTrigger value="stats">Detailed Insights</TabsTrigger>
+            <TabsTrigger value="stats">{t("contentSync.tabs.stats")}</TabsTrigger>
           )}
-          <TabsTrigger value="batch-sync">Batch Sync</TabsTrigger>
+          <TabsTrigger value="batch-sync">{t("contentSync.tabs.batchSync")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={data.filters.view === "resolved" ? "resolved" : "queue"}>
           {!data.selectedBatch && data.filteredRows.length === 0 ? (
             <div className="pt-6">
               <EmptyState
-                title={data.filters.view === "resolved" ? "No resolved sync rows" : "No sync rows in review queue"}
+                title={data.filters.view === "resolved" ? t("contentSync.empty.noResolvedRows") : t("contentSync.empty.noQueueRows")}
                 description={
                   data.filters.view === "resolved"
-                    ? "No rows have been approved, rejected, or applied yet. Choose a batch from history or process rows from the review queue."
-                    : "Start a new preview or choose a batch from history to inspect its staged rows."
+                    ? t("contentSync.empty.noResolvedRowsDescription")
+                    : t("contentSync.empty.noQueueRowsDescription")
                 }
               />
             </div>
@@ -126,31 +126,31 @@ export default async function AdminContentSyncPage({
                       name="q"
                       defaultValue={data.filters.q}
                       className={`${inputClassName("pl-10")}`}
-                      placeholder="Search normalized text or pinyin"
+                      placeholder={t("contentSync.filters.searchPlaceholder")}
                     />
                   </div>
                   <select name="changeType" defaultValue={data.filters.changeType} className={inputClassName()}>
-                    <option value="all">All change types</option>
-                    <option value="new">New</option>
-                    <option value="changed">Changed</option>
-                    <option value="unchanged">Unchanged</option>
-                    <option value="conflict">Conflict</option>
-                    <option value="invalid">Invalid</option>
+                    <option value="all">{t("contentSync.filters.allChangeTypes")}</option>
+                    <option value="new">{t("contentSync.status.changeType.new")}</option>
+                    <option value="changed">{t("contentSync.status.changeType.changed")}</option>
+                    <option value="unchanged">{t("contentSync.status.changeType.unchanged")}</option>
+                    <option value="conflict">{t("contentSync.status.changeType.conflict")}</option>
+                    <option value="invalid">{t("contentSync.status.changeType.invalid")}</option>
                   </select>
                   <select name="reviewStatus" defaultValue={data.filters.reviewStatus} className={inputClassName()}>
-                    <option value="all">All review states</option>
-                    <option value="pending">Pending</option>
-                    <option value="needs_review">Needs review</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="applied">Applied</option>
+                    <option value="all">{t("contentSync.filters.allReviewStates")}</option>
+                    <option value="pending">{t("contentSync.status.review.pending")}</option>
+                    <option value="needs_review">{t("contentSync.status.review.needsReview")}</option>
+                    <option value="approved">{t("contentSync.status.review.approved")}</option>
+                    <option value="rejected">{t("contentSync.status.review.rejected")}</option>
+                    <option value="applied">{t("contentSync.status.review.applied")}</option>
                   </select>
                   <select name="applyStatus" defaultValue={data.filters.applyStatus} className={inputClassName()}>
-                    <option value="all">All apply states</option>
-                    <option value="pending">Pending apply</option>
-                    <option value="applied">Applied</option>
-                    <option value="failed">Failed</option>
-                    <option value="skipped">Skipped</option>
+                    <option value="all">{t("contentSync.filters.allApplyStates")}</option>
+                    <option value="pending">{t("contentSync.status.apply.pending")}</option>
+                    <option value="applied">{t("contentSync.status.apply.applied")}</option>
+                    <option value="failed">{t("contentSync.status.apply.failed")}</option>
+                    <option value="skipped">{t("contentSync.status.apply.skipped")}</option>
                   </select>
                   <div className="flex gap-3">
                     <Button type="submit">{t("common.applyFilters")}</Button>
@@ -165,12 +165,12 @@ export default async function AdminContentSyncPage({
                 <Card className="border-border/80 bg-card/95">
                   <CardContent className="flex items-center justify-between gap-4 p-4">
                     <div>
-                      <p className="text-sm font-semibold">Global review queue</p>
+                      <p className="text-sm font-semibold">{t("contentSync.overview.globalQueueTitle")}</p>
                       <p className="text-xs text-muted-foreground">
-                        Showing all sync rows across batches that are still in `pending` or `needs_review`.
+                        {t("contentSync.overview.globalQueueDescription")}
                       </p>
                     </div>
-                    <Badge variant="secondary">{data.filteredRows.length} rows</Badge>
+                    <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
                   </CardContent>
                 </Card>
               ) : null}
@@ -179,12 +179,12 @@ export default async function AdminContentSyncPage({
                 <Card className="border-border/80 bg-card/95">
                   <CardContent className="flex items-center justify-between gap-4 p-4">
                     <div>
-                      <p className="text-sm font-semibold">Global resolved history</p>
+                      <p className="text-sm font-semibold">{t("contentSync.overview.globalResolvedTitle")}</p>
                       <p className="text-xs text-muted-foreground">
-                        Showing all sync rows across batches that are no longer in `pending` or `needs_review`.
+                        {t("contentSync.overview.globalResolvedDescription")}
                       </p>
                     </div>
-                    <Badge variant="secondary">{data.filteredRows.length} rows</Badge>
+                    <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
                   </CardContent>
                 </Card>
               ) : null}
@@ -216,35 +216,35 @@ export default async function AdminContentSyncPage({
           <TabsContent value="stats" className="space-y-8 pt-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold">{data.selectedBatch.sourceSheetName || "Current Batch"}</h3>
-                <p className="text-sm text-muted-foreground">Detailed analytical insights and row distribution.</p>
+                <h3 className="text-xl font-bold">{data.selectedBatch.sourceSheetName || t("contentSync.stats.currentBatch")}</h3>
+                <p className="text-sm text-muted-foreground">{t("contentSync.stats.detailDescription")}</p>
               </div>
               <form action={retryContentSyncPreviewBatchAction}>
                 <input type="hidden" name="batch_id" value={data.selectedBatch.id} />
                 <Button type="submit" variant="outline" size="sm">
-                  Retry preview batch
+                  {t("common.tryAgain")}
                 </Button>
               </form>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">Source Classification</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">{t("contentSync.stats.sourceClassification")}</p>
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-                  <StatCard variant="compact" label="New" value={String(data.summary?.new ?? 0)} description="Rows with no production match yet." icon={<Sparkles className="size-4" />} />
-                  <StatCard variant="compact" label="Changed" value={String(data.summary?.changed ?? 0)} description="Matched rows where meaningful content differs." icon={<GitCompare className="size-4" />} accent="warning" />
-                  <StatCard variant="compact" label="Unchanged" value={String(data.summary?.unchanged ?? 0)} description="Rows auto-skipped because staged content already matches production." icon={<CheckCheck className="size-4" />} />
-                  <StatCard variant="compact" label="Conflict" value={String(data.summary?.conflict ?? 0)} description="Rows that still need human disambiguation." icon={<FileWarning className="size-4" />} />
-                  <StatCard variant="compact" label="Invalid" value={String(data.summary?.invalid ?? 0)} description="Rows blocked by parse or validation issues." icon={<CircleOff className="size-4" />} />
+                  <StatCard variant="compact" label={t("contentSync.stats.new.label")} value={String(data.summary?.new ?? 0)} description={t("contentSync.stats.new.description")} icon={<Sparkles className="size-4" />} />
+                  <StatCard variant="compact" label={t("contentSync.stats.changed.label")} value={String(data.summary?.changed ?? 0)} description={t("contentSync.stats.changed.description")} icon={<GitCompare className="size-4" />} accent="warning" />
+                  <StatCard variant="compact" label={t("contentSync.stats.unchanged.label")} value={String(data.summary?.unchanged ?? 0)} description={t("contentSync.stats.unchanged.description")} icon={<CheckCheck className="size-4" />} />
+                  <StatCard variant="compact" label={t("contentSync.stats.conflict.label")} value={String(data.summary?.conflict ?? 0)} description={t("contentSync.stats.conflict.description")} icon={<FileWarning className="size-4" />} />
+                  <StatCard variant="compact" label={t("contentSync.stats.invalid.label")} value={String(data.summary?.invalid ?? 0)} description={t("contentSync.stats.invalid.description")} icon={<CircleOff className="size-4" />} />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">Review & Action Status</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">{t("contentSync.stats.reviewAndActionStatus")}</p>
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
-                  <StatCard variant="compact" label="Approved" value={String(data.summary?.approved ?? 0)} description="Rows approved but not fully completed because sync is still pending or failed." icon={<CheckCheck className="size-4" />} accent="success" />
-                  <StatCard variant="compact" label="Applied" value={String(data.summary?.applied ?? 0)} description="Rows already synced to production or skipped because data was unchanged." icon={<CheckCheck className="size-4" />} accent="success" />
-                  <StatCard variant="compact" label="Rejected" value={String(data.summary?.rejected ?? 0)} description="Rows rejected from the staged review queue." icon={<CircleOff className="size-4" />} />
+                  <StatCard variant="compact" label={t("contentSync.stats.approved.label")} value={String(data.summary?.approved ?? 0)} description={t("contentSync.stats.approved.description")} icon={<CheckCheck className="size-4" />} accent="success" />
+                  <StatCard variant="compact" label={t("contentSync.stats.applied.label")} value={String(data.summary?.applied ?? 0)} description={t("contentSync.stats.applied.description")} icon={<CheckCheck className="size-4" />} accent="success" />
+                  <StatCard variant="compact" label={t("contentSync.stats.rejected.label")} value={String(data.summary?.rejected ?? 0)} description={t("contentSync.stats.rejected.description")} icon={<CircleOff className="size-4" />} />
                 </div>
               </div>
             </div>
@@ -255,25 +255,27 @@ export default async function AdminContentSyncPage({
           <div className="space-y-6">
             <Card className="border-border/80 bg-card/95">
               <CardHeader>
-                <CardTitle>Start preview sync</CardTitle>
+                <CardTitle>{t("contentSync.batchSync.startTitle")}</CardTitle>
                 <CardDescription>
-                  Enter a spreadsheet ID and sheet name to pull rows into the staged review queue.
+                  {t("contentSync.batchSync.startDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ContentSyncStartForm
                   action={startContentSyncPreviewAction}
                   labels={{
-                    spreadsheetId: "Spreadsheet ID",
+                    spreadsheetId: t("contentSync.batchSync.spreadsheetId"),
+                    spreadsheetPlaceholder: t("contentSync.batchSync.spreadsheetPlaceholder"),
                     spreadsheetHint: env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID
-                      ? `Optional. Defaults to ${env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID.slice(0, 10)}...`
-                      : "Required if GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID is not set.",
-                    sheetName: "Sheet name",
+                      ? t("contentSync.batchSync.spreadsheetHintDefault", { value: env.GOOGLE_SHEETS_DEFAULT_SPREADSHEET_ID.slice(0, 10) })
+                      : t("contentSync.batchSync.spreadsheetHintRequired"),
+                    sheetName: t("contentSync.batchSync.sheetName"),
+                    sheetPlaceholder: t("contentSync.batchSync.sheetPlaceholder"),
                     sheetHint: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME
-                      ? `Optional. Defaults to "${env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME}".`
-                      : "Required if GOOGLE_SHEETS_DEFAULT_SHEET_NAME is not set.",
-                    submit: "Start preview",
-                    pending: "Starting preview…",
+                      ? t("contentSync.batchSync.sheetHintDefault", { value: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME })
+                      : t("contentSync.batchSync.sheetHintRequired"),
+                    submit: t("contentSync.batchSync.startPreview"),
+                    pending: t("contentSync.batchSync.startingPreview"),
                   }}
                 />
               </CardContent>
@@ -283,13 +285,13 @@ export default async function AdminContentSyncPage({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <History className="size-5" />
-                  Batch history
+                  {t("contentSync.batchSync.historyTitle")}
                 </CardTitle>
-                <CardDescription>Recent preview runs available for review.</CardDescription>
+                <CardDescription>{t("contentSync.batchSync.historyDescription")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {data.batches.length === 0 ? (
-                  <EmptyState title="No sync history" description="Start your first preview to begin." />
+                  <EmptyState title={t("contentSync.empty.noHistory")} description={t("contentSync.empty.noHistoryDescription")} />
                 ) : (
                   <ContentSyncBatchHistoryTable
                     batches={data.batches}
