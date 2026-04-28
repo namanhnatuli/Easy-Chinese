@@ -445,6 +445,7 @@
       "selectedSingle": "1 row selected",
       "selectedMultiple": "{count} rows selected",
       "bulkApprove": "Bulk Approve",
+      "bulkApply": "Bulk Apply",
       "bulkReject": "Bulk Reject",
       "text": "Text",
       "change": "Change",

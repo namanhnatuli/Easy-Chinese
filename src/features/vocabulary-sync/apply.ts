@@ -16,7 +16,7 @@ import {
   resolveMainRadicalsAgainstAliases,
 } from "@/features/vocabulary-sync/radical-alias";
 import type { NormalizedVocabSyncPayload } from "@/features/vocabulary-sync/types";
-import { getVocabSyncRow, listVocabSyncRowsForBatch, updateVocabSyncRow } from "@/features/vocabulary-sync/repository";
+import { getVocabSyncRow, listVocabSyncRowsForBatch, updateVocabSyncRow, listVocabSyncRowsByIds } from "@/features/vocabulary-sync/repository";
 import type { VocabSyncRow } from "@/features/vocabulary-sync/types";
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
 import { logger } from "@/lib/logger";
@@ -739,8 +739,7 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
 
 async function loadRowsForApply(input: { batchId?: string; rowIds?: string[] }) {
   if (input.rowIds && input.rowIds.length > 0 && !input.batchId) {
-    const rows = await Promise.all(input.rowIds.map((rowId) => getVocabSyncRow(rowId)));
-    return rows.filter((row): row is VocabSyncRow => Boolean(row));
+    return listVocabSyncRowsByIds(input.rowIds);
   }
 
   if (!input.batchId) {

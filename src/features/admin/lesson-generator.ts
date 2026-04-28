@@ -222,18 +222,28 @@ async function listWordTagsByWordId(wordIds: string[]) {
   }
 
   const { supabase } = await requireAdminSupabase();
-  const { data, error } = await supabase
-    .from("word_tag_links")
-    .select("word_id, word_tags!inner(slug, label)")
-    .in("word_id", wordIds);
+  const CHUNK_SIZE = 100;
+  let allData: any[] = [];
+  
+  for (let i = 0; i < wordIds.length; i += CHUNK_SIZE) {
+    const chunk = wordIds.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("word_tag_links")
+      .select("word_id, word_tags!inner(slug, label)")
+      .in("word_id", chunk);
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+    
+    if (data) {
+      allData = allData.concat(data);
+    }
   }
 
   const tagsByWordId = new Map<string, { slug: string; label: string }[]>();
 
-  for (const row of (data ?? []) as Array<{
+  for (const row of allData as Array<{
     word_id: string;
     word_tags: { slug: string; label: string } | Array<{ slug: string; label: string }> | null;
   }>) {
@@ -256,18 +266,28 @@ async function listWordRadicalsByWordId(wordIds: string[]) {
   }
 
   const { supabase } = await requireAdminSupabase();
-  const { data, error } = await supabase
-    .from("word_radicals")
-    .select("word_id, radicals!inner(radical)")
-    .in("word_id", wordIds);
+  const CHUNK_SIZE = 100;
+  let allData: any[] = [];
 
-  if (error) {
-    throw error;
+  for (let i = 0; i < wordIds.length; i += CHUNK_SIZE) {
+    const chunk = wordIds.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("word_radicals")
+      .select("word_id, radicals!inner(radical)")
+      .in("word_id", chunk);
+
+    if (error) {
+      throw error;
+    }
+    
+    if (data) {
+      allData = allData.concat(data);
+    }
   }
 
   const radicalsByWordId = new Map<string, string[]>();
 
-  for (const row of (data ?? []) as Array<{
+  for (const row of allData as Array<{
     word_id: string;
     radicals: { radical: string } | Array<{ radical: string }> | null;
   }>) {
@@ -290,18 +310,28 @@ async function listLessonMembershipsByWordId(wordIds: string[]) {
   }
 
   const { supabase } = await requireAdminSupabase();
-  const { data, error } = await supabase
-    .from("lesson_words")
-    .select("word_id, lessons!inner(id, title, slug, is_published)")
-    .in("word_id", wordIds);
+  const CHUNK_SIZE = 100;
+  let allData: any[] = [];
 
-  if (error) {
-    throw error;
+  for (let i = 0; i < wordIds.length; i += CHUNK_SIZE) {
+    const chunk = wordIds.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("lesson_words")
+      .select("word_id, lessons!inner(id, title, slug, is_published)")
+      .in("word_id", chunk);
+
+    if (error) {
+      throw error;
+    }
+    
+    if (data) {
+      allData = allData.concat(data);
+    }
   }
 
   const membershipsByWordId = new Map<string, LessonGeneratorWord["lessonMemberships"]>();
 
-  for (const row of (data ?? []) as Array<{
+  for (const row of allData as Array<{
     word_id: string;
     lessons:
       | { id: string; title: string; slug: string; is_published: boolean }

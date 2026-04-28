@@ -1,6 +1,7 @@
 "use client";
 
-import { DatabaseZap } from "lucide-react";
+import { useTransition } from "react";
+import { DatabaseZap, Loader2 } from "lucide-react";
 
 import { Field, inputClassName } from "@/components/admin/form-primitives";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,19 @@ export function ContentSyncStartForm({
     pending: string;
   };
 }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleAction = (formData: FormData) => {
+    startTransition(async () => {
+      await action(formData);
+    });
+  };
+
   return (
-    <form action={action} className="grid gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_auto] lg:items-start">
+    <form action={handleAction} className="grid gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_auto] lg:items-start relative">
+      {isPending && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl" />
+      )}
       <Field label={labels.spreadsheetId} hint={labels.spreadsheetHint}>
         <input
           name="spreadsheet_id"
@@ -37,10 +49,10 @@ export function ContentSyncStartForm({
           placeholder={labels.sheetPlaceholder}
         />
       </Field>
-      <div className="lg:pt-7">
-        <Button type="submit" className="w-full lg:w-auto">
-          <DatabaseZap className="size-4" />
-          {labels.submit}
+      <div className="lg:pt-7 relative z-20">
+        <Button type="submit" className="w-full lg:w-auto" disabled={isPending}>
+          {isPending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseZap className="size-4" />}
+          {isPending ? labels.pending : labels.submit}
         </Button>
       </div>
     </form>

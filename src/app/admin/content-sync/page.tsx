@@ -13,6 +13,7 @@ import { FilterBar } from "@/components/shared/filter-bar";
 import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -21,6 +22,8 @@ import {
   applyContentSyncRowAction,
   rejectContentSyncRowAction,
   bulkReviewContentSyncRowsAction,
+  bulkApplyApprovedContentSyncRowsAction,
+  applyAllApprovedContentSyncRowsAction,
   getContentSyncPageData,
   retryContentSyncPreviewBatchAction,
   saveContentSyncRowEditsAction,
@@ -194,8 +197,8 @@ export default async function AdminContentSyncPage({
                 rows={data.filteredRows}
                 batchId={data.selectedBatch?.id ?? ""}
                 filters={data.filters}
-                bulkAction={bulkReviewContentSyncRowsAction}
-                approveAllAction={approveAllEligibleContentSyncRowsAction}
+                bulkAction={data.filters.view === "resolved" ? bulkApplyApprovedContentSyncRowsAction : bulkReviewContentSyncRowsAction}
+                approveAllAction={data.filters.view === "resolved" ? applyAllApprovedContentSyncRowsAction : approveAllEligibleContentSyncRowsAction}
               />
 
               {data.selectedRow ? (
@@ -223,9 +226,9 @@ export default async function AdminContentSyncPage({
               </div>
               <form action={retryContentSyncPreviewBatchAction}>
                 <input type="hidden" name="batch_id" value={data.selectedBatch.id} />
-                <Button type="submit" variant="outline" size="sm">
+                <SubmitButton variant="outline" size="sm">
                   {t("common.tryAgain")}
-                </Button>
+                </SubmitButton>
               </form>
             </div>
 

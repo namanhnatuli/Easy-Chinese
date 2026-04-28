@@ -119,6 +119,11 @@ function redirectBackFromFormData(formData: FormData, overrides: { selectedRowId
   const reviewStatus = optionalText(formData.get("return_review_status"));
   const applyStatus = optionalText(formData.get("return_apply_status"));
   const selectedRowId = overrides.selectedRowId ?? optionalText(formData.get("return_row_id"));
+  const pageText = optionalText(formData.get("return_page"));
+  const pageSizeText = optionalText(formData.get("return_page_size"));
+  
+  const page = pageText ? parseInt(pageText, 10) : undefined;
+  const pageSize = pageSizeText ? parseInt(pageSizeText, 10) : undefined;
 
   redirectTo(
     buildContentSyncPath({
@@ -129,6 +134,8 @@ function redirectBackFromFormData(formData: FormData, overrides: { selectedRowId
       reviewStatus,
       applyStatus,
       selectedRowId,
+      page: !isNaN(page as any) ? page : undefined,
+      pageSize: !isNaN(pageSize as any) ? pageSize : undefined,
     }),
   );
 }
@@ -320,10 +327,9 @@ export async function startContentSyncPreviewAction(formData: FormData) {
 
     revalidateAdminPaths(["/admin", "/admin/content-sync"]);
   } catch (error) {
-    logger.error("admin_content_sync_preview_failed", {
+    logger.error("admin_content_sync_preview_failed", error, {
       spreadsheetId,
       sheetName,
-      error: error instanceof Error ? error.message : String(error),
     });
 
     redirectTo(
@@ -535,23 +541,27 @@ export async function bulkReviewContentSyncRowsAction(formData: FormData) {
   const approvedBy = decision === "approve" ? auth.user?.id ?? null : null;
   const approvedAt = decision === "approve" ? new Date().toISOString() : null;
 
-  let query = supabase
-    .from("vocab_sync_rows")
-    .update({
-      review_status: reviewStatus,
-      approved_by: approvedBy,
-      approved_at: approvedAt,
-    })
-    .in("id", eligibleIds);
+  const CHUNK_SIZE = 100;
+  for (let i = 0; i < eligibleIds.length; i += CHUNK_SIZE) {
+    const chunk = eligibleIds.slice(i, i + CHUNK_SIZE);
+    let query = supabase
+      .from("vocab_sync_rows")
+      .update({
+        review_status: reviewStatus,
+        approved_by: approvedBy,
+        approved_at: approvedAt,
+      })
+      .in("id", chunk);
 
-  if (batchId) {
-    query = query.eq("batch_id", batchId);
-  }
+    if (batchId) {
+      query = query.eq("batch_id", batchId);
+    }
 
-  const { error } = await query;
+    const { error } = await query;
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
   }
 
   logger.info("admin_content_sync_bulk_reviewed", {
@@ -608,23 +618,27 @@ export async function approveAllEligibleContentSyncRowsAction(formData: FormData
   const { auth, supabase } = await requireAdminSupabase();
   const approvedAt = new Date().toISOString();
   
-  let query = supabase
-    .from("vocab_sync_rows")
-    .update({
-      review_status: "approved",
-      approved_by: auth.user?.id ?? null,
-      approved_at: approvedAt,
-    })
-    .in("id", eligibleIds);
+  const CHUNK_SIZE = 100;
+  for (let i = 0; i < eligibleIds.length; i += CHUNK_SIZE) {
+    const chunk = eligibleIds.slice(i, i + CHUNK_SIZE);
+    let query = supabase
+      .from("vocab_sync_rows")
+      .update({
+        review_status: "approved",
+        approved_by: auth.user?.id ?? null,
+        approved_at: approvedAt,
+      })
+      .in("id", chunk);
 
-  if (batchId) {
-    query = query.eq("batch_id", batchId);
-  }
+    if (batchId) {
+      query = query.eq("batch_id", batchId);
+    }
 
-  const { error } = await query;
+    const { error } = await query;
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
   }
 
   logger.info("admin_content_sync_approved_all_eligible", {
@@ -667,36 +681,48 @@ export async function bulkApplyApprovedContentSyncRowsAction(formData: FormData)
   const batchId = optionalText(formData.get("batch_id"));
   const selectedRowIds = getSelectedRowIds(formData);
 
-  if (!batchId) {
-    throw new Error("Batch id is required.");
-  }
-
   if (selectedRowIds.length === 0) {
     redirectBackFromFormData(formData);
   }
 
   await applyApprovedVocabSyncRows({
-    batchId,
+    batchId: batchId ?? undefined,
     rowIds: selectedRowIds,
   });
 
-  await refreshBatchReviewCounts(batchId);
+  if (batchId) {
+    await refreshBatchReviewCounts(batchId);
+  }
+
   revalidateAdminPaths(["/admin", "/admin/content-sync", "/admin/words", "/vocabulary", "/lessons"]);
   redirectBackFromFormData(formData);
 }
 
 export async function applyAllApprovedContentSyncRowsAction(formData: FormData) {
   const batchId = optionalText(formData.get("batch_id"));
-
-  if (!batchId) {
-    throw new Error("Batch id is required.");
+  
+  if (batchId) {
+    await applyApprovedVocabSyncRows({ batchId });
+    await refreshBatchReviewCounts(batchId);
+  } else {
+    const rows = await getGlobalVocabSyncPreviewRows({
+      reviewStatuses: ["approved"],
+    });
+    
+    const eligibleRows = rows.filter(
+      (row) =>
+        row.reviewStatus === "approved" &&
+        row.applyStatus !== "applied" &&
+        row.applyStatus !== "skipped"
+    );
+    
+    const eligibleIds = eligibleRows.map((row) => row.id);
+    
+    if (eligibleIds.length > 0) {
+      await applyApprovedVocabSyncRows({ rowIds: eligibleIds });
+    }
   }
 
-  await applyApprovedVocabSyncRows({
-    batchId,
-  });
-
-  await refreshBatchReviewCounts(batchId);
   revalidateAdminPaths(["/admin", "/admin/content-sync", "/admin/words", "/vocabulary", "/lessons"]);
   redirectBackFromFormData(formData);
 }

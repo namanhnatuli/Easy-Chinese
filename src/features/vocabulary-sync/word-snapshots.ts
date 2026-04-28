@@ -68,39 +68,47 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
     }
   }
 
+  const CHUNK_SIZE = 100;
+
   if (externalIds.length > 0) {
-    await collectWords(
-      supabase
-        .from("words")
-        .select(
-          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
-        )
-        .eq("external_source", "google_sheets")
-        .in("external_id", externalIds),
-    );
+    for (let i = 0; i < externalIds.length; i += CHUNK_SIZE) {
+      await collectWords(
+        supabase
+          .from("words")
+          .select(
+            "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          )
+          .eq("external_source", "google_sheets")
+          .in("external_id", externalIds.slice(i, i + CHUNK_SIZE)),
+      );
+    }
   }
 
   if (sourceRowKeys.length > 0) {
-    await collectWords(
-      supabase
-        .from("words")
-        .select(
-          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
-        )
-        .eq("external_source", "google_sheets")
-        .in("source_row_key", sourceRowKeys),
-    );
+    for (let i = 0; i < sourceRowKeys.length; i += CHUNK_SIZE) {
+      await collectWords(
+        supabase
+          .from("words")
+          .select(
+            "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          )
+          .eq("external_source", "google_sheets")
+          .in("source_row_key", sourceRowKeys.slice(i, i + CHUNK_SIZE)),
+      );
+    }
   }
 
   if (normalizedTexts.length > 0) {
-    await collectWords(
-      supabase
-        .from("words")
-        .select(
-          "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
-        )
-        .in("normalized_text", normalizedTexts),
-    );
+    for (let i = 0; i < normalizedTexts.length; i += CHUNK_SIZE) {
+      await collectWords(
+        supabase
+          .from("words")
+          .select(
+            "id, slug, external_source, external_id, source_row_key, content_hash, normalized_text, simplified, hanzi, pinyin, part_of_speech, meanings_vi, han_viet, traditional_variant, hsk_level, component_breakdown_json, radical_summary, mnemonic, character_structure_type, structure_explanation, notes, ambiguity_flag, ambiguity_note, reading_candidates, review_status, ai_status, source_confidence, last_source_updated_at",
+          )
+          .in("normalized_text", normalizedTexts.slice(i, i + CHUNK_SIZE)),
+      );
+    }
   }
 
   const wordIds = [...wordMap.keys()];
@@ -108,35 +116,38 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
     return [];
   }
 
-  const [
-    { data: examples, error: examplesError },
-    { data: tagLinks, error: tagLinksError },
-    { data: radicalLinks, error: radicalLinksError },
-  ] = await Promise.all([
-    supabase
-      .from("word_examples")
-      .select("word_id, chinese_text, pinyin, vietnamese_meaning, sort_order")
-      .in("word_id", wordIds),
-    supabase
-      .from("word_tag_links")
-      .select("word_id, word_tags(slug)")
-      .in("word_id", wordIds),
-    supabase
-      .from("word_radicals")
-      .select("word_id, radicals(radical), sort_order")
-      .in("word_id", wordIds),
-  ]);
+  const examples: any[] = [];
+  const tagLinks: any[] = [];
+  const radicalLinks: any[] = [];
 
-  if (examplesError) {
-    throw examplesError;
-  }
+  for (let i = 0; i < wordIds.length; i += CHUNK_SIZE) {
+    const chunk = wordIds.slice(i, i + CHUNK_SIZE);
+    const [
+      { data: exData, error: exError },
+      { data: tlData, error: tlError },
+      { data: rlData, error: rlError },
+    ] = await Promise.all([
+      supabase
+        .from("word_examples")
+        .select("word_id, chinese_text, pinyin, vietnamese_meaning, sort_order")
+        .in("word_id", chunk),
+      supabase
+        .from("word_tag_links")
+        .select("word_id, word_tags(slug)")
+        .in("word_id", chunk),
+      supabase
+        .from("word_radicals")
+        .select("word_id, radicals(radical), sort_order")
+        .in("word_id", chunk),
+    ]);
 
-  if (tagLinksError) {
-    throw tagLinksError;
-  }
+    if (exError) throw exError;
+    if (tlError) throw tlError;
+    if (rlError) throw rlError;
 
-  if (radicalLinksError) {
-    throw radicalLinksError;
+    if (exData) examples.push(...exData);
+    if (tlData) tagLinks.push(...tlData);
+    if (rlData) radicalLinks.push(...rlData);
   }
 
   for (const example of examples ?? []) {

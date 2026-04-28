@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CircleOff, GitCompare, Sparkles, FileWarning, X, Plus, Trash2 } from "lucide-react";
+import { CircleOff, GitCompare, Sparkles, FileWarning, X, Plus, Trash2, Loader2 } from "lucide-react";
 
 import {
   ApplyStatusBadge,
@@ -60,6 +60,7 @@ export function ContentSyncDetailDialog({
 }: ContentSyncDetailDialogProps) {
   const { t, link } = useI18n();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const formValue = getEditablePayloadForForm(row || ({} as any));
   const [examples, setExamples] = useState(formValue.examples);
@@ -92,8 +93,16 @@ export function ContentSyncDetailDialog({
     router.push(link(`/admin/content-sync?${params.toString()}`));
   };
 
+  const handleAction = (actionFn: any) => {
+    return (formData: FormData) => {
+      startTransition(async () => {
+        await actionFn(formData);
+      });
+    };
+  };
+
   return (
-    <Dialog open={!!row} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog open={!!row} onOpenChange={(open) => !open && !isPending && handleClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -127,8 +136,14 @@ export function ContentSyncDetailDialog({
             <TabsTrigger value="issues">{t("contentSync.detail.tabs.issues")}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="edit" className="space-y-6 pt-4">
-            <form action={saveAction} className="space-y-6">
+          <TabsContent value="edit" className="space-y-6 pt-4 relative">
+            {isPending && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl">
+                <Loader2 className="size-8 animate-spin text-primary" />
+                <p className="mt-2 text-sm font-medium text-foreground">Processing...</p>
+              </div>
+            )}
+            <form action={handleAction(saveAction)} className="space-y-6">
               <input type="hidden" name="row_id" value={row.id} />
               <input type="hidden" name="batch_id" value={batchId} />
               <input type="hidden" name="return_view" value={filters.view} />
@@ -136,6 +151,8 @@ export function ContentSyncDetailDialog({
               <input type="hidden" name="return_change_type" value={filters.changeType} />
               <input type="hidden" name="return_review_status" value={filters.reviewStatus} />
               <input type="hidden" name="return_apply_status" value={filters.applyStatus} />
+              <input type="hidden" name="return_page" value={filters.page} />
+              <input type="hidden" name="return_page_size" value={filters.pageSize} />
               <input type="hidden" name="return_row_id" value={row.id} />
 
               <fieldset disabled={isEditLocked} className="grid gap-4 md:grid-cols-2">
@@ -311,9 +328,11 @@ export function ContentSyncDetailDialog({
                     <div className="flex gap-3">
                       <Button
                         type="submit"
-                        formAction={applyAction}
+                        formAction={handleAction(applyAction)}
                         className="bg-success hover:bg-success/90"
+                        disabled={isPending}
                       >
+                        {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                         {t("contentSync.detail.actions.applyNow")}
                       </Button>
                     </div>
@@ -323,22 +342,29 @@ export function ContentSyncDetailDialog({
                     <div className="flex gap-3">
                       <Button
                         type="submit"
-                        formAction={approveAction}
+                        formAction={handleAction(approveAction)}
                         className="bg-success hover:bg-success/90"
+                        disabled={isPending}
                       >
+                        {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                         {t("contentSync.detail.actions.approveAndSync")}
                       </Button>
                       <Button
                         type="submit"
-                        formAction={rejectAction}
+                        formAction={handleAction(rejectAction)}
                         variant="destructive"
+                        disabled={isPending}
                       >
+                        {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                         {t("contentSync.detail.actions.rejectRow")}
                       </Button>
                     </div>
 
                     <div className="flex gap-3">
-                      <Button type="submit" variant="secondary">{t("contentSync.detail.actions.saveChangesOnly")}</Button>
+                      <Button type="submit" variant="secondary" disabled={isPending}>
+                        {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                        {t("contentSync.detail.actions.saveChangesOnly")}
+                      </Button>
                     </div>
                   </div>
                 )}

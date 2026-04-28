@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Eye, Loader2 } from "lucide-react";
 
 import {
   ApplyStatusBadge,
@@ -35,14 +36,42 @@ export function ContentSyncReviewModule({
 }: ContentSyncReviewModuleProps) {
   const { t, link } = useI18n();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const showSelectionControls = filters.view === "queue";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
+  const page = filters.page;
+  const pageSize = filters.pageSize;
+  
+  const setPage = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(newPage));
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-  // Rows that can actually be selected for review
+  const setPageSize = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("pageSize", String(newPageSize));
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const [isPending, startTransition] = useTransition();
+  const showSelectionControls = filters.view === "queue" || filters.view === "resolved";
+
+  // Rows that can actually be selected for review or apply
   const selectableRows = useMemo(() => {
     if (!showSelectionControls) {
       return [];
+    }
+
+    if (filters.view === "resolved") {
+      return rows.filter(
+        (row) =>
+          row.reviewStatus === "approved" &&
+          row.applyStatus !== "applied" &&
+          row.applyStatus !== "skipped"
+      );
     }
 
     return rows.filter(
@@ -54,39 +83,44 @@ export function ContentSyncReviewModule({
         row.applyStatus !== "applied" &&
         row.applyStatus !== "skipped",
     );
-  }, [rows, showSelectionControls]);
+  }, [rows, showSelectionControls, filters.view]);
 
   const allSelected = selectableRows.length > 0 && selectedIds.size === selectableRows.length;
-  const someSelected = selectedIds.size > 0 && !allSelected;
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 
   useEffect(() => {
-    setPage((current) => Math.min(current, pageCount));
-  }, [pageCount]);
-
-  useEffect(() => {
-    if (!filters.selectedRowId) {
-      return;
+    if (page > pageCount) {
+      setPage(pageCount);
     }
+  }, [page, pageCount]);
 
-    const targetIndex = rows.findIndex((row) => row.id === filters.selectedRowId);
-    if (targetIndex === -1) {
-      return;
-    }
-
-    setPage(Math.floor(targetIndex / pageSize) + 1);
-  }, [filters.selectedRowId, rows, pageSize]);
+  // Removed auto-pagination to target index to prevent infinite loops with router.push
 
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * pageSize;
     return rows.slice(start, start + pageSize);
   }, [rows, page, pageSize]);
 
+  const selectableRowsOnPage = useMemo(() => {
+    if (!showSelectionControls) {
+      return [];
+    }
+    const selectableSet = new Set(selectableRows.map(r => r.id));
+    return paginatedRows.filter(r => selectableSet.has(r.id));
+  }, [paginatedRows, selectableRows, showSelectionControls]);
+
+  const allOnPageSelected = selectableRowsOnPage.length > 0 && selectableRowsOnPage.every(r => selectedIds.has(r.id));
+  const someOnPageSelected = selectableRowsOnPage.some(r => selectedIds.has(r.id)) && !allOnPageSelected;
+
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
+    if (allOnPageSelected) {
+      const next = new Set(selectedIds);
+      selectableRowsOnPage.forEach((r) => next.delete(r.id));
+      setSelectedIds(next);
     } else {
-      setSelectedIds(new Set(selectableRows.map((r) => r.id)));
+      const next = new Set(selectedIds);
+      selectableRowsOnPage.forEach((r) => next.add(r.id));
+      setSelectedIds(next);
     }
   };
 
@@ -100,8 +134,28 @@ export function ContentSyncReviewModule({
     setSelectedIds(next);
   };
 
+  const handleBulkAction = (formData: FormData) => {
+    startTransition(async () => {
+      await bulkAction(formData);
+      setSelectedIds(new Set());
+    });
+  };
+
+  const handleApproveAllAction = (formData: FormData) => {
+    startTransition(async () => {
+      await approveAllAction(formData);
+      setSelectedIds(new Set());
+    });
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {isPending && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="mt-2 text-sm font-medium text-foreground">Processing...</p>
+        </div>
+      )}
       {/* Floating Bottom Bulk Action Bar */}
       {showSelectionControls && selectedIds.size > 0 && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-between rounded-2xl border border-primary/20 bg-background/90 p-4 shadow-2xl backdrop-blur-md max-w-[calc(100vw-2rem)] w-full sm:w-auto gap-8">
@@ -116,24 +170,34 @@ export function ContentSyncReviewModule({
             </p>
           </div>
 
-          <form action={bulkAction} className="flex items-center gap-2">
+          <form action={handleBulkAction} className="flex items-center gap-2">
             <input type="hidden" name="batch_id" value={batchId} />
             <input type="hidden" name="return_view" value={filters.view} />
             <input type="hidden" name="return_q" value={filters.q} />
             <input type="hidden" name="return_change_type" value={filters.changeType} />
             <input type="hidden" name="return_review_status" value={filters.reviewStatus} />
             <input type="hidden" name="return_apply_status" value={filters.applyStatus} />
+            <input type="hidden" name="return_page" value={page} />
+            <input type="hidden" name="return_page_size" value={pageSize} />
             
             {Array.from(selectedIds).map((id) => (
               <input key={id} type="hidden" name="selected_row_ids" value={id} />
             ))}
 
-            <Button type="submit" name="decision" value="approve" size="sm">
-              {t("contentSync.queue.bulkApprove")}
-            </Button>
-            <Button type="submit" name="decision" value="reject" variant="outline" size="sm">
-              {t("contentSync.queue.bulkReject")}
-            </Button>
+            {filters.view === "resolved" ? (
+              <Button type="submit" size="sm">
+                {t("contentSync.queue.bulkApply")}
+              </Button>
+            ) : (
+              <>
+                <Button type="submit" name="decision" value="approve" size="sm">
+                  {t("contentSync.queue.bulkApprove")}
+                </Button>
+                <Button type="submit" name="decision" value="reject" variant="outline" size="sm">
+                  {t("contentSync.queue.bulkReject")}
+                </Button>
+              </>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -161,9 +225,9 @@ export function ContentSyncReviewModule({
                   <TableHead className="w-[50px]">
                     <input
                       type="checkbox"
-                      checked={allSelected}
+                      checked={allOnPageSelected}
                       ref={(el) => {
-                        if (el) el.indeterminate = someSelected;
+                        if (el) el.indeterminate = someOnPageSelected;
                       }}
                       onChange={toggleAll}
                       className="size-4 rounded border-border text-primary focus-ring"
@@ -182,11 +246,16 @@ export function ContentSyncReviewModule({
             <TableBody>
               {paginatedRows.map((row) => {
                 const isSelected = selectedIds.has(row.id);
-                const isSelectable =
-                  row.changeClassification !== "invalid" &&
-                  row.reviewStatus !== "applied" &&
-                  row.applyStatus !== "applied" &&
-                  row.applyStatus !== "skipped";
+                const isSelectable = filters.view === "resolved"
+                  ? row.reviewStatus === "approved" &&
+                    row.applyStatus !== "applied" &&
+                    row.applyStatus !== "skipped"
+                  : row.changeClassification !== "invalid" &&
+                    row.reviewStatus !== "approved" &&
+                    row.reviewStatus !== "rejected" &&
+                    row.reviewStatus !== "applied" &&
+                    row.applyStatus !== "applied" &&
+                    row.applyStatus !== "skipped";
 
                 const payload = (row.adminEditedPayload ?? row.normalizedPayload) as Record<string, any>;
                 const normalizedText = payload.normalizedText || "???";
@@ -263,7 +332,6 @@ export function ContentSyncReviewModule({
           onPageChange={setPage}
           onPageSizeChange={(nextPageSize) => {
             setPageSize(nextPageSize);
-            setPage(1);
           }}
         />
       </div>
@@ -271,16 +339,18 @@ export function ContentSyncReviewModule({
       {/* Overall Actions Bar (Global) */}
       {showSelectionControls ? (
         <div className="flex justify-end pt-2">
-          <form action={approveAllAction} className="flex gap-3">
+          <form action={handleApproveAllAction} className="flex gap-3">
             <input type="hidden" name="batch_id" value={batchId} />
             <input type="hidden" name="return_view" value={filters.view} />
             <input type="hidden" name="return_q" value={filters.q} />
             <input type="hidden" name="return_change_type" value={filters.changeType} />
             <input type="hidden" name="return_review_status" value={filters.reviewStatus} />
             <input type="hidden" name="return_apply_status" value={filters.applyStatus} />
+            <input type="hidden" name="return_page" value={page} />
+            <input type="hidden" name="return_page_size" value={pageSize} />
             
             <Button type="submit" variant="outline" size="sm">
-              Approve all eligible
+              {filters.view === "resolved" ? "Apply all eligible" : "Approve all eligible"}
             </Button>
           </form>
         </div>

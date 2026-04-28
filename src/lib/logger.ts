@@ -11,6 +11,19 @@ function serializeError(error: unknown) {
     };
   }
 
+  if (error && typeof error === "object") {
+    // Check if it's a Supabase/Postgrest error or a custom error object
+    const obj = error as Record<string, unknown>;
+    if (obj.message || obj.code || obj.details) {
+      return {
+        message: obj.message ?? String(error),
+        code: obj.code,
+        details: obj.details,
+        hint: obj.hint,
+      };
+    }
+  }
+
   return error;
 }
 

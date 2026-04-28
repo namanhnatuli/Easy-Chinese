@@ -400,6 +400,37 @@ export async function listVocabSyncRowsForBatch(
   return (data ?? []).map(mapRow);
 }
 
+export async function listVocabSyncRowsByIds(rowIds: string[]) {
+  const uniqueIds = [...new Set(rowIds.filter(Boolean))];
+  if (uniqueIds.length === 0) {
+    return [];
+  }
+
+  const { supabase } = await requireAdminSupabase();
+  const CHUNK_SIZE = 100;
+  const allData: any[] = [];
+
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("vocab_sync_rows")
+      .select(
+        "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+      )
+      .in("id", chunk);
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      allData.push(...data);
+    }
+  }
+
+  return allData.map(mapRow);
+}
+
 export async function listLatestOpenVocabSyncRowsBySourceKeys(sourceRowKeys: string[]) {
   const uniqueSourceRowKeys = [...new Set(sourceRowKeys.filter(Boolean))];
 
@@ -408,22 +439,32 @@ export async function listLatestOpenVocabSyncRowsBySourceKeys(sourceRowKeys: str
   }
 
   const { supabase } = await requireAdminSupabase();
-  const { data, error } = await supabase
-    .from("vocab_sync_rows")
-    .select(
-      "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
-    )
-    .in("source_row_key", uniqueSourceRowKeys)
-    .in("review_status", ["pending", "needs_review", "approved"])
-    .order("created_at", { ascending: false });
+  const CHUNK_SIZE = 100;
+  const allData: any[] = [];
 
-  if (error) {
-    throw error;
+  for (let i = 0; i < uniqueSourceRowKeys.length; i += CHUNK_SIZE) {
+    const chunk = uniqueSourceRowKeys.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("vocab_sync_rows")
+      .select(
+        "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+      )
+      .in("source_row_key", chunk)
+      .in("review_status", ["pending", "needs_review", "approved"])
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      allData.push(...data);
+    }
   }
 
   const latestBySourceRowKey = new Map<string, VocabSyncRow>();
 
-  for (const row of (data ?? []).map(mapRow)) {
+  for (const row of allData.map(mapRow)) {
     if (!latestBySourceRowKey.has(row.sourceRowKey)) {
       latestBySourceRowKey.set(row.sourceRowKey, row);
     }
@@ -440,21 +481,31 @@ export async function listLatestVocabSyncRowsBySourceKeys(sourceRowKeys: string[
   }
 
   const { supabase } = await requireAdminSupabase();
-  const { data, error } = await supabase
-    .from("vocab_sync_rows")
-    .select(
-      "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
-    )
-    .in("source_row_key", uniqueSourceRowKeys)
-    .order("created_at", { ascending: false });
+  const CHUNK_SIZE = 100;
+  const allData: any[] = [];
 
-  if (error) {
-    throw error;
+  for (let i = 0; i < uniqueSourceRowKeys.length; i += CHUNK_SIZE) {
+    const chunk = uniqueSourceRowKeys.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("vocab_sync_rows")
+      .select(
+        "id, batch_id, external_source, external_id, source_row_key, source_row_number, source_updated_at, raw_payload, normalized_payload, admin_edited_payload, content_hash, change_classification, match_result, matched_word_ids, parse_errors, review_status, ai_status, source_confidence, diff_summary, review_note, apply_status, approved_by, approved_at, applied_word_id, applied_by, applied_at, error_message, created_at, updated_at",
+      )
+      .in("source_row_key", chunk)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      allData.push(...data);
+    }
   }
 
   const latestBySourceRowKey = new Map<string, VocabSyncRow>();
 
-  for (const row of (data ?? []).map(mapRow)) {
+  for (const row of allData.map(mapRow)) {
     if (!latestBySourceRowKey.has(row.sourceRowKey)) {
       latestBySourceRowKey.set(row.sourceRowKey, row);
     }

@@ -445,6 +445,7 @@
       "selectedSingle": "已选择 1 行",
       "selectedMultiple": "已选择 {count} 行",
       "bulkApprove": "批量批准",
+      "bulkApply": "批量应用",
       "bulkReject": "批量拒绝",
       "text": "文本",
       "change": "变更",

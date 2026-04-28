@@ -85,12 +85,19 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       sheetName,
     });
 
-    const parsedRows = sheet.rows.map((row) =>
-      parseAndNormalizeVocabSyncRow({
-        rowNumber: row.rowNumber,
-        values: row.values,
-      }),
-    );
+    const parsedRows = sheet.rows
+      .map((row) =>
+        parseAndNormalizeVocabSyncRow({
+          rowNumber: row.rowNumber,
+          values: row.values,
+        }),
+      )
+      .filter(
+        (row) =>
+          row.normalizedPayload.normalizedText &&
+          row.normalizedPayload.pinyin &&
+          row.normalizedPayload.meaningsVi,
+      );
 
     const duplicateSourceRowKeys = parsedRows.reduce<Map<string, number>>((result, row) => {
       if (!row.sourceRowKey) {

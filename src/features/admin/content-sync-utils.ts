@@ -16,6 +16,8 @@ export interface ContentSyncFilters {
   applyStatus: VocabSyncRow["applyStatus"] | "all";
   selectedRowId: string | null;
   view: "queue" | "resolved";
+  page: number;
+  pageSize: number;
 }
 
 export interface ContentSyncSummary {
@@ -71,6 +73,8 @@ export function buildContentSyncPath(filters: {
   reviewStatus?: string | null;
   applyStatus?: string | null;
   selectedRowId?: string | null;
+  page?: number | null;
+  pageSize?: number | null;
   error?: string | null;
 }) {
   const params = new URLSearchParams();
@@ -82,6 +86,8 @@ export function buildContentSyncPath(filters: {
   if (filters.applyStatus && filters.applyStatus !== "all") params.set("applyStatus", filters.applyStatus);
   if (filters.view && filters.view !== "queue") params.set("view", filters.view);
   if (filters.selectedRowId) params.set("row", filters.selectedRowId);
+  if (filters.page && filters.page > 1) params.set("page", filters.page.toString());
+  if (filters.pageSize && filters.pageSize !== 10) params.set("pageSize", filters.pageSize.toString());
   if (filters.error) params.set("error", filters.error);
 
   const query = params.toString();
@@ -216,6 +222,8 @@ export function parseContentSyncFilters(searchParams: Record<string, string | st
         ? (applyStatus as VocabSyncRow["applyStatus"])
         : "all",
     selectedRowId: parseSearchParam(searchParams.row) || null,
+    page: Math.max(1, parseInt(parseSearchParam(searchParams.page), 10) || 1),
+    pageSize: Math.max(1, parseInt(parseSearchParam(searchParams.pageSize), 10) || 10),
   };
 }
 
