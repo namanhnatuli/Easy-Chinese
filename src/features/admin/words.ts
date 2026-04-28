@@ -56,6 +56,13 @@ export interface AdminWordListItem {
   hsk_level: number;
   is_published: boolean;
   updated_at: string;
+  lessonCount: number;
+  lessonLinks: Array<{
+    lessonId: string;
+    lessonTitle: string;
+    lessonSlug: string;
+    isPublished: boolean;
+  }>;
 }
 
 export interface AdminWordListPage {
@@ -144,8 +151,60 @@ export async function listWordsPage(input: {
 
   if (error) throw error;
 
+  const wordIds = (data ?? []).map((word) => word.id);
+  const lessonLinksByWordId = new Map<
+    string,
+    Array<{
+      lessonId: string;
+      lessonTitle: string;
+      lessonSlug: string;
+      isPublished: boolean;
+    }>
+  >();
+
+  if (wordIds.length > 0) {
+    const { data: lessonLinks, error: lessonLinksError } = await supabase
+      .from("lesson_words")
+      .select("word_id, lessons!inner(id, title, slug, is_published)")
+      .in("word_id", wordIds);
+
+    if (lessonLinksError) {
+      throw lessonLinksError;
+    }
+
+    for (const row of (lessonLinks ?? []) as Array<{
+      word_id: string;
+      lessons:
+        | { id: string; title: string; slug: string; is_published: boolean }
+        | Array<{ id: string; title: string; slug: string; is_published: boolean }>
+        | null;
+    }>) {
+      const lesson = Array.isArray(row.lessons) ? row.lessons[0] : row.lessons;
+      if (!lesson) {
+        continue;
+      }
+
+      const current = lessonLinksByWordId.get(row.word_id) ?? [];
+      current.push({
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        lessonSlug: lesson.slug,
+        isPublished: lesson.is_published,
+      });
+      lessonLinksByWordId.set(row.word_id, current);
+    }
+  }
+
   return {
-    items: data ?? [],
+    items:
+      (data ?? []).map((word) => {
+        const lessonLinks = lessonLinksByWordId.get(word.id) ?? [];
+        return {
+          ...word,
+          lessonCount: lessonLinks.length,
+          lessonLinks,
+        };
+      }) ?? [],
     totalItems,
     page,
     pageSize,

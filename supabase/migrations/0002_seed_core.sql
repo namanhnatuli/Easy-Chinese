@@ -92,3 +92,109 @@ on conflict (radical) do update set
   meaning_vi = excluded.meaning_vi,
   stroke_count = excluded.stroke_count,
   updated_at = timezone('utc', now());
+
+-- 3. LEARNING ARTICLE TAGS
+insert into public.learning_article_tags (name, slug)
+values
+  ('So sánh từ gần nghĩa', 'so-sanh-tu-gan-nghia'),
+  ('Mẹo dùng từ', 'meo-dung-tu'),
+  ('Ghi chú học tập', 'ghi-chu-hoc-tap')
+on conflict (slug) do update set
+  name = excluded.name;
+
+-- 4. SEED LEARNING ARTICLE
+with article_seed as (
+  insert into public.learning_articles (
+    title,
+    slug,
+    summary,
+    content_markdown,
+    hsk_level,
+    article_type,
+    is_published,
+    published_at
+  )
+  values (
+    '觉得 vs 认为 vs 以为',
+    'jue-de-vs-ren-wei-vs-yi-wei',
+    'Phân biệt ba động từ rất hay gặp khi diễn đạt suy nghĩ, nhận định và hiểu lầm trong tiếng Trung.',
+    $$# 觉得 vs 认为 vs 以为
+
+Ba từ này đều có thể dịch gần như "nghĩ", nhưng sắc thái và tình huống dùng rất khác nhau.
+
+## 觉得
+
+- Thường dùng để nói **cảm nhận, ấn tượng, ý kiến mang tính cá nhân**.
+- Khẩu ngữ dùng rất nhiều.
+- Chủ ngữ thường là người đang trực tiếp cảm thấy hoặc đánh giá điều gì đó.
+
+> Ví dụ:
+> 我觉得这本书很有意思。  
+> Wǒ juéde zhè běn shū hěn yǒu yìsi.  
+> Tôi cảm thấy cuốn sách này rất thú vị.
+
+> Ví dụ:
+> 你觉得他今天怎么样？  
+> Nǐ juéde tā jīntiān zěnmeyàng?  
+> Bạn thấy hôm nay anh ấy thế nào?
+
+## 认为
+
+- Thường dùng khi đưa ra **nhận định, quan điểm, đánh giá có tính lý trí hơn**.
+- Dùng nhiều trong văn viết, tranh luận, phát biểu chính thức.
+- Sắc thái trang trọng hơn `觉得`.
+
+> Ví dụ:
+> 我认为这个方法更有效。  
+> Wǒ rènwéi zhège fāngfǎ gèng yǒuxiào.  
+> Tôi cho rằng phương pháp này hiệu quả hơn.
+
+> Ví dụ:
+> 很多人认为学汉字需要时间。  
+> Hěn duō rén rènwéi xué Hànzì xūyào shíjiān.  
+> Nhiều người cho rằng học chữ Hán cần thời gian.
+
+## 以为
+
+- Dùng khi nói **đã tưởng rằng**, thường hàm ý hiểu khác với sự thật.
+- Hay xuất hiện trong tình huống hiểu lầm hoặc giả định sai.
+- Rất thường đi cùng thông tin sửa lại ở phía sau.
+
+> Ví dụ:
+> 我以为你今天不来了。  
+> Wǒ yǐwéi nǐ jīntiān bù lái le.  
+> Tôi cứ tưởng hôm nay bạn không đến.
+
+> Ví dụ:
+> 他以为老师已经走了，其实老师还在办公室。  
+> Tā yǐwéi lǎoshī yǐjīng zǒu le, qíshí lǎoshī hái zài bàngōngshì.  
+> Anh ấy tưởng giáo viên đã đi rồi, nhưng thật ra giáo viên vẫn còn trong văn phòng.
+
+## Gợi ý nhớ nhanh
+
+- `觉得`: cảm thấy, thấy rằng, ý kiến cá nhân
+- `认为`: cho rằng, nhận định, văn phong trang trọng hơn
+- `以为`: tưởng rằng, nhưng thực tế không đúng như vậy
+$$,
+    3,
+    'vocabulary_compare',
+    true,
+    timezone('utc', now())
+  )
+  on conflict (slug) do update set
+    title = excluded.title,
+    summary = excluded.summary,
+    content_markdown = excluded.content_markdown,
+    hsk_level = excluded.hsk_level,
+    article_type = excluded.article_type,
+    is_published = excluded.is_published,
+    published_at = excluded.published_at,
+    updated_at = timezone('utc', now())
+  returning id
+)
+insert into public.learning_article_tag_links (article_id, tag_id)
+select article_seed.id, learning_article_tags.id
+from article_seed
+join public.learning_article_tags
+  on learning_article_tags.slug in ('so-sanh-tu-gan-nghia', 'meo-dung-tu', 'ghi-chu-hoc-tap')
+on conflict (article_id, tag_id) do nothing;

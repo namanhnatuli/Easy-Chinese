@@ -10,6 +10,14 @@ export type PreferredFont = "sans" | "serif" | "kai";
 export type SourceConfidenceLevel = "low" | "medium" | "high";
 export type WordReviewStatus = "pending" | "needs_review" | "approved" | "rejected" | "applied";
 export type WordAiStatus = "pending" | "processing" | "done" | "failed" | "skipped";
+export type LearningArticleType =
+  | "vocabulary_compare"
+  | "grammar_note"
+  | "usage_note"
+  | "culture"
+  | "other";
+export type ArticleProgressStatus = "not_started" | "reading" | "completed";
+export type LessonGenerationSource = "manual" | "auto";
 
 export interface TimestampedEntity {
   createdAt: string;
@@ -199,6 +207,12 @@ export interface Lesson extends TimestampedEntity {
   topicId: string | null;
   isPublished: boolean;
   sortOrder: number;
+  generationSource: LessonGenerationSource;
+  generationConfig: Record<string, unknown> | null;
+  difficultyLevel: number | null;
+  topicTagSlugs: string[];
+  estimatedMinutes: number;
+  wordCount: number;
   createdBy: string | null;
 }
 
@@ -206,6 +220,10 @@ export interface LessonWord {
   lessonId: string;
   wordId: string;
   sortOrder: number;
+  difficultyScore: number | null;
+  relevanceScore: number | null;
+  selectionReason: string | null;
+  isNewWord: boolean;
   createdAt: string;
 }
 
@@ -214,6 +232,84 @@ export interface LessonGrammarPoint {
   grammarPointId: string;
   sortOrder: number;
   createdAt: string;
+}
+
+export interface LessonGenerationRun extends TimestampedEntity {
+  id: string;
+  requestedBy: string | null;
+  hskLevel: number;
+  topicTagSlugs: string[];
+  targetWordCount: number;
+  excludePublishedLessonWords: boolean;
+  includeUnapprovedWords: boolean;
+  allowReusedWords: boolean;
+  generatedTitle: string;
+  generatedSlug: string;
+  generatedSummary: string;
+  generatedWordCount: number;
+  savedLessonId: string | null;
+}
+
+export interface LessonGenerationCandidate {
+  runId: string;
+  wordId: string;
+  sortOrder: number;
+  selected: boolean;
+  difficultyScore: number;
+  relevanceScore: number;
+  selectionReason: string;
+  lessonUsageCount: number;
+  publishedLessonUsageCount: number;
+  createdAt: string;
+}
+
+export interface LearningArticle extends TimestampedEntity {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  contentMarkdown: string;
+  hskLevel: number | null;
+  articleType: LearningArticleType;
+  isPublished: boolean;
+  createdBy: string | null;
+  publishedAt: string | null;
+}
+
+export interface LearningArticleTag extends TimestampedEntity {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface LearningArticleTagLink {
+  articleId: string;
+  tagId: string;
+  createdAt: string;
+}
+
+export interface LearningArticleWord {
+  articleId: string;
+  wordId: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface LearningArticleGrammarPoint {
+  articleId: string;
+  grammarPointId: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface UserArticleProgress extends TimestampedEntity {
+  id: string;
+  userId: string;
+  articleId: string;
+  status: ArticleProgressStatus;
+  bookmarked: boolean;
+  lastReadAt: string | null;
+  completedAt: string | null;
 }
 
 export interface UserWordProgress extends TimestampedEntity {
@@ -435,6 +531,10 @@ export const sampleLessons: LessonDetail[] = [
     hskLevel: 1,
     topicId: "topic-greetings",
     topicName: "Greetings",
+    generationSource: "manual",
+    generationConfig: null,
+    difficultyLevel: null,
+    topicTagSlugs: ["greetings"],
     wordCount: 12,
     grammarCount: 1,
     estimatedMinutes: 10,
@@ -454,6 +554,10 @@ export const sampleLessons: LessonDetail[] = [
     hskLevel: 1,
     topicId: "topic-introductions",
     topicName: "Introductions",
+    generationSource: "manual",
+    generationConfig: null,
+    difficultyLevel: null,
+    topicTagSlugs: ["introductions"],
     wordCount: 15,
     grammarCount: 2,
     estimatedMinutes: 14,

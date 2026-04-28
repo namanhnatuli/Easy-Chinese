@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, LayoutDashboard, LibraryBig, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
+import { BookOpen, FileText, LayoutDashboard, LibraryBig, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +101,7 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
     { href: "/lessons", label: t("navigation.lessons.label"), description: t("navigation.lessons.description"), icon: BookOpen },
     { href: "/vocabulary", label: t("navigation.vocabulary.label"), description: t("navigation.vocabulary.description"), icon: LibraryBig },
     { href: "/grammar", label: t("navigation.grammar.label"), description: t("navigation.grammar.description"), icon: BookOpen },
+    { href: "/articles", label: t("navigation.articles.label"), description: t("navigation.articles.description"), icon: FileText },
   ];
   const authenticatedLinks: SidebarLink[] = [
     { href: "/dashboard", label: t("navigation.dashboard.label"), description: t("navigation.dashboard.description"), icon: LayoutDashboard },
@@ -114,6 +115,8 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
     { href: "/admin/content-sync", label: t("navigation.contentSync.label"), description: t("navigation.contentSync.description"), icon: Sparkles },
     { href: "/admin/grammar", label: t("navigation.manageGrammar.label"), description: t("navigation.manageGrammar.description"), icon: BookOpen },
     { href: "/admin/lessons", label: t("navigation.manageLessons.label"), description: t("navigation.manageLessons.description"), icon: LayoutDashboard },
+    { href: "/admin/lesson-generator", label: t("navigation.lessonGenerator.label"), description: t("navigation.lessonGenerator.description"), icon: Sparkles },
+    { href: "/admin/articles", label: t("navigation.manageArticles.label"), description: t("navigation.manageArticles.description"), icon: FileText },
   ];
 
   return (

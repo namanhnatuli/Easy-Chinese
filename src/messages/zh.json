@@ -72,6 +72,10 @@
       "label": "语法",
       "description": "句式与例句"
     },
+    "articles": {
+      "label": "文章",
+      "description": "学习笔记与对比说明"
+    },
     "dashboard": {
       "label": "学习面板",
       "description": "进度与复习状态"
@@ -107,6 +111,14 @@
     "manageLessons": {
       "label": "课程",
       "description": "课程编排"
+    },
+    "lessonGenerator": {
+      "label": "课程生成",
+      "description": "从词汇自动生成课程草稿"
+    },
+    "manageArticles": {
+      "label": "文章",
+      "description": "学习笔记管理"
     }
   },
   "header": {
@@ -125,7 +137,7 @@
     "anonymousBody": "你可以在不保存进度的情况下浏览课程并学习。",
     "saveProgressCta": "登录以保存进度",
     "mobileTitle": "中文学习",
-    "mobileDescription": "在课程、复习页面和管理工具之间切换。",
+    "mobileDescription": "在课程、文章、复习页面和管理工具之间切换。",
     "pageTitles": {
       "home": {
         "title": "按自己的节奏学习中文",
@@ -278,6 +290,49 @@
     "explanation": "解释",
     "examples": "例句",
     "noExamples": "这个语法点目前还没有公开例句。"
+  },
+  "articles": {
+    "eyebrow": "文章",
+    "title": "词汇、语法和用法学习笔记",
+    "description": "浏览更长篇的学习说明、近义词对比和用法文章，用于深入阅读与复习。",
+    "detailEyebrow": "学习文章",
+    "backToArticles": "返回文章列表",
+    "browseArticles": "浏览文章",
+    "openDetail": "打开文章",
+    "emptyTitle": "没有符合筛选条件的已发布文章",
+    "emptyDescription": "尝试其他关键词、HSK 等级、文章类型或标签来扩大结果。",
+    "overview": "文章概览",
+    "overviewDescription": "快速查看文章类型、学习等级、标签和你的阅读状态。",
+    "relatedWords": "相关词汇",
+    "relatedWordsDescription": "与本文章关联的词汇条目，便于继续复习。",
+    "relatedGrammar": "相关语法点",
+    "relatedGrammarDescription": "与本文章关联的语法参考。",
+    "noRelatedWords": "这篇文章暂时没有关联词汇。",
+    "noRelatedGrammar": "这篇文章暂时没有关联语法点。",
+    "bookmark": "收藏",
+    "removeBookmark": "取消收藏",
+    "markCompleted": "标记为已读完",
+    "completed": "已完成",
+    "bookmarked": "已收藏",
+    "notBookmarked": "未收藏",
+    "notStarted": "未开始",
+    "progressStatus": "阅读状态",
+    "bookmarkStatus": "收藏状态",
+    "signInToTrack": "登录后记录阅读",
+    "anonymousHint": "匿名用户可以阅读已发布文章，但收藏与阅读记录只会在登录后保存。",
+    "filters": {
+      "search": "搜索",
+      "searchPlaceholder": "搜索文章标题或摘要",
+      "type": "文章类型",
+      "tag": "标签",
+      "allTypes": "所有类型",
+      "allTags": "所有标签"
+    },
+    "progressLabels": {
+      "not_started": "未开始",
+      "reading": "阅读中",
+      "completed": "已完成"
+    }
   },
   "contentSync": {
     "header": {
@@ -626,10 +681,18 @@
     "masteredDescription": "长期稳定的词汇",
     "lessonProgress": "课程进度",
     "lessonProgressSummary": "{completed} 已完成 · {inProgress} 进行中",
+    "completedArticles": "已完成文章",
+    "completedArticlesDescription": "你已经读完的学习笔记",
+    "bookmarkedArticles": "已收藏文章",
+    "bookmarkedArticlesDescription": "保存起来以后再看的笔记",
     "completed": "已完成",
     "notYet": "尚未开始",
     "noLessonProgress": "还没有课程进度",
     "noLessonProgressDescription": "开始一节课程，即可解锁完成度追踪、最近学习历史和复习建议。",
+    "recentArticles": "最近阅读文章",
+    "recentArticlesDescription": "你最近在已发布学习笔记中的阅读活动。",
+    "noArticleProgress": "还没有文章阅读记录",
+    "noArticleProgressDescription": "打开一篇已发布文章后，这里会开始记录你的阅读轨迹和收藏列表。",
     "reviewReadiness": "复习准备情况",
     "reviewReadinessDescription": "今天结束前需要注意的内容。",
     "dueToday": "今日到期",
@@ -725,6 +788,8 @@
         "grammarDescription": "创建语法讲解、例句以及可发布的课程内容。",
         "lessonsTitle": "课程",
         "lessonsDescription": "用词汇和语法点编排有顺序的课程内容。",
+        "articlesTitle": "文章",
+        "articlesDescription": "撰写并发布长篇学习笔记、对比说明和用法文章。",
         "topicsTitle": "主题",
         "topicsDescription": "维护课程分类和内容组织。",
         "radicalsTitle": "部首",
@@ -744,10 +809,12 @@
       "new": "新建词汇",
       "emptyTitle": "还没有词汇",
       "emptyDescription": "创建第一个词汇条目以开始构建词库。",
+      "noLessons": "尚未用于课程",
       "columns": {
         "word": "词汇",
         "meaning": "释义",
         "hsk": "HSK",
+        "lessons": "课程",
         "status": "状态",
         "updated": "更新时间",
         "actions": "操作"
@@ -871,6 +938,104 @@
         "eyebrow": "课程管理",
         "description": "更新课程元数据、发布状态和有序内容结构。",
         "submit": "保存课程"
+      }
+    },
+    "lessonGenerator": {
+      "eyebrow": "课程生成",
+      "title": "自动生成课程草稿",
+      "shortTitle": "生成课程",
+      "description": "从词汇库生成课程草稿，审核选中的词汇后保存到现有课程 CMS 中。",
+      "form": {
+        "title": "生成筛选条件",
+        "description": "先选择等级、主题标签和复用规则，再生成候选课程。",
+        "hskLevel": "HSK 等级",
+        "targetWordCount": "目标词数",
+        "topicTags": "主题标签",
+        "topicTagsPlaceholder": "搜索主题标签...",
+        "excludePublishedLessonWords": "排除已用于已发布课程的词汇",
+        "includeUnapprovedWords": "包含尚未审核通过的词汇",
+        "allowReusedWords": "在需要时允许使用其他课程中已出现的词汇",
+        "generate": "生成课程预览"
+      },
+      "coverage": {
+        "title": "覆盖情况概览",
+        "eligibleWords": "可用词汇",
+        "unusedWords": "未进入课程的词汇",
+        "reusedWords": "出现在多个课程中的词汇",
+        "byHsk": "按 HSK 覆盖",
+        "byTag": "按主题标签覆盖",
+        "unusedWordsShort": "{count} 个未使用"
+      },
+      "review": {
+        "title": "审核生成词汇",
+        "description": "检查草稿词汇集、调整顺序、替换词汇，并保存为后续编辑的课程草稿。",
+        "selectedWords": "已选词汇",
+        "averageDifficulty": "平均难度",
+        "replacements": "替换池",
+        "lessonDraft": "课程草稿信息",
+        "lessonDraftDescription": "保存草稿前可修改生成的标题、slug 和摘要。",
+        "lessonTitle": "课程标题",
+        "lessonSlug": "课程 slug",
+        "lessonSummary": "课程摘要",
+        "previewTableTitle": "候选词预览",
+        "previewTableDescription": "词汇会按照确定性的难度分数从易到难排序。",
+        "emptySelection": "当前没有选中的词汇。请重新加入替换词或重新生成草稿。",
+        "word": "词汇",
+        "difficulty": "难度",
+        "relevance": "相关度",
+        "reason": "选择原因",
+        "lessons": "现有课程",
+        "replace": "替换",
+        "actions": "操作",
+        "newWord": "新词",
+        "reusedWord": "复用",
+        "noLessonUsage": "尚未用于课程",
+        "chooseReplacement": "选择替换词",
+        "replacementPool": "快速添加替换词",
+        "saveDraft": "保存课程草稿"
+      }
+    },
+    "articles": {
+      "eyebrow": "文章管理",
+      "title": "文章",
+      "description": "管理长篇学习笔记、对比文章和发布状态。",
+      "new": "新建文章",
+      "emptyTitle": "还没有文章",
+      "emptyDescription": "创建第一篇学习文章，开始建立学习笔记库。",
+      "columns": {
+        "title": "标题",
+        "type": "类型",
+        "hsk": "HSK",
+        "status": "状态",
+        "updated": "更新于",
+        "actions": "操作"
+      },
+      "form": {
+        "title": "文章详情",
+        "description": "使用安全 Markdown 编写内容，支持标题、列表、强调和 blockquote 风格例句。",
+        "titleLabel": "标题",
+        "slug": "Slug",
+        "summary": "摘要",
+        "hskLevel": "HSK 等级",
+        "articleType": "文章类型",
+        "contentMarkdown": "Markdown 内容",
+        "tags": "标签",
+        "relatedWords": "相关词汇",
+        "relatedGrammarPoints": "相关语法点",
+        "searchTags": "搜索标签...",
+        "searchWords": "搜索词汇...",
+        "searchGrammar": "搜索语法点...",
+        "published": "已发布"
+      },
+      "create": {
+        "title": "新建文章",
+        "description": "创建一篇可发布的学习笔记，并关联标签和相关内容。",
+        "submit": "创建文章"
+      },
+      "edit": {
+        "eyebrow": "文章管理",
+        "description": "更新学习笔记内容、关联关系和发布状态。",
+        "submit": "保存文章"
       }
     },
     "topics": {

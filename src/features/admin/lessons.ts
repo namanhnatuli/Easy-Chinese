@@ -127,6 +127,8 @@ export async function listLessonFormOptions(): Promise<{
 
 export async function saveLessonAction(formData: FormData) {
   const { supabase, auth } = await requireAdminSupabase();
+  const selectedWords = parseOrderedSelections(formData, "word");
+  const selectedGrammar = parseOrderedSelections(formData, "grammar");
   const parsed = lessonSchema.parse({
     id: optionalText(formData.get("id")) ?? undefined,
     title: requiredText(formData.get("title")),
@@ -138,6 +140,39 @@ export async function saveLessonAction(formData: FormData) {
     sortOrder: Number(requiredText(formData.get("sort_order")) || "0"),
   });
 
+  let lessonId = parsed.id;
+  const existingLessonWordMetadata = new Map<
+    string,
+    {
+      difficulty_score: number | null;
+      relevance_score: number | null;
+      selection_reason: string | null;
+      is_new_word: boolean;
+    }
+  >();
+
+  if (lessonId) {
+    const { data: existingLessonWords, error: existingLessonWordsError } = await supabase
+      .from("lesson_words")
+      .select("word_id, difficulty_score, relevance_score, selection_reason, is_new_word")
+      .eq("lesson_id", lessonId);
+
+    if (existingLessonWordsError) throw existingLessonWordsError;
+
+    for (const row of existingLessonWords ?? []) {
+      existingLessonWordMetadata.set(row.word_id, {
+        difficulty_score: row.difficulty_score,
+        relevance_score: row.relevance_score,
+        selection_reason: row.selection_reason,
+        is_new_word: row.is_new_word,
+      });
+    }
+  }
+
+  const preservedDifficultyScores = selectedWords
+    .map((item) => existingLessonWordMetadata.get(item.id)?.difficulty_score ?? null)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
   const payload = {
     title: parsed.title,
     slug: parsed.slug,
@@ -146,9 +181,18 @@ export async function saveLessonAction(formData: FormData) {
     topic_id: parsed.topicId,
     is_published: parsed.isPublished,
     sort_order: parsed.sortOrder,
+    word_count: selectedWords.length,
+    estimated_minutes: Math.max(10, Math.ceil(selectedWords.length * 0.8)),
+    difficulty_level:
+      preservedDifficultyScores.length > 0
+        ? Number(
+            (
+              preservedDifficultyScores.reduce((total, value) => total + value, 0) /
+              preservedDifficultyScores.length
+            ).toFixed(2),
+          )
+        : null,
   };
-
-  let lessonId = parsed.id;
 
   if (lessonId) {
     const { error } = await supabase.from("lessons").update(payload).eq("id", lessonId);
@@ -166,9 +210,6 @@ export async function saveLessonAction(formData: FormData) {
     if (error) throw error;
     lessonId = data.id;
   }
-
-  const selectedWords = parseOrderedSelections(formData, "word");
-  const selectedGrammar = parseOrderedSelections(formData, "grammar");
 
   const { error: deleteWordsError } = await supabase
     .from("lesson_words")
@@ -188,6 +229,10 @@ export async function saveLessonAction(formData: FormData) {
         lesson_id: lessonId,
         word_id: item.id,
         sort_order: item.sortOrder,
+        difficulty_score: existingLessonWordMetadata.get(item.id)?.difficulty_score ?? null,
+        relevance_score: existingLessonWordMetadata.get(item.id)?.relevance_score ?? null,
+        selection_reason: existingLessonWordMetadata.get(item.id)?.selection_reason ?? null,
+        is_new_word: existingLessonWordMetadata.get(item.id)?.is_new_word ?? true,
       })),
     );
 

@@ -72,6 +72,10 @@
       "label": "Ngữ pháp",
       "description": "Mẫu câu và ví dụ"
     },
+    "articles": {
+      "label": "Bài viết",
+      "description": "Ghi chú học tập và bài so sánh"
+    },
     "dashboard": {
       "label": "Tiến độ",
       "description": "Tiến độ và trạng thái ôn tập"
@@ -107,6 +111,14 @@
     "manageLessons": {
       "label": "Bài học",
       "description": "Biên soạn bài học"
+    },
+    "lessonGenerator": {
+      "label": "Tạo bài học",
+      "description": "Tạo nháp bài học từ từ vựng"
+    },
+    "manageArticles": {
+      "label": "Bài viết",
+      "description": "Quản lý ghi chú học tập"
     }
   },
   "header": {
@@ -125,7 +137,7 @@
     "anonymousBody": "Bạn có thể xem bài học và học mà không lưu tiến độ.",
     "saveProgressCta": "Đăng nhập để lưu tiến độ",
     "mobileTitle": "Học Tiếng Trung",
-    "mobileDescription": "Đi tới bài học, trang ôn tập và công cụ quản trị.",
+    "mobileDescription": "Đi tới bài học, bài viết, trang ôn tập và công cụ quản trị.",
     "pageTitles": {
       "home": {
         "title": "Học tiếng Trung theo nhịp độ của bạn",
@@ -278,6 +290,49 @@
     "explanation": "Giải thích",
     "examples": "Ví dụ",
     "noExamples": "Chưa có ví dụ công khai nào cho điểm ngữ pháp này."
+  },
+  "articles": {
+    "eyebrow": "Bài viết",
+    "title": "Ghi chú học tập cho từ vựng, ngữ pháp và cách dùng",
+    "description": "Xem các ghi chú dài hơn, bài so sánh từ và bài giải thích được thiết kế để đọc kỹ và ôn lại.",
+    "detailEyebrow": "Bài viết học tập",
+    "backToArticles": "Quay lại bài viết",
+    "browseArticles": "Xem bài viết",
+    "openDetail": "Mở bài viết",
+    "emptyTitle": "Không có bài viết đã xuất bản nào khớp với bộ lọc",
+    "emptyDescription": "Thử từ khóa, cấp độ, loại bài hoặc thẻ khác để mở rộng danh sách bài viết.",
+    "overview": "Tổng quan bài viết",
+    "overviewDescription": "Tóm tắt nhanh về loại bài viết, cấp độ học, thẻ và trạng thái đọc của bạn.",
+    "relatedWords": "Từ liên quan",
+    "relatedWordsDescription": "Các mục từ vựng liên kết với bài viết này để ôn nhanh.",
+    "relatedGrammar": "Điểm ngữ pháp liên quan",
+    "relatedGrammarDescription": "Các tham chiếu ngữ pháp được nối với bài viết này.",
+    "noRelatedWords": "Chưa có từ liên quan nào được gắn với bài viết này.",
+    "noRelatedGrammar": "Chưa có điểm ngữ pháp liên quan nào được gắn với bài viết này.",
+    "bookmark": "Lưu",
+    "removeBookmark": "Bỏ lưu",
+    "markCompleted": "Đánh dấu đã đọc xong",
+    "completed": "Đã hoàn thành",
+    "bookmarked": "Đã lưu",
+    "notBookmarked": "Chưa lưu",
+    "notStarted": "Chưa bắt đầu",
+    "progressStatus": "Trạng thái đọc",
+    "bookmarkStatus": "Lưu bài",
+    "signInToTrack": "Đăng nhập để theo dõi",
+    "anonymousHint": "Người học ẩn danh vẫn có thể đọc bài viết đã xuất bản, nhưng bookmark và lịch sử đọc chỉ được lưu sau khi đăng nhập.",
+    "filters": {
+      "search": "Tìm kiếm",
+      "searchPlaceholder": "Tìm theo tiêu đề hoặc tóm tắt bài viết",
+      "type": "Loại bài viết",
+      "tag": "Thẻ",
+      "allTypes": "Tất cả loại",
+      "allTags": "Tất cả thẻ"
+    },
+    "progressLabels": {
+      "not_started": "Chưa bắt đầu",
+      "reading": "Đang đọc",
+      "completed": "Đã hoàn thành"
+    }
   },
   "contentSync": {
     "header": {
@@ -626,10 +681,18 @@
     "masteredDescription": "Từ đã ổn định dài hạn",
     "lessonProgress": "Tiến độ bài học",
     "lessonProgressSummary": "{completed} hoàn thành · {inProgress} đang học",
+    "completedArticles": "Bài viết đã đọc xong",
+    "completedArticlesDescription": "Các ghi chú học tập bạn đã hoàn thành",
+    "bookmarkedArticles": "Bài viết đã lưu",
+    "bookmarkedArticlesDescription": "Các ghi chú lưu lại để xem sau",
     "completed": "Đã hoàn thành",
     "notYet": "Chưa có",
     "noLessonProgress": "Chưa có tiến độ bài học",
     "noLessonProgressDescription": "Bắt đầu một bài học để mở khóa theo dõi mức hoàn thành, lịch sử học gần đây và gợi ý ôn tập.",
+    "recentArticles": "Bài viết đọc gần đây",
+    "recentArticlesDescription": "Hoạt động đọc mới nhất của bạn trên các ghi chú học tập đã xuất bản.",
+    "noArticleProgress": "Chưa có lịch sử đọc bài viết",
+    "noArticleProgressDescription": "Mở một bài viết đã xuất bản để bắt đầu lưu dấu đọc và danh sách đã lưu.",
     "reviewReadiness": "Mức sẵn sàng ôn tập",
     "reviewReadinessDescription": "Những gì cần chú ý trước khi kết thúc ngày.",
     "dueToday": "Đến hạn hôm nay",
@@ -725,6 +788,8 @@
         "grammarDescription": "Tạo giải thích ngữ pháp, ví dụ và nội dung bài học có thể xuất bản.",
         "lessonsTitle": "Bài học",
         "lessonsDescription": "Sắp xếp nội dung bài học từ từ vựng và điểm ngữ pháp.",
+        "articlesTitle": "Bài viết",
+        "articlesDescription": "Viết và xuất bản ghi chú học tập dài, bài so sánh và bài giải thích cách dùng.",
         "topicsTitle": "Chủ đề",
         "topicsDescription": "Duy trì danh mục bài học và tổ chức nội dung.",
         "radicalsTitle": "Bộ thủ",
@@ -744,10 +809,12 @@
       "new": "Từ mới",
       "emptyTitle": "Chưa có từ nào",
       "emptyDescription": "Tạo mục từ vựng đầu tiên để bắt đầu xây dựng thư viện.",
+      "noLessons": "Chưa dùng trong bài học",
       "columns": {
         "word": "Từ",
         "meaning": "Nghĩa",
         "hsk": "HSK",
+        "lessons": "Bài học",
         "status": "Trạng thái",
         "updated": "Cập nhật",
         "actions": "Thao tác"
@@ -871,6 +938,104 @@
         "eyebrow": "Quản trị bài học",
         "description": "Cập nhật siêu dữ liệu, trạng thái xuất bản và cấu trúc có thứ tự của bài học.",
         "submit": "Lưu bài học"
+      }
+    },
+    "lessonGenerator": {
+      "eyebrow": "Tạo bài học",
+      "title": "Tự động tạo nháp bài học",
+      "shortTitle": "Tạo bài học",
+      "description": "Tạo bài học nháp từ kho từ vựng, duyệt lại danh sách từ rồi lưu vào CMS bài học hiện có.",
+      "form": {
+        "title": "Bộ lọc tạo bài học",
+        "description": "Chọn cấp độ, thẻ chủ đề và quy tắc tái sử dụng trước khi tạo danh sách từ gợi ý.",
+        "hskLevel": "Cấp độ HSK",
+        "targetWordCount": "Số từ mục tiêu",
+        "topicTags": "Thẻ chủ đề",
+        "topicTagsPlaceholder": "Tìm thẻ chủ đề...",
+        "excludePublishedLessonWords": "Loại trừ các từ đã có trong bài học đã xuất bản",
+        "includeUnapprovedWords": "Bao gồm cả từ chưa được duyệt",
+        "allowReusedWords": "Cho phép dùng lại từ đã có trong bài học khác khi cần",
+        "generate": "Tạo bản xem trước"
+      },
+      "coverage": {
+        "title": "Tổng quan độ phủ",
+        "eligibleWords": "Từ đủ điều kiện",
+        "unusedWords": "Từ chưa vào bài học",
+        "reusedWords": "Từ xuất hiện ở nhiều bài học",
+        "byHsk": "Độ phủ theo HSK",
+        "byTag": "Độ phủ theo thẻ chủ đề",
+        "unusedWordsShort": "{count} từ chưa dùng"
+      },
+      "review": {
+        "title": "Duyệt danh sách từ được tạo",
+        "description": "Kiểm tra tập từ nháp, chỉnh thứ tự, thay thế từ và lưu thành bài học nháp để sửa tiếp.",
+        "selectedWords": "Từ đã chọn",
+        "averageDifficulty": "Độ khó trung bình",
+        "replacements": "Nguồn thay thế",
+        "lessonDraft": "Thông tin bài học nháp",
+        "lessonDraftDescription": "Chỉnh tiêu đề, slug và mô tả trước khi lưu bài học nháp.",
+        "lessonTitle": "Tiêu đề bài học",
+        "lessonSlug": "Slug bài học",
+        "lessonSummary": "Mô tả bài học",
+        "previewTableTitle": "Xem trước từ ứng viên",
+        "previewTableDescription": "Các từ được sắp từ dễ đến khó theo điểm độ khó xác định.",
+        "emptySelection": "Hiện chưa có từ nào được chọn. Hãy thêm từ thay thế hoặc tạo lại danh sách.",
+        "word": "Từ",
+        "difficulty": "Độ khó",
+        "relevance": "Liên quan",
+        "reason": "Lý do chọn",
+        "lessons": "Bài học hiện có",
+        "replace": "Thay thế",
+        "actions": "Thao tác",
+        "newWord": "Từ mới",
+        "reusedWord": "Dùng lại",
+        "noLessonUsage": "Chưa dùng trong bài học",
+        "chooseReplacement": "Chọn từ thay thế",
+        "replacementPool": "Thêm nhanh từ thay thế",
+        "saveDraft": "Lưu bài học nháp"
+      }
+    },
+    "articles": {
+      "eyebrow": "Quản trị bài viết",
+      "title": "Bài viết",
+      "description": "Quản lý ghi chú học tập dài, bài so sánh và trạng thái xuất bản.",
+      "new": "Bài viết mới",
+      "emptyTitle": "Chưa có bài viết nào",
+      "emptyDescription": "Tạo bài viết học tập đầu tiên để bắt đầu thư viện ghi chú.",
+      "columns": {
+        "title": "Tiêu đề",
+        "type": "Loại",
+        "hsk": "HSK",
+        "status": "Trạng thái",
+        "updated": "Cập nhật",
+        "actions": "Thao tác"
+      },
+      "form": {
+        "title": "Chi tiết bài viết",
+        "description": "Viết Markdown an toàn với heading, bullet list, nhấn mạnh và các khối ví dụ kiểu blockquote.",
+        "titleLabel": "Tiêu đề",
+        "slug": "Slug",
+        "summary": "Tóm tắt",
+        "hskLevel": "Cấp HSK",
+        "articleType": "Loại bài viết",
+        "contentMarkdown": "Nội dung markdown",
+        "tags": "Thẻ",
+        "relatedWords": "Từ liên quan",
+        "relatedGrammarPoints": "Điểm ngữ pháp liên quan",
+        "searchTags": "Tìm thẻ...",
+        "searchWords": "Tìm từ...",
+        "searchGrammar": "Tìm điểm ngữ pháp...",
+        "published": "Xuất bản"
+      },
+      "create": {
+        "title": "Bài viết mới",
+        "description": "Tạo ghi chú học tập có thể xuất bản với thẻ và nội dung liên quan.",
+        "submit": "Tạo bài viết"
+      },
+      "edit": {
+        "eyebrow": "Quản trị bài viết",
+        "description": "Cập nhật nội dung ghi chú, liên kết và trạng thái xuất bản.",
+        "submit": "Lưu bài viết"
       }
     },
     "topics": {

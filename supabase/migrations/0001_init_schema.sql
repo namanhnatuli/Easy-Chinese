@@ -48,6 +48,18 @@ begin
   if not exists (select 1 from pg_type where typname = 'vocab_sync_apply_status') then
     create type public.vocab_sync_apply_status as enum ('pending', 'applied', 'failed', 'skipped');
   end if;
+
+  if not exists (select 1 from pg_type where typname = 'learning_article_type') then
+    create type public.learning_article_type as enum ('vocabulary_compare', 'grammar_note', 'usage_note', 'culture', 'other');
+  end if;
+
+  if not exists (select 1 from pg_type where typname = 'article_progress_status') then
+    create type public.article_progress_status as enum ('not_started', 'reading', 'completed');
+  end if;
+
+  if not exists (select 1 from pg_type where typname = 'lesson_generation_source') then
+    create type public.lesson_generation_source as enum ('manual', 'auto');
+  end if;
 end
 $$;
 
@@ -216,6 +228,12 @@ create table public.lessons (
   topic_id uuid references public.topics(id) on delete set null,
   is_published boolean not null default false,
   sort_order integer not null default 0,
+  generation_source public.lesson_generation_source not null default 'manual',
+  generation_config jsonb,
+  difficulty_level numeric(6,2),
+  topic_tag_slugs text[] not null default '{}'::text[],
+  estimated_minutes integer not null default 0 check (estimated_minutes >= 0),
+  word_count integer not null default 0 check (word_count >= 0),
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -226,6 +244,10 @@ create table public.lesson_words (
   lesson_id uuid not null references public.lessons(id) on delete cascade,
   word_id uuid not null references public.words(id) on delete cascade,
   sort_order integer not null default 0,
+  difficulty_score numeric(6,2),
+  relevance_score numeric(6,2),
+  selection_reason text,
+  is_new_word boolean not null default true,
   created_at timestamptz not null default timezone('utc', now()),
   primary key (lesson_id, word_id),
   constraint lesson_words_lesson_sort_unique unique (lesson_id, sort_order)
@@ -239,6 +261,88 @@ create table public.lesson_grammar_points (
   created_at timestamptz not null default timezone('utc', now()),
   primary key (lesson_id, grammar_point_id),
   constraint lesson_grammar_points_lesson_sort_unique unique (lesson_id, sort_order)
+);
+
+create table public.lesson_generation_runs (
+  id uuid primary key default gen_random_uuid(),
+  requested_by uuid references public.profiles(id) on delete set null,
+  hsk_level integer not null check (hsk_level between 1 and 9),
+  topic_tag_slugs text[] not null default '{}'::text[],
+  target_word_count integer not null check (target_word_count between 1 and 50),
+  exclude_published_lesson_words boolean not null default true,
+  include_unapproved_words boolean not null default false,
+  allow_reused_words boolean not null default false,
+  generated_title text not null,
+  generated_slug text not null,
+  generated_summary text not null,
+  generated_word_count integer not null default 0 check (generated_word_count >= 0),
+  saved_lesson_id uuid references public.lessons(id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table public.lesson_generation_candidates (
+  run_id uuid not null references public.lesson_generation_runs(id) on delete cascade,
+  word_id uuid not null references public.words(id) on delete cascade,
+  sort_order integer not null check (sort_order >= 1),
+  selected boolean not null default true,
+  difficulty_score numeric(6,2) not null,
+  relevance_score numeric(6,2) not null,
+  selection_reason text not null,
+  lesson_usage_count integer not null default 0 check (lesson_usage_count >= 0),
+  published_lesson_usage_count integer not null default 0 check (published_lesson_usage_count >= 0),
+  created_at timestamptz not null default timezone('utc', now()),
+  primary key (run_id, word_id),
+  constraint lesson_generation_candidates_run_sort_unique unique (run_id, sort_order)
+);
+
+-- Learning Articles
+create table public.learning_articles (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  summary text not null,
+  content_markdown text not null,
+  hsk_level integer check (hsk_level between 1 and 9),
+  article_type public.learning_article_type not null default 'other',
+  is_published boolean not null default false,
+  created_by uuid references public.profiles(id) on delete set null,
+  published_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table public.learning_article_tags (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text not null unique,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table public.learning_article_tag_links (
+  article_id uuid not null references public.learning_articles(id) on delete cascade,
+  tag_id uuid not null references public.learning_article_tags(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+  primary key (article_id, tag_id)
+);
+
+create table public.learning_article_words (
+  article_id uuid not null references public.learning_articles(id) on delete cascade,
+  word_id uuid not null references public.words(id) on delete cascade,
+  sort_order integer not null default 0 check (sort_order >= 0),
+  created_at timestamptz not null default timezone('utc', now()),
+  primary key (article_id, word_id),
+  constraint learning_article_words_article_sort_unique unique (article_id, sort_order)
+);
+
+create table public.learning_article_grammar_points (
+  article_id uuid not null references public.learning_articles(id) on delete cascade,
+  grammar_point_id uuid not null references public.grammar_points(id) on delete cascade,
+  sort_order integer not null default 0 check (sort_order >= 0),
+  created_at timestamptz not null default timezone('utc', now()),
+  primary key (article_id, grammar_point_id),
+  constraint learning_article_grammar_points_article_sort_unique unique (article_id, sort_order)
 );
 
 -- 4. USER PROGRESS TABLES
@@ -272,6 +376,19 @@ create table public.user_lesson_progress (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   constraint user_lesson_progress_user_lesson_unique unique (user_id, lesson_id)
+);
+
+create table public.user_article_progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  article_id uuid not null references public.learning_articles(id) on delete cascade,
+  status public.article_progress_status not null default 'not_started',
+  bookmarked boolean not null default false,
+  last_read_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint user_article_progress_user_article_unique unique (user_id, article_id)
 );
 
 -- Review Events
@@ -387,8 +504,28 @@ create index grammar_points_slug_idx on public.grammar_points(slug);
 create index grammar_points_is_published_idx on public.grammar_points(is_published);
 create index lessons_slug_idx on public.lessons(slug);
 create index lessons_is_published_idx on public.lessons(is_published);
+create index lessons_generation_source_idx on public.lessons(generation_source);
+create index lessons_topic_tag_slugs_idx on public.lessons using gin(topic_tag_slugs);
+create index learning_articles_slug_idx on public.learning_articles(slug);
+create index learning_articles_hsk_level_idx on public.learning_articles(hsk_level);
+create index learning_articles_article_type_idx on public.learning_articles(article_type);
+create index learning_articles_is_published_idx on public.learning_articles(is_published);
+create index learning_articles_published_at_idx on public.learning_articles(published_at desc);
+create index learning_article_tags_slug_idx on public.learning_article_tags(slug);
+create index learning_article_tag_links_tag_idx on public.learning_article_tag_links(tag_id);
+create index learning_article_words_word_idx on public.learning_article_words(word_id);
+create index learning_article_grammar_points_point_idx on public.learning_article_grammar_points(grammar_point_id);
+create index lesson_generation_runs_requested_by_idx on public.lesson_generation_runs(requested_by);
+create index lesson_generation_runs_saved_lesson_idx on public.lesson_generation_runs(saved_lesson_id);
+create index lesson_generation_runs_topic_tag_slugs_idx on public.lesson_generation_runs using gin(topic_tag_slugs);
+create index lesson_generation_candidates_word_idx on public.lesson_generation_candidates(word_id);
+create index lesson_generation_candidates_selected_idx on public.lesson_generation_candidates(run_id, selected);
 create index user_word_progress_user_id_idx on public.user_word_progress(user_id);
 create index user_word_progress_next_review_at_idx on public.user_word_progress(next_review_at);
+create index user_article_progress_user_id_idx on public.user_article_progress(user_id);
+create index user_article_progress_article_id_idx on public.user_article_progress(article_id);
+create index user_article_progress_status_idx on public.user_article_progress(status);
+create index user_article_progress_bookmarked_idx on public.user_article_progress(user_id, bookmarked);
 create index review_events_user_id_reviewed_at_idx on public.review_events(user_id, reviewed_at desc);
 create index vocab_sync_batches_status_idx on public.vocab_sync_batches(status);
 create index vocab_sync_rows_batch_idx on public.vocab_sync_rows(batch_id);
@@ -419,8 +556,12 @@ create trigger word_radicals_set_updated_at before update on public.word_radical
 create trigger grammar_points_set_updated_at before update on public.grammar_points for each row execute function public.set_updated_at();
 create trigger grammar_examples_set_updated_at before update on public.grammar_examples for each row execute function public.set_updated_at();
 create trigger lessons_set_updated_at before update on public.lessons for each row execute function public.set_updated_at();
+create trigger lesson_generation_runs_set_updated_at before update on public.lesson_generation_runs for each row execute function public.set_updated_at();
+create trigger learning_articles_set_updated_at before update on public.learning_articles for each row execute function public.set_updated_at();
+create trigger learning_article_tags_set_updated_at before update on public.learning_article_tags for each row execute function public.set_updated_at();
 create trigger user_word_progress_set_updated_at before update on public.user_word_progress for each row execute function public.set_updated_at();
 create trigger user_lesson_progress_set_updated_at before update on public.user_lesson_progress for each row execute function public.set_updated_at();
+create trigger user_article_progress_set_updated_at before update on public.user_article_progress for each row execute function public.set_updated_at();
 create trigger vocab_sync_batches_set_updated_at before update on public.vocab_sync_batches for each row execute function public.set_updated_at();
 create trigger vocab_sync_rows_set_updated_at before update on public.vocab_sync_rows for each row execute function public.set_updated_at();
 
@@ -439,8 +580,16 @@ alter table public.grammar_examples enable row level security;
 alter table public.lessons enable row level security;
 alter table public.lesson_words enable row level security;
 alter table public.lesson_grammar_points enable row level security;
+alter table public.lesson_generation_runs enable row level security;
+alter table public.lesson_generation_candidates enable row level security;
+alter table public.learning_articles enable row level security;
+alter table public.learning_article_tags enable row level security;
+alter table public.learning_article_tag_links enable row level security;
+alter table public.learning_article_words enable row level security;
+alter table public.learning_article_grammar_points enable row level security;
 alter table public.user_word_progress enable row level security;
 alter table public.user_lesson_progress enable row level security;
+alter table public.user_article_progress enable row level security;
 alter table public.review_events enable row level security;
 alter table public.vocab_sync_batches enable row level security;
 alter table public.vocab_sync_rows enable row level security;
@@ -474,10 +623,23 @@ create policy "lesson_words_read" on public.lesson_words for select to public us
 create policy "lesson_words_admin" on public.lesson_words for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
 create policy "lesson_grammar_points_read" on public.lesson_grammar_points for select to public using (exists (select 1 from public.lessons l join public.grammar_points gp on gp.id = lesson_grammar_points.grammar_point_id where l.id = lesson_grammar_points.lesson_id and (l.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) and (gp.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role))));
 create policy "lesson_grammar_points_admin" on public.lesson_grammar_points for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "lesson_generation_runs_admin" on public.lesson_generation_runs for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "lesson_generation_candidates_admin" on public.lesson_generation_candidates for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_articles_read" on public.learning_articles for select to public using (is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_articles_admin" on public.learning_articles for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_article_tags_read" on public.learning_article_tags for select to public using (true);
+create policy "learning_article_tags_admin" on public.learning_article_tags for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_article_tag_links_read" on public.learning_article_tag_links for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_tag_links.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role))));
+create policy "learning_article_tag_links_admin" on public.learning_article_tag_links for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_article_words_read" on public.learning_article_words for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_words.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role))));
+create policy "learning_article_words_admin" on public.learning_article_words for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
+create policy "learning_article_grammar_points_read" on public.learning_article_grammar_points for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_grammar_points.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role))));
+create policy "learning_article_grammar_points_admin" on public.learning_article_grammar_points for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role)) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'::public.app_role));
 
 -- Progress/Events
 create policy "user_word_progress_own" on public.user_word_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "user_lesson_progress_own" on public.user_lesson_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_article_progress_own" on public.user_article_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "review_events_own" on public.review_events for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Sync Pipeline

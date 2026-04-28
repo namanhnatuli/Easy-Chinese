@@ -82,6 +82,7 @@ export default async function AdminWordsPage({
                 <TableHead>{t("admin.words.columns.word")}</TableHead>
                 <TableHead>{t("admin.words.columns.meaning")}</TableHead>
                 <TableHead>{t("admin.words.columns.hsk")}</TableHead>
+                <TableHead>{t("admin.words.columns.lessons")}</TableHead>
                 <TableHead>{t("admin.words.columns.status")}</TableHead>
                 <TableHead>{t("admin.words.columns.updated")}</TableHead>
                 <TableHead className="text-right">{t("admin.words.columns.actions")}</TableHead>
@@ -98,6 +99,26 @@ export default async function AdminWordsPage({
                   </TableCell>
                   <TableCell className="font-medium text-foreground">{word.vietnamese_meaning}</TableCell>
                   <TableCell>HSK {word.hsk_level}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium text-foreground">{word.lessonCount}</div>
+                      {word.lessonLinks.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {word.lessonLinks.slice(0, 3).map((lesson) => (
+                            <Link
+                              key={`${word.id}-${lesson.lessonId}`}
+                              href={link(`/admin/lessons/${lesson.lessonId}/edit`)}
+                              className="text-xs text-primary underline-offset-4 hover:underline"
+                            >
+                              {lesson.lessonTitle}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{t("admin.words.noLessons")}</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={word.is_published ? "success" : "warning"}>
                       {word.is_published ? t("admin.status.published") : t("admin.status.draft")}

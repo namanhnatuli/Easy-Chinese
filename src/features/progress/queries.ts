@@ -6,6 +6,7 @@ import type {
   DashboardData,
   DueReviewItem,
   LessonProgressSummary,
+  RecentArticleProgressItem,
   RecentReviewActivityItem,
   SuggestedLessonItem,
 } from "@/features/progress/types";
@@ -174,6 +175,45 @@ export async function listSuggestedLessons(limit = 3): Promise<SuggestedLessonIt
   }));
 }
 
+export async function listRecentArticleProgress(
+  userId: string,
+  limit = 5,
+): Promise<RecentArticleProgressItem[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("user_article_progress")
+    .select(
+      "status, bookmarked, last_read_at, completed_at, learning_articles!inner(id, title, slug, is_published)",
+    )
+    .eq("user_id", userId)
+    .eq("learning_articles.is_published", true)
+    .order("last_read_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .map((row) => {
+      const article = normalizeRelation(row.learning_articles);
+      if (!article) {
+        return null;
+      }
+
+      return {
+        articleId: article.id,
+        title: article.title,
+        slug: article.slug,
+        status: row.status,
+        bookmarked: row.bookmarked,
+        lastReadAt: row.last_read_at,
+        completedAt: row.completed_at,
+      } satisfies RecentArticleProgressItem;
+    })
+    .filter((item): item is RecentArticleProgressItem => item !== null);
+}
+
 export async function getDashboardData(userId: string): Promise<DashboardData> {
   const supabase = await createSupabaseServerClient();
   const now = new Date();
@@ -181,6 +221,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const [
     { data: progressRows, error: progressError },
     { data: lessonRows, error: lessonError },
+    { data: articleRows, error: articleError },
     { data: dailyActivityRows, error: dailyActivityError },
   ] = await Promise.all([
     supabase
@@ -190,6 +231,10 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     supabase
       .from("user_lesson_progress")
       .select("completion_percent, completed_at")
+      .eq("user_id", userId),
+    supabase
+      .from("user_article_progress")
+      .select("status, bookmarked, completed_at")
       .eq("user_id", userId),
     supabase
       .from("review_events")
@@ -207,12 +252,17 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     throw lessonError;
   }
 
+  if (articleError) {
+    throw articleError;
+  }
+
   if (dailyActivityError) {
     throw dailyActivityError;
   }
 
-  const [recentLessonProgress, recentReviewActivity] = await Promise.all([
+  const [recentLessonProgress, recentArticleProgress, recentReviewActivity] = await Promise.all([
     listRecentLessonProgress(userId),
+    listRecentArticleProgress(userId),
     listRecentReviewActivity(userId),
   ]);
 
@@ -224,12 +274,17 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     const percent = Number(row.completion_percent);
     return percent > 0 && percent < 100;
   }).length;
+  const completedArticlesCount = (articleRows ?? []).filter((row) => row.status === "completed").length;
+  const bookmarkedArticlesCount = (articleRows ?? []).filter((row) => row.bookmarked).length;
 
   return {
     summary,
     completedLessonsCount,
     inProgressLessonsCount,
+    completedArticlesCount,
+    bookmarkedArticlesCount,
     recentLessonProgress,
+    recentArticleProgress,
     recentReviewActivity,
     dailyActivity: buildDailyActivitySummary(dailyActivityRows ?? [], now),
   };

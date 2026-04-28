@@ -30,6 +30,60 @@ function formatDateTime(value: string | null, locale: string, notYetLabel: strin
   }).format(new Date(value));
 }
 
+function RecentArticleList({
+  articles,
+  locale,
+  link,
+  t,
+}: {
+  articles: DashboardData["recentArticleProgress"];
+  locale: string;
+  link: (href: string) => string;
+  t: Awaited<ReturnType<typeof getServerI18n>>["t"];
+}) {
+  if (articles.length === 0) {
+    return (
+      <EmptyState
+        title={t("dashboard.noArticleProgress")}
+        description={t("dashboard.noArticleProgressDescription")}
+        action={
+          <Button asChild>
+            <Link href={link("/articles")}>{t("articles.browseArticles")}</Link>
+          </Button>
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {articles.map((article) => (
+        <Link
+          key={article.articleId}
+          href={link(`/articles/${article.slug}`)}
+          className="block rounded-2xl border border-border/80 bg-card/80 p-4 transition-colors hover:bg-muted/50"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">{article.title}</h3>
+                {article.bookmarked ? <Badge variant="secondary">{t("articles.bookmarked")}</Badge> : null}
+                {article.completedAt ? <Badge variant="default">{t("articles.completed")}</Badge> : null}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t(`articles.progressLabels.${article.status}`)}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatDateTime(article.lastReadAt, locale, t("dashboard.notYet"))}
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function LessonProgressList({
   lessons,
   locale,
@@ -166,6 +220,21 @@ export async function DashboardOverview({
         />
       </section>
 
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label={t("dashboard.completedArticles")}
+          value={String(data.completedArticlesCount)}
+          description={t("dashboard.completedArticlesDescription")}
+          icon={<BookOpen className="size-5" />}
+        />
+        <StatCard
+          label={t("dashboard.bookmarkedArticles")}
+          value={String(data.bookmarkedArticlesCount)}
+          description={t("dashboard.bookmarkedArticlesDescription")}
+          icon={<Sparkles className="size-5" />}
+        />
+      </section>
+
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
@@ -236,6 +305,16 @@ export async function DashboardOverview({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
+        <Card className="border-border/80 bg-card/95">
+          <CardHeader>
+            <CardTitle>{t("dashboard.recentArticles")}</CardTitle>
+            <CardDescription>{t("dashboard.recentArticlesDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RecentArticleList articles={data.recentArticleProgress} locale={locale} link={link} t={t} />
+          </CardContent>
+        </Card>
+
         <Card className="border-border/80 bg-card/95">
           <CardHeader>
             <CardTitle>{t("dashboard.recentReviewActivity")}</CardTitle>

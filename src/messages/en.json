@@ -72,6 +72,10 @@
       "label": "Grammar",
       "description": "Patterns and examples"
     },
+    "articles": {
+      "label": "Articles",
+      "description": "Study notes and comparisons"
+    },
     "dashboard": {
       "label": "Dashboard",
       "description": "Progress and review status"
@@ -107,6 +111,14 @@
     "manageLessons": {
       "label": "Lessons",
       "description": "Lesson composition"
+    },
+    "lessonGenerator": {
+      "label": "Lesson generator",
+      "description": "Auto-build draft lessons from words"
+    },
+    "manageArticles": {
+      "label": "Articles",
+      "description": "Study note management"
     }
   },
   "header": {
@@ -125,7 +137,7 @@
     "anonymousBody": "You can browse lessons and study without saved progress.",
     "saveProgressCta": "Sign in to save progress",
     "mobileTitle": "Chinese Learning",
-    "mobileDescription": "Navigate lessons, review pages, and admin tools.",
+    "mobileDescription": "Navigate lessons, articles, review pages, and admin tools.",
     "pageTitles": {
       "home": {
         "title": "Learn Chinese at your own pace",
@@ -278,6 +290,49 @@
     "explanation": "Explanation",
     "examples": "Examples",
     "noExamples": "No public examples have been published for this grammar point yet."
+  },
+  "articles": {
+    "eyebrow": "Articles",
+    "title": "Study notes for vocabulary, grammar, and usage",
+    "description": "Browse longer learning notes, word comparisons, and explanation articles designed for careful reading and review.",
+    "detailEyebrow": "Learning article",
+    "backToArticles": "Back to articles",
+    "browseArticles": "Browse articles",
+    "openDetail": "Open article",
+    "emptyTitle": "No published articles match these filters",
+    "emptyDescription": "Try a different keyword, level, type, or tag to widen the article list.",
+    "overview": "Article overview",
+    "overviewDescription": "A quick summary of article type, study level, tags, and your reading status.",
+    "relatedWords": "Related words",
+    "relatedWordsDescription": "Vocabulary entries linked to this article for quick follow-up review.",
+    "relatedGrammar": "Related grammar points",
+    "relatedGrammarDescription": "Grammar references connected to this article.",
+    "noRelatedWords": "No related words have been linked to this article yet.",
+    "noRelatedGrammar": "No related grammar points have been linked to this article yet.",
+    "bookmark": "Bookmark",
+    "removeBookmark": "Remove bookmark",
+    "markCompleted": "Mark completed",
+    "completed": "Completed",
+    "bookmarked": "Bookmarked",
+    "notBookmarked": "Not bookmarked",
+    "notStarted": "Not started",
+    "progressStatus": "Reading status",
+    "bookmarkStatus": "Bookmark",
+    "signInToTrack": "Sign in to track reading",
+    "anonymousHint": "Anonymous learners can read published articles, but bookmarks and reading history are saved only after sign-in.",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search article title or summary",
+      "type": "Article type",
+      "tag": "Tag",
+      "allTypes": "All types",
+      "allTags": "All tags"
+    },
+    "progressLabels": {
+      "not_started": "Not started",
+      "reading": "Reading",
+      "completed": "Completed"
+    }
   },
   "contentSync": {
     "header": {
@@ -626,10 +681,18 @@
     "masteredDescription": "Stable long-term words",
     "lessonProgress": "Lesson progress",
     "lessonProgressSummary": "{completed} completed · {inProgress} in progress",
+    "completedArticles": "Completed articles",
+    "completedArticlesDescription": "Study notes you have finished reading",
+    "bookmarkedArticles": "Bookmarked articles",
+    "bookmarkedArticlesDescription": "Saved notes to revisit later",
     "completed": "Completed",
     "notYet": "Not yet",
     "noLessonProgress": "No lesson progress yet",
     "noLessonProgressDescription": "Start a lesson to unlock completion tracking, recent study history, and review recommendations.",
+    "recentArticles": "Recent article reading",
+    "recentArticlesDescription": "Your latest reading activity across published study notes.",
+    "noArticleProgress": "No article reading yet",
+    "noArticleProgressDescription": "Open a published article to start building a reading trail and bookmark list.",
     "reviewReadiness": "Review readiness",
     "reviewReadinessDescription": "What needs attention before the day ends.",
     "dueToday": "Due today",
@@ -725,6 +788,8 @@
         "grammarDescription": "Create grammar explanations, examples, and publishable lesson content.",
         "lessonsTitle": "Lessons",
         "lessonsDescription": "Compose ordered lesson content from words and grammar points.",
+        "articlesTitle": "Articles",
+        "articlesDescription": "Write and publish long-form study notes, comparisons, and usage articles.",
         "topicsTitle": "Topics",
         "topicsDescription": "Maintain lesson categories and content organization.",
         "radicalsTitle": "Radicals",
@@ -744,10 +809,12 @@
       "new": "New word",
       "emptyTitle": "No words yet",
       "emptyDescription": "Create the first vocabulary entry to start building the library.",
+      "noLessons": "Not used in lessons",
       "columns": {
         "word": "Word",
         "meaning": "Meaning",
         "hsk": "HSK",
+        "lessons": "Lessons",
         "status": "Status",
         "updated": "Updated",
         "actions": "Actions"
@@ -871,6 +938,104 @@
         "eyebrow": "Admin Lessons",
         "description": "Update lesson metadata, publish state, and ordered composition.",
         "submit": "Save lesson"
+      }
+    },
+    "lessonGenerator": {
+      "eyebrow": "Lesson Generator",
+      "title": "Auto-generate lesson drafts",
+      "shortTitle": "Generate lesson",
+      "description": "Create draft lessons from the vocabulary database, review the selected words, then save them into the lesson CMS.",
+      "form": {
+        "title": "Generation filters",
+        "description": "Choose level, topic tags, and reuse rules before building a candidate lesson.",
+        "hskLevel": "HSK level",
+        "targetWordCount": "Target word count",
+        "topicTags": "Topic tags",
+        "topicTagsPlaceholder": "Search topic tags...",
+        "excludePublishedLessonWords": "Exclude words already used in published lessons",
+        "includeUnapprovedWords": "Include not-yet-approved words",
+        "allowReusedWords": "Allow words already used in other lessons when needed",
+        "generate": "Generate lesson preview"
+      },
+      "coverage": {
+        "title": "Coverage snapshot",
+        "eligibleWords": "Eligible words",
+        "unusedWords": "Words without lessons",
+        "reusedWords": "Words used in multiple lessons",
+        "byHsk": "Coverage by HSK",
+        "byTag": "Coverage by topic tag",
+        "unusedWordsShort": "{count} unused"
+      },
+      "review": {
+        "title": "Review generated words",
+        "description": "Inspect the draft set, adjust ordering, replace words, and save a draft lesson for final editing.",
+        "selectedWords": "Selected words",
+        "averageDifficulty": "Average difficulty",
+        "replacements": "Replacement pool",
+        "lessonDraft": "Draft lesson details",
+        "lessonDraftDescription": "Edit the generated title, slug, and summary before saving the draft.",
+        "lessonTitle": "Lesson title",
+        "lessonSlug": "Lesson slug",
+        "lessonSummary": "Lesson summary",
+        "previewTableTitle": "Candidate word preview",
+        "previewTableDescription": "Words are ordered from easier to harder using the deterministic difficulty score.",
+        "emptySelection": "No words are selected right now. Add replacements back in or regenerate the draft.",
+        "word": "Word",
+        "difficulty": "Difficulty",
+        "relevance": "Relevance",
+        "reason": "Selection reason",
+        "lessons": "Existing lessons",
+        "replace": "Replace",
+        "actions": "Actions",
+        "newWord": "New word",
+        "reusedWord": "Reused",
+        "noLessonUsage": "Not used in lessons",
+        "chooseReplacement": "Choose replacement",
+        "replacementPool": "Quick-add replacements",
+        "saveDraft": "Save draft lesson"
+      }
+    },
+    "articles": {
+      "eyebrow": "Admin Articles",
+      "title": "Articles",
+      "description": "Manage long-form study notes, comparison articles, and publish state.",
+      "new": "New article",
+      "emptyTitle": "No articles yet",
+      "emptyDescription": "Create the first learning article to start the study note library.",
+      "columns": {
+        "title": "Title",
+        "type": "Type",
+        "hsk": "HSK",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "form": {
+        "title": "Article details",
+        "description": "Write safe Markdown with headings, bullet lists, emphasis, and blockquote-style example sections.",
+        "titleLabel": "Title",
+        "slug": "Slug",
+        "summary": "Summary",
+        "hskLevel": "HSK level",
+        "articleType": "Article type",
+        "contentMarkdown": "Content markdown",
+        "tags": "Tags",
+        "relatedWords": "Related words",
+        "relatedGrammarPoints": "Related grammar points",
+        "searchTags": "Search tags...",
+        "searchWords": "Search words...",
+        "searchGrammar": "Search grammar points...",
+        "published": "Published"
+      },
+      "create": {
+        "title": "New article",
+        "description": "Create a publishable study note with tags and related content.",
+        "submit": "Create article"
+      },
+      "edit": {
+        "eyebrow": "Admin Articles",
+        "description": "Update study note content, relationships, and publish state.",
+        "submit": "Save article"
       }
     },
     "topics": {

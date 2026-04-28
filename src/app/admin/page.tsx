@@ -25,6 +25,11 @@ export default async function AdminPage() {
       description: t("admin.overview.sections.lessonsDescription"),
     },
     {
+      href: link("/admin/articles"),
+      title: t("admin.overview.sections.articlesTitle"),
+      description: t("admin.overview.sections.articlesDescription"),
+    },
+    {
       href: link("/admin/topics"),
       title: t("admin.overview.sections.topicsTitle"),
       description: t("admin.overview.sections.topicsDescription"),

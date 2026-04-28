@@ -21,9 +21,14 @@ export default async function AdminLessonsPage() {
         title={t("admin.lessons.title")}
         description={t("admin.lessons.description")}
         actions={
-          <Button asChild>
-            <Link href={link("/admin/lessons/new")}>{t("admin.lessons.new")}</Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline">
+              <Link href={link("/admin/lesson-generator")}>{t("admin.lessonGenerator.shortTitle")}</Link>
+            </Button>
+            <Button asChild>
+              <Link href={link("/admin/lessons/new")}>{t("admin.lessons.new")}</Link>
+            </Button>
+          </div>
         }
       />
 

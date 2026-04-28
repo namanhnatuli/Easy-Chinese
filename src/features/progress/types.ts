@@ -70,11 +70,24 @@ export interface SuggestedLessonItem {
   description: string | null;
 }
 
+export interface RecentArticleProgressItem {
+  articleId: string;
+  title: string;
+  slug: string;
+  status: "not_started" | "reading" | "completed";
+  bookmarked: boolean;
+  lastReadAt: string | null;
+  completedAt: string | null;
+}
+
 export interface DashboardData {
   summary: ProgressSummary;
   completedLessonsCount: number;
   inProgressLessonsCount: number;
+  completedArticlesCount: number;
+  bookmarkedArticlesCount: number;
   recentLessonProgress: LessonProgressSummary[];
+  recentArticleProgress: RecentArticleProgressItem[];
   recentReviewActivity: RecentReviewActivityItem[];
   dailyActivity: DailyActivitySummary;
 }
