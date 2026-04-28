@@ -387,9 +387,9 @@ export async function listLessonGeneratorTagOptions(): Promise<LessonGeneratorTa
   return data ?? [];
 }
 
-export function parseLessonGeneratorInput(
+export async function parseLessonGeneratorInput(
   searchParams: Record<string, string | string[] | undefined>,
-): LessonGeneratorInput | null {
+): Promise<LessonGeneratorInput | null> {
   const normalized = {
     hsk: Array.isArray(searchParams.hsk) ? searchParams.hsk[0] : searchParams.hsk,
     topic_tags: Array.isArray(searchParams.topic_tags) ? searchParams.topic_tags[0] : searchParams.topic_tags,

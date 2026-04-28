@@ -20,7 +20,7 @@ export default async function LessonGeneratorPage({
   await requireAdminUser();
   const { t } = await getServerI18n();
   const searchParamsValue = await searchParams;
-  const generatorInput = parseLessonGeneratorInput(searchParamsValue);
+  const generatorInput = await parseLessonGeneratorInput(searchParamsValue);
   const [tagOptions, coverageSummary, preview] = await Promise.all([
     listLessonGeneratorTagOptions(),
     getLessonGenerationCoverageSummary(),
