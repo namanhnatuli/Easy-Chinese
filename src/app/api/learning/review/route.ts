@@ -10,6 +10,7 @@ const reviewSubmissionSchema = z.object({
   wordId: z.string().uuid(),
   mode: z.enum(["flashcard", "multiple_choice", "typing"]),
   result: z.enum(["correct", "incorrect", "skipped"]),
+  grade: z.enum(["again", "hard", "good", "easy"]).optional(),
   completionPercent: z.number().min(0).max(100),
 });
 

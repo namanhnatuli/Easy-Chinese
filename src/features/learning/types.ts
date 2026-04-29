@@ -1,4 +1,4 @@
-import type { ReviewMode, ReviewResult } from "@/types/domain";
+import type { ReviewMode, ReviewResult, SchedulerGrade } from "@/types/domain";
 
 export interface LessonStudyWord {
   id: string;
@@ -49,6 +49,7 @@ export interface StudyOutcomeSubmission {
   wordId: string;
   mode: ReviewMode;
   result: ReviewResult;
+  grade?: SchedulerGrade;
   completionPercent: number;
 }
 

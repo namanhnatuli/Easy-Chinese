@@ -46,7 +46,7 @@ export function AppHeader({ user }: { user: AuthUser | null }) {
         description: t("header.pageTitles.dashboard.description"),
       };
     }
-    if (pathname === "/review") {
+    if (pathname === "/review" || pathname === "/practice/review") {
       return {
         title: t("header.pageTitles.review.title"),
         description: t("header.pageTitles.review.description"),

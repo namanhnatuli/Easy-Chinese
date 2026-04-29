@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,9 +51,17 @@ export default async function GrammarDetailPage({
         title={point.title}
         description={point.explanationVi}
         actions={
-          <Button asChild>
-            <Link href={link("/grammar")}>{t("common.backToGrammar")}</Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <AiExplanationCard
+              payload={{ kind: "grammar", grammarId: point.id }}
+              title={t("ai.explanation.grammarTitle", { value: point.title })}
+              description={t("ai.explanation.grammarDescription")}
+              triggerLabel={t("ai.explanation.open")}
+            />
+            <Button asChild>
+              <Link href={link("/grammar")}>{t("common.backToGrammar")}</Link>
+            </Button>
+          </div>
         }
       />
 

@@ -4,6 +4,7 @@ import type { StoredUserRole } from "@/types/domain";
 const permissionRoutes: Array<{ prefix: string; permission: Permission }> = [
   { prefix: "/dashboard", permission: "dashboard.read" },
   { prefix: "/review", permission: "dashboard.read" },
+  { prefix: "/practice/review", permission: "dashboard.read" },
   { prefix: "/settings", permission: "settings.read" },
   { prefix: "/admin", permission: "admin.access" },
 ];

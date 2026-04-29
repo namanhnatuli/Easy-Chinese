@@ -3,6 +3,13 @@ export type StoredUserRole = Exclude<UserRole, "anonymous">;
 
 export type ReviewMode = "flashcard" | "multiple_choice" | "typing";
 export type ReviewResult = "correct" | "incorrect" | "skipped";
+export type SchedulerGrade = "again" | "hard" | "good" | "easy";
+export type MemoryCardState = "new" | "learning" | "review" | "relearning";
+export type ReadingPracticeType = "word" | "sentence";
+export type PracticeProgressStatus = "new" | "practicing" | "completed" | "difficult";
+export type PracticeEventType = "reading_word" | "reading_sentence" | "writing_character";
+export type PracticeEventResult = "completed" | "difficult" | "skipped";
+export type MemoryReviewResult = "correct" | "difficult" | "skipped";
 
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
 export type PreferredTheme = "light" | "dark" | "system";
@@ -18,6 +25,11 @@ export type LearningArticleType =
   | "other";
 export type ArticleProgressStatus = "not_started" | "reading" | "completed";
 export type LessonGenerationSource = "manual" | "auto";
+export type AchievementKey =
+  | "first_lesson_completed"
+  | "seven_day_streak"
+  | "fifty_words_learned"
+  | "hundred_characters_written";
 
 export interface TimestampedEntity {
   createdAt: string;
@@ -177,6 +189,95 @@ export interface WordExample extends TimestampedEntity {
   sortOrder: number;
 }
 
+export interface UserReadingProgress extends TimestampedEntity {
+  id: string;
+  userId: string;
+  wordId: string | null;
+  exampleId: string | null;
+  practiceType: ReadingPracticeType;
+  status: PracticeProgressStatus;
+  attemptCount: number;
+  lastPracticedAt: string | null;
+}
+
+export interface UserWritingProgress extends TimestampedEntity {
+  id: string;
+  userId: string;
+  wordId: string;
+  character: string;
+  status: PracticeProgressStatus;
+  attemptCount: number;
+  lastPracticedAt: string | null;
+}
+
+export interface PracticeEvent {
+  id: string;
+  userId: string;
+  wordId: string | null;
+  exampleId: string | null;
+  practiceType: PracticeEventType;
+  result: PracticeEventResult;
+  createdAt: string;
+}
+
+export interface UserWordMemory extends TimestampedEntity {
+  id: string;
+  userId: string;
+  wordId: string;
+  state: MemoryCardState;
+  easeFactor: number;
+  intervalDays: number;
+  dueAt: string | null;
+  reps: number;
+  lapses: number;
+  learningStepIndex: number;
+  lastReviewedAt: string | null;
+  lastGrade: SchedulerGrade | null;
+}
+
+export interface UserLearningStats extends TimestampedEntity {
+  userId: string;
+  streakCount: number;
+  lastActiveDate: string | null;
+  dailyGoal: number;
+}
+
+export interface UserXp extends TimestampedEntity {
+  userId: string;
+  totalXp: number;
+}
+
+export interface UserLevel extends TimestampedEntity {
+  userId: string;
+  level: number;
+  currentXp: number;
+  nextLevelXp: number;
+}
+
+export interface UserAchievement extends TimestampedEntity {
+  id: string;
+  userId: string;
+  achievementKey: AchievementKey;
+  earnedAt: string;
+}
+
+export interface ReviewEvent {
+  id: string;
+  userId: string;
+  wordId: string;
+  mode: ReviewMode | null;
+  result: ReviewResult | null;
+  practiceType: string;
+  grade: SchedulerGrade;
+  previousState: MemoryCardState | null;
+  nextState: MemoryCardState | null;
+  previousIntervalDays: number | null;
+  nextIntervalDays: number | null;
+  previousDueAt: string | null;
+  nextDueAt: string | null;
+  reviewedAt: string;
+}
+
 export interface GrammarPoint extends TimestampedEntity {
   id: string;
   title: string;
@@ -333,16 +434,6 @@ export interface UserLessonProgress extends TimestampedEntity {
   completionPercent: number;
   lastStudiedAt: string | null;
   completedAt: string | null;
-}
-
-export interface ReviewEvent {
-  id: string;
-  userId: string;
-  wordId: string;
-  mode: ReviewMode;
-  result: ReviewResult;
-  reviewedAt: string;
-  createdAt: string;
 }
 
 export interface LessonSummary extends Lesson {

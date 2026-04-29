@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { FlashcardPrompt, StudyFeedback } from "@/features/learning/types";
+import type { SchedulerGrade } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
 
 export function FlashcardPanel({
@@ -10,10 +11,9 @@ export function FlashcardPanel({
   total,
   revealed,
   feedback,
+  dueHints,
   onReveal,
-  onKnow,
-  onDontKnow,
-  onSkip,
+  onGrade,
   onNext,
 }: {
   prompt: FlashcardPrompt;
@@ -21,14 +21,39 @@ export function FlashcardPanel({
   total: number;
   revealed: boolean;
   feedback: StudyFeedback | null;
+  dueHints?: Partial<Record<SchedulerGrade, string>>;
   onReveal: () => void;
-  onKnow: () => void;
-  onDontKnow: () => void;
-  onSkip: () => void;
+  onGrade: (grade: SchedulerGrade) => void;
   onNext: () => void;
 }) {
   const { t } = useI18n();
   const isLocked = feedback !== null;
+  const gradeButtons: Array<{
+    grade: SchedulerGrade;
+    labelKey: "again" | "hard" | "good" | "easy";
+    className: string;
+  }> = [
+    {
+      grade: "again",
+      labelKey: "again",
+      className: "border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white",
+    },
+    {
+      grade: "hard",
+      labelKey: "hard",
+      className: "bg-amber-300 text-slate-950 hover:bg-amber-200",
+    },
+    {
+      grade: "good",
+      labelKey: "good",
+      className: "bg-emerald-300 text-slate-950 hover:bg-emerald-200",
+    },
+    {
+      grade: "easy",
+      labelKey: "easy",
+      className: "bg-sky-300 text-slate-950 hover:bg-sky-200",
+    },
+  ];
 
   return (
     <section className="rounded-[2rem] bg-slate-950 text-white">
@@ -83,30 +108,22 @@ export function FlashcardPanel({
           </Button>
         ) : (
           <>
-            <Button
-              onClick={onKnow}
-              variant="secondary"
-              className="bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-              disabled={isLocked}
-            >
-              {t("learning.know")}
-            </Button>
-            <Button
-              onClick={onDontKnow}
-              variant="secondary"
-              className="bg-amber-300 text-slate-950 hover:bg-amber-200"
-              disabled={isLocked}
-            >
-              {t("learning.dontKnow")}
-            </Button>
-            <Button
-              onClick={onSkip}
-              variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
-              disabled={isLocked}
-            >
-              {t("learning.skip")}
-            </Button>
+            {gradeButtons.map((button) => (
+              <Button
+                key={button.grade}
+                onClick={() => onGrade(button.grade)}
+                variant={button.grade === "again" ? "outline" : "secondary"}
+                className={`min-w-[8rem] flex-1 sm:flex-none ${button.className}`}
+                disabled={isLocked}
+              >
+                <span className="flex flex-col items-center leading-tight">
+                  <span>{t(`learning.grades.${button.labelKey}`)}</span>
+                  {dueHints?.[button.grade] ? (
+                    <span className="text-[0.68rem] font-medium opacity-80">{dueHints[button.grade]}</span>
+                  ) : null}
+                </span>
+              </Button>
+            ))}
           </>
         )}
 

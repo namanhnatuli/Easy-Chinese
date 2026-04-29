@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArticleReadTracker } from "@/components/articles/article-read-tracker";
+import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
 import { MarkdownRenderer } from "@/components/articles/markdown-renderer";
 import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,12 @@ export default async function ArticleDetailPage({
                       {progress?.status === "completed" ? t("articles.completed") : t("articles.markCompleted")}
                     </Button>
                   </form>
+                  <AiExplanationCard
+                    payload={{ kind: "article", articleId: article.id }}
+                    title={t("ai.explanation.articleTitle", { value: article.title })}
+                    description={t("ai.explanation.articleDescription")}
+                    triggerLabel={t("ai.explanation.open")}
+                  />
                 </>
               ) : (
                 <HeaderLinkButton href={link("/auth/sign-in")}>
@@ -113,6 +120,12 @@ export default async function ArticleDetailPage({
                   {t("articles.anonymousHint")}
                 </div>
               )}
+              <AiExplanationCard
+                payload={{ kind: "article", articleId: article.id }}
+                title={t("ai.explanation.articleTitle", { value: article.title })}
+                description={t("ai.explanation.articleDescription")}
+                triggerLabel={t("ai.explanation.articleCta")}
+              />
             </CardContent>
           </Card>
 

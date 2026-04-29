@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, FileText, LayoutDashboard, LibraryBig, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
+import { BookOpen, FileText, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -101,11 +101,12 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
     { href: "/lessons", label: t("navigation.lessons.label"), description: t("navigation.lessons.description"), icon: BookOpen },
     { href: "/vocabulary", label: t("navigation.vocabulary.label"), description: t("navigation.vocabulary.description"), icon: LibraryBig },
     { href: "/grammar", label: t("navigation.grammar.label"), description: t("navigation.grammar.description"), icon: BookOpen },
+    { href: "/practice", label: t("navigation.practice.label"), description: t("navigation.practice.description"), icon: PenTool },
     { href: "/articles", label: t("navigation.articles.label"), description: t("navigation.articles.description"), icon: FileText },
   ];
   const authenticatedLinks: SidebarLink[] = [
     { href: "/dashboard", label: t("navigation.dashboard.label"), description: t("navigation.dashboard.description"), icon: LayoutDashboard },
-    { href: "/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
+    { href: "/practice/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
     { href: "/settings", label: t("navigation.settings.label"), description: t("navigation.settings.description"), icon: Settings },
   ];
   const adminLinks: SidebarLink[] = [

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { CheckCircle2, Keyboard, RotateCcw, SkipForward, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
 import { FlashcardPanel } from "@/components/learning/flashcard-panel";
 import { MultipleChoicePanel } from "@/components/learning/multiple-choice-panel";
 import { TypingPanel } from "@/components/learning/typing-panel";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
 import type { DueReviewItem } from "@/features/progress/types";
 import type { StudyOutcomeSubmission } from "@/features/learning/types";
 import type { ReviewMode } from "@/types/domain";
@@ -35,31 +36,53 @@ export function ReviewStudyExperience({
   items: DueReviewItem[];
 }) {
   const { t, link, locale } = useI18n();
+  const reviewDueHints = items.length
+    ? predictDueHintsForGrades(
+        {
+          state: items[0]?.memoryState ?? "new",
+          easeFactor: items[0]?.easeFactor ?? 2.5,
+          intervalDays: items[0]?.intervalDays ?? 0,
+          dueAt: items[0]?.dueAt ?? null,
+          reps: items[0]?.reps ?? 0,
+          lapses: items[0]?.lapses ?? 0,
+          learningStepIndex: items[0]?.learningStepIndex ?? 0,
+          lastReviewedAt: items[0]?.lastReviewedAt ?? null,
+          lastGrade: items[0]?.lastGrade ?? null,
+        },
+        new Date(),
+      )
+    : undefined;
   const session = useStudySession({
     items,
-    onPersistOutcome: async ({ currentItem, result, mode, nextCompletionPercent }) => {
-    const payload: StudyOutcomeSubmission = {
-      wordId: currentItem.id,
-      mode,
-      result,
-      completionPercent: nextCompletionPercent,
-    };
+    onPersistOutcome: async ({ currentItem, result, grade, mode, nextCompletionPercent }) => {
+      const payload: StudyOutcomeSubmission = {
+        wordId: currentItem.id,
+        mode,
+        result,
+        grade,
+        completionPercent: nextCompletionPercent,
+      };
 
-    const response = await fetch("/api/learning/review", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch("/api/learning/review", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { message?: string } | null;
-      toast.error(body?.message ?? t("learning.progressSaveFailed"));
-      
-    }
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+        toast.error(body?.message ?? t("learning.progressSaveFailed"));
+      }
     },
     incorrectMessage: t("learning.reviewSoon"),
+    flashcardMessages: {
+      again: t("learning.gradeFeedback.again"),
+      hard: t("learning.gradeFeedback.hard"),
+      good: t("learning.gradeFeedback.good"),
+      easy: t("learning.gradeFeedback.easy"),
+    },
   });
 
   if (session.totalItems === 0) {
@@ -101,6 +124,12 @@ export function ReviewStudyExperience({
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Link href={link("/practice/reading/sentences")}>{t("practice.cta.reading")}</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Link href={link("/practice/writing")}>{t("practice.cta.writing")}</Link>
+            </Button>
             <Button
               onClick={() => {
                 session.setIndex(0);
@@ -170,10 +199,26 @@ export function ReviewStudyExperience({
                   total={session.totalItems}
                   revealed={session.revealed}
                   feedback={session.feedback}
+                  dueHints={
+                    session.currentItem
+                      ? predictDueHintsForGrades(
+                          {
+                            state: session.currentItem.memoryState,
+                            easeFactor: session.currentItem.easeFactor,
+                            intervalDays: session.currentItem.intervalDays,
+                            dueAt: session.currentItem.dueAt,
+                            reps: session.currentItem.reps,
+                            lapses: session.currentItem.lapses,
+                            learningStepIndex: session.currentItem.learningStepIndex,
+                            lastReviewedAt: session.currentItem.lastReviewedAt,
+                            lastGrade: session.currentItem.lastGrade,
+                          },
+                          new Date(),
+                        )
+                      : reviewDueHints
+                  }
                   onReveal={() => session.setRevealed(true)}
-                  onKnow={() => session.handleFlashcardAction("correct")}
-                  onDontKnow={() => session.handleFlashcardAction("incorrect")}
-                  onSkip={() => session.handleFlashcardAction("skipped")}
+                  onGrade={session.handleFlashcardGrade}
                   onNext={session.goToNextItem}
                 />
               ) : null}
@@ -222,11 +267,11 @@ export function ReviewStudyExperience({
                   <RotateCcw className="size-4" />
                   {t("learning.reviewStatus")}
                 </div>
-                <p className="mt-3">{t("learning.status", { value: session.currentItem.status })}</p>
+                <p className="mt-3">{t("learning.status", { value: session.currentItem.memoryState })}</p>
                 <p className="mt-1">
                   {t("learning.due", {
                     value: formatDateTime(
-                      session.currentItem.nextReviewAt,
+                      session.currentItem.dueAt,
                       locale,
                       t("learning.reviewStatusFallbacks.noPriorReview"),
                     ),
@@ -244,9 +289,10 @@ export function ReviewStudyExperience({
                 <p className="mt-1">
                   {t("learning.interval", {
                     days: session.currentItem.intervalDays,
-                    streak: session.currentItem.streakCount,
+                    streak: session.currentItem.reps,
                   })}
                 </p>
+                <p className="mt-1">{t("learning.lapses", { count: session.currentItem.lapses })}</p>
               </div>
 
               <div className="rounded-[1.25rem] bg-black/20 p-4">
@@ -276,6 +322,16 @@ export function ReviewStudyExperience({
                   {session.summary.skipped} {t("learning.reviewSession.skipped")}
                 </div>
               </div>
+
+              {session.feedback?.result === "incorrect" ? (
+                <AiExplanationCard
+                  payload={{ kind: "word", wordId: session.currentItem.id }}
+                  title={t("ai.explanation.wordTitle", { value: session.currentItem.hanzi })}
+                  description={t("ai.explanation.incorrectDescription")}
+                  triggerLabel={t("ai.explanation.open")}
+                  autoLoad
+                />
+              ) : null}
             </aside>
           </div>
         </Tabs>

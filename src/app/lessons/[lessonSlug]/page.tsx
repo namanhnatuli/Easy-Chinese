@@ -53,12 +53,20 @@ export default async function LessonDetailPage({
         title={lesson.title}
         description={lesson.description}
         actions={
-          <Button asChild size="lg">
-            <Link href={link(`/learn/lesson/${lesson.id}`)}>
-              {t("common.startLesson")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline" size="lg">
+              <Link href={link("/practice/reading")}>{t("practice.cta.reading")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href={link("/practice/writing")}>{t("practice.cta.writing")}</Link>
+            </Button>
+            <Button asChild size="lg">
+              <Link href={link(`/learn/lesson/${lesson.id}`)}>
+                {t("common.startLesson")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
         }
       />
 

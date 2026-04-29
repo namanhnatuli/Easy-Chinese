@@ -16,6 +16,7 @@
     "continueLearning": "继续学习",
     "continueReview": "继续复习",
     "dashboard": "学习面板",
+    "practice": "练习",
     "review": "复习",
     "settings": "设置",
     "admin": "管理",
@@ -71,6 +72,10 @@
     "grammar": {
       "label": "语法",
       "description": "句式与例句"
+    },
+    "practice": {
+      "label": "练习",
+      "description": "阅读与汉字书写"
     },
     "articles": {
       "label": "文章",
@@ -596,11 +601,17 @@
     "know": "认识",
     "dontKnow": "不认识",
     "skip": "跳过",
+    "grades": {
+      "again": "重来",
+      "hard": "困难",
+      "good": "良好",
+      "easy": "简单"
+    },
     "nextWord": "下一个词",
     "checkAnswer": "检查答案",
     "currentWord": "当前词汇",
     "shortcuts": "快捷键",
-    "flashcardShortcut": "`1/2/3` 为闪卡打分",
+    "flashcardShortcut": "`1/2/3/4` 为闪卡打分",
     "multipleChoiceShortcut": "`1-4` 选择答案",
     "enterShortcut": "`Enter` 检查或继续",
     "spaceShortcut": "`Space` 显示闪卡答案",
@@ -615,9 +626,16 @@
     "due": "到期时间：{value}",
     "lastReviewed": "上次复习：{value}",
     "interval": "间隔：{days} 天 · 连续答对：{streak}",
+    "lapses": "遗忘次数：{count}",
     "saving": "保存中…",
     "autosaves": "自动保存进度",
     "skippedForNow": "暂时跳过。",
+    "gradeFeedback": {
+      "again": "已标记为稍后再次复习。",
+      "hard": "已标记为困难。",
+      "good": "已标记为良好。",
+      "easy": "已标记为简单。"
+    },
     "progressSaveFailed": "无法保存进度。",
     "reviewSoon": "已标记为稍后再次复习。",
     "needsMoreReview": "已标记为需要更多复习。",
@@ -666,6 +684,122 @@
       "noPriorReview": "尚无复习记录"
     }
   },
+  "practice": {
+    "eyebrow": "练习",
+    "anonymousBadge": "支持匿名学习",
+    "title": "专注式阅读与汉字书写练习",
+    "description": "用公开词汇和例句进行阅读练习，再切换到简单可靠的书写画布来练字。",
+    "openModule": "打开练习模块",
+    "signInForReview": "登录以打开你的个性化复习队列",
+    "emptyTitle": "目前还没有可练习的内容",
+    "completeEyebrow": "练习完成",
+    "restart": "重新练习",
+    "backToPractice": "返回练习",
+    "signInNotice": "匿名模式也能练习，但只有登录后才会保存进度。",
+    "signInToSave": "登录以保存练习进度",
+    "status": "状态：{value}",
+    "grades": {
+      "again": "重来",
+      "hard": "困难",
+      "good": "良好",
+      "easy": "简单"
+    },
+    "actions": {
+      "completed": "完成",
+      "difficult": "困难",
+      "skipped": "跳过"
+    },
+    "cta": {
+      "reading": "练习阅读",
+      "writing": "练习书写"
+    },
+    "cards": {
+      "review": {
+        "title": "复习队列",
+        "description": "清理到期词汇，回看困难项目，并让间隔复习持续运转。"
+      },
+      "readingWords": {
+        "title": "阅读词汇",
+        "description": "逐词练习识别与发音。"
+      },
+      "readingSentences": {
+        "title": "阅读句子",
+        "description": "阅读例句，并按需显示拼音和释义。"
+      },
+      "writingHanzi": {
+        "title": "书写汉字",
+        "description": "在简单的书写画布上逐个练习汉字。"
+      }
+    },
+    "review": {
+      "eyebrow": "智能复习",
+      "title": "你的个性化复习队列",
+      "description": "优先学习现在到期的词汇，更快回到困难项目，并在队列较轻时补入少量新词。",
+      "emptyTitle": "你的复习队列暂时已清空",
+      "emptyDescription": "当前没有紧急复习项目。继续课程或打开阅读练习，开始下一轮学习循环。",
+      "suggestedLessons": "推荐下一节课程",
+      "suggestedDescription": "用下一批合适的已发布课程继续充实复习队列。"
+    },
+    "reading": {
+      "eyebrow": "阅读练习",
+      "title": "选择阅读重点",
+      "description": "在同一个安静的学习界面中切换词汇阅读和句子阅读。",
+      "wordsSessionDescription": "阅读已发布词汇，并按需显示拼音、释义和浏览器朗读。",
+      "sentencesSessionDescription": "阅读例句，在需要时打开辅助信息，并把困难内容标记到后续练习中。",
+      "playAudio": "播放发音",
+      "showPinyin": "显示拼音",
+      "hidePinyin": "隐藏拼音",
+      "showMeaning": "显示释义",
+      "hideMeaning": "隐藏释义",
+      "linkedWord": "关联词汇",
+      "openWord": "打开词汇",
+      "currentStatus": "阅读进度",
+      "attempts": "尝试次数：{count}",
+      "shortcutAgain": "`1` 标记重来",
+      "shortcutHard": "`2` 标记困难",
+      "shortcutGood": "`3` 标记良好",
+      "shortcutEasy": "`4` 标记简单",
+      "shortcutPinyin": "`H` 切换拼音",
+      "shortcutMeaning": "`M` 切换释义",
+      "shortcutAudio": "`P` 播放发音",
+      "shortcutsTitle": "键盘快捷键",
+      "audioUnavailable": "当前浏览器不支持音频朗读。",
+      "saveFailed": "无法保存阅读练习进度。",
+      "emptyDescription": "请先发布词汇或例句，阅读练习才会显示内容。",
+      "ttsBadge": "浏览器 TTS",
+      "pronunciationUnsupported": "当前浏览器暂不支持语音识别。",
+      "pronunciationTitle": "发音反馈",
+      "pronunciationDescription": "请朗读当前内容，并将识别文本与目标汉字进行对比。",
+      "startListening": "开始朗读",
+      "stopListening": "停止",
+      "pronunciationCorrect": "匹配良好",
+      "pronunciationNeedsWork": "请检查不匹配部分",
+      "transcriptLabel": "识别结果"
+    },
+    "writing": {
+      "eyebrow": "书写练习",
+      "title": "选择一组汉字来书写",
+      "description": "打开一个词，拆分成单个汉字，并在适合触控和平板的画布上逐字练习。",
+      "targetCharacter": "目标汉字",
+      "characterStatus": "字符进度",
+      "attempts": "尝试次数：{count}",
+      "clearCanvas": "清空画布",
+      "characters": "{count} 个字",
+      "completedCount": "{count} 个完成",
+      "difficultCount": "{count} 个困难",
+      "completeDescription": "你已经完成当前书写集合。可以重新开始，或返回书写词汇列表继续练习。",
+      "backToWords": "返回书写词汇列表",
+      "saveFailed": "无法保存书写练习进度。",
+      "canvasBadge": "画布已就绪",
+      "strokeGuideTitle": "笔顺提示",
+      "strokeGuideDescription": "使用淡色参考字作为视觉引导，帮助建立字形与手写记忆。",
+      "strokeGuideRule": "目前先遵循常见规则：从上到下、从左到右。",
+      "showGrid": "显示米字格",
+      "hideGrid": "隐藏米字格",
+      "showGuide": "显示参考字",
+      "hideGuide": "隐藏参考字"
+    }
+  },
   "dashboard": {
     "eyebrow": "学习面板",
     "title": "你的学习进度",
@@ -680,12 +814,48 @@
     "reviewDueDescription": "现在就可以复习",
     "mastered": "已掌握",
     "masteredDescription": "长期稳定的词汇",
+    "wordsToReviewToday": "今日待复习词汇",
+    "wordsToReviewTodayDescription": "到期或被标记为困难的词汇",
+    "streak": "连续天数",
+    "streakDescription": "连续完成目标的天数",
+    "completedToday": "今日已完成",
+    "completedTodayDescription": "今天的目标是 {goal} 次操作",
+    "difficultWords": "困难词汇",
+    "difficultWordsDescription": "被标记为需要额外重复的词汇",
+    "totalXp": "总 XP",
+    "totalXpDescription": "来自课程、复习和练习的经验值",
+    "currentLevel": "当前等级",
+    "currentLevelDescription": "基于累计 XP 的整体学习等级",
+    "achievementCount": "成就数量",
+    "achievementCountDescription": "已解锁的学习里程碑",
+    "nextLevelProgress": "下一级进度",
+    "nextLevelProgressDescription": "当前等级内 {current} / {total} XP",
     "lessonProgress": "课程进度",
     "lessonProgressSummary": "{completed} 已完成 · {inProgress} 进行中",
+    "dailyGoalWidget": "每日目标",
+    "dailyGoalWidgetDescription": "用一个小而稳定的终点来维持复习循环。",
+    "goalProgress": "今日进度",
+    "goalRemaining": "再完成 {count} 次操作即可达到今日目标",
+    "goalCompleted": "你已经完成今日目标。如有余力，可以继续建立余量。",
+    "startReview": "开始复习",
+    "gamificationTitle": "XP 与成就",
+    "gamificationDescription": "用简单的激励层让每日学习更有可见进展。",
+    "levelBadge": "等级徽章",
+    "levelValue": "等级 {level}",
+    "levelProgress": "距离下一级还需 {total} 中的 {current} XP",
+    "noAchievementsYet": "暂时还没有解锁成就",
     "completedArticles": "已完成文章",
     "completedArticlesDescription": "你已经读完的学习笔记",
     "bookmarkedArticles": "已收藏文章",
     "bookmarkedArticlesDescription": "保存起来以后再看的笔记",
+    "readingCompleted": "阅读已完成",
+    "readingCompletedDescription": "已标记完成的阅读项目",
+    "difficultReading": "阅读困难项",
+    "difficultReadingDescription": "被标记为困难的阅读项目",
+    "writingCharacters": "已练习书写字符",
+    "writingCharactersDescription": "已保存书写进度的字符数量",
+    "difficultWriting": "书写困难项",
+    "difficultWritingDescription": "被标记为困难的书写字符",
     "completed": "已完成",
     "notYet": "尚未开始",
     "noLessonProgress": "还没有课程进度",
@@ -706,8 +876,75 @@
     "activeDays": "最近 7 天活跃 {count} 天",
     "recentReviewActivity": "最近复习活动",
     "recentReviewDescription": "你最近学习会话中保存的答案。",
+    "suggestedActions": {
+      "review": "现在开始复习",
+      "lesson": "继续当前课程",
+      "practice": "打开阅读练习"
+    },
+    "suggestedActionBodies": {
+      "review": "今天有复习压力，建议先清理到期队列。",
+      "lesson": "下一步最合适的是完成已经开始的课程。",
+      "practice": "用轻量阅读练习保持学习循环继续前进。"
+    },
+    "nextRecommendation": "推荐下一节课程",
+    "nextRecommendationDescription": "基于未完成课程和当前水平给出的轻量建议。",
+    "noRecommendation": "暂时没有课程建议",
+    "noRecommendationDescription": "先开始或完成一节课程，以改善课程推荐。",
+    "recommendedArticles": "推荐文章",
+    "recommendedArticlesDescription": "与你当前水平或最近文章标签相匹配的已发布学习笔记。",
+    "noRecommendedArticles": "暂时没有文章推荐",
+    "noRecommendedArticlesDescription": "先阅读或收藏一篇文章，以改善文章推荐。",
     "noReviewActivity": "还没有复习活动",
-    "noReviewActivityDescription": "当你完成课程或清理复习队列后，复习事件会显示在这里。"
+    "noReviewActivityDescription": "当你完成课程或清理复习队列后，复习事件会显示在这里。",
+    "recentPracticeActivity": "最近练习活动",
+    "recentPracticeActivityDescription": "最近保存的阅读和书写练习动作。",
+    "noPracticeActivity": "还没有练习活动",
+    "noPracticeActivityDescription": "完成第一次阅读或书写练习后，这里就会显示记录。",
+    "practiceType": {
+      "reading_word": "阅读词汇",
+      "reading_sentence": "阅读句子",
+      "writing_character": "书写汉字"
+    },
+    "practiceResult": {
+      "completed": "完成",
+      "difficult": "困难",
+      "skipped": "跳过"
+    }
+  },
+  "ai": {
+    "explanation": {
+      "open": "AI 讲解",
+      "loading": "正在生成越南语讲解…",
+      "loadFailed": "当前无法生成 AI 讲解。",
+      "meaning": "含义",
+      "usage": "用法",
+      "comparison": "相近词对比",
+      "tips": "学习提示",
+      "wordTitle": "{value} 的 AI 讲解",
+      "wordDescription": "用越南语说明词义、用法和细微差别。",
+      "grammarTitle": "{value} 的 AI 讲解",
+      "grammarDescription": "用越南语解释语法点并给出使用建议。",
+      "articleTitle": "{value} 的 AI 总结",
+      "articleDescription": "用越南语快速说明这篇文章的关键点。",
+      "articleCta": "讲解这篇文章",
+      "incorrectDescription": "你刚刚答错了这一项，先回顾词义和用法再继续。"
+    },
+    "sentences": {
+      "title": "AI 例句",
+      "description": "额外生成 2-3 个带汉字、拼音和越南语释义的句子。",
+      "practiceTitle": "更多例句",
+      "practiceDescription": "在标记完成之前，再看几条 AI 生成的补充例句。",
+      "generate": "生成例句",
+      "empty": "需要更多语境时再生成额外例句。",
+      "loadFailed": "当前无法生成 AI 例句。",
+      "aiBadge": "AI"
+    }
+  },
+  "achievements": {
+    "first_lesson_completed": "完成第一节课程",
+    "seven_day_streak": "连续 7 天",
+    "fifty_words_learned": "学会 50 个词",
+    "hundred_characters_written": "书写 100 个汉字"
   },
   "settings": {
     "eyebrow": "设置",

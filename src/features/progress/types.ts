@@ -1,4 +1,6 @@
-import type { ProgressStatus, ReviewMode, ReviewResult } from "@/types/domain";
+import type { MemoryCardState, ProgressStatus, ReviewMode, ReviewResult, SchedulerGrade } from "@/types/domain";
+import type { GamificationDashboardSummary } from "@/features/gamification/queries";
+import type { PracticeDashboardSummary, RecentPracticeActivityItem } from "@/features/practice/types";
 
 export interface DueReviewItem {
   id: string;
@@ -11,12 +13,19 @@ export interface DueReviewItem {
   vietnameseMeaning: string;
   sortOrder: number;
   status: ProgressStatus;
-  nextReviewAt: string;
+  memoryState: MemoryCardState;
+  dueAt: string | null;
   lastReviewedAt: string | null;
   intervalDays: number;
   streakCount: number;
   correctCount: number;
   incorrectCount: number;
+  queueSource: "due" | "new";
+  reps: number;
+  lapses: number;
+  easeFactor: number;
+  learningStepIndex: number;
+  lastGrade: SchedulerGrade | null;
 }
 
 export interface ProgressSummary {
@@ -70,6 +79,24 @@ export interface SuggestedLessonItem {
   description: string | null;
 }
 
+export interface RecommendedArticleItem {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  hskLevel: number | null;
+  matchingTagNames: string[];
+}
+
+export interface DailyGoalProgress {
+  dailyGoal: number;
+  completedToday: number;
+  remainingToday: number;
+  streakCount: number;
+  wordsToReviewToday: number;
+  difficultWordsCount: number;
+}
+
 export interface RecentArticleProgressItem {
   articleId: string;
   title: string;
@@ -86,8 +113,22 @@ export interface DashboardData {
   inProgressLessonsCount: number;
   completedArticlesCount: number;
   bookmarkedArticlesCount: number;
+  practiceSummary: PracticeDashboardSummary;
   recentLessonProgress: LessonProgressSummary[];
   recentArticleProgress: RecentArticleProgressItem[];
   recentReviewActivity: RecentReviewActivityItem[];
+  recentPracticeActivity: RecentPracticeActivityItem[];
   dailyActivity: DailyActivitySummary;
+  dailyGoalProgress: DailyGoalProgress;
+  gamification: GamificationDashboardSummary;
+  suggestedNextAction: {
+    href: string;
+    titleKey: "dashboard.suggestedActions.review" | "dashboard.suggestedActions.lesson" | "dashboard.suggestedActions.practice";
+    descriptionKey:
+      | "dashboard.suggestedActionBodies.review"
+      | "dashboard.suggestedActionBodies.lesson"
+      | "dashboard.suggestedActionBodies.practice";
+  };
+  nextLessonRecommendation: SuggestedLessonItem | null;
+  recommendedArticles: RecommendedArticleItem[];
 }

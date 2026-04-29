@@ -9,6 +9,9 @@ const publicEnvSchema = z.object({
 
 const serverEnvSchema = publicEnvSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
+  OPENAI_API_KEY: z.string().min(20).optional(),
+  OPENAI_MODEL: z.string().min(1).optional(),
+  OPENAI_BASE_URL: z.string().url().optional(),
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: z.string().email().optional(),
@@ -41,6 +44,9 @@ export function getServerEnv() {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_MODEL: process.env.OPENAI_MODEL,
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL,
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON: process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON,
     GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,

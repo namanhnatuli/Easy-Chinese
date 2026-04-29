@@ -36,6 +36,12 @@ function createSupabaseStub({
     reviewEvents: [] as Array<Record<string, unknown>>,
     wordProgress: [] as Array<Record<string, unknown>>,
     lessonProgress: [] as Array<Record<string, unknown>>,
+    wordMemory: [] as Array<Record<string, unknown>>,
+    learningStats: [] as Array<Record<string, unknown>>,
+    xp: [] as Array<Record<string, unknown>>,
+    levels: [] as Array<Record<string, unknown>>,
+    achievements: [] as Array<Record<string, unknown>>,
+    xpEvents: [] as Array<Record<string, unknown>>,
   };
 
   const supabase = {
@@ -62,6 +68,21 @@ function createSupabaseStub({
 
       if (table === "review_events") {
         return {
+          select() {
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          in() {
+            return this;
+          },
+          gte() {
+            return this;
+          },
+          lt() {
+            return Promise.resolve({ count: 0, error: null });
+          },
           insert: async (payload: Record<string, unknown>) => {
             operations.reviewEvents.push(payload);
             return { error: null };
@@ -69,10 +90,162 @@ function createSupabaseStub({
         };
       }
 
+      if (table === "practice_events") {
+        return {
+          select() {
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          gte() {
+            return this;
+          },
+          lt() {
+            return Promise.resolve({ count: 0, error: null });
+          },
+        };
+      }
+
+      if (table === "user_word_memory") {
+        return {
+          select(_columns?: string, options?: { count?: string; head?: boolean }) {
+            if (options?.head) {
+              return {
+                eq() {
+                  return this;
+                },
+                gt() {
+                  return Promise.resolve({ count: 0, error: null });
+                },
+              };
+            }
+
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+          upsert: async (payload: Record<string, unknown>) => {
+            operations.wordMemory.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
+      if (table === "user_learning_stats") {
+        return {
+          select() {
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+          upsert: async (payload: Record<string, unknown>) => {
+            operations.learningStats.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
       if (table === "user_lesson_progress") {
         return {
+          select(_columns?: string, options?: { count?: string; head?: boolean }) {
+            if (options?.head) {
+              return {
+                eq() {
+                  return this;
+                },
+                gte() {
+                  return Promise.resolve({ count: 0, error: null });
+                },
+              };
+            }
+
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
           upsert: async (payload: Record<string, unknown>) => {
             operations.lessonProgress.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
+      if (table === "user_writing_progress") {
+        return {
+          select(_columns?: string, options?: { count?: string; head?: boolean }) {
+            if (options?.head) {
+              let eqCount = 0;
+              return {
+                eq() {
+                  eqCount += 1;
+                  return eqCount >= 2 ? Promise.resolve({ count: 0, error: null }) : this;
+                },
+              };
+            }
+
+            return this;
+          },
+        };
+      }
+
+      if (table === "user_xp") {
+        return {
+          select() {
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+          upsert: async (payload: Record<string, unknown>) => {
+            operations.xp.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
+      if (table === "user_level") {
+        return {
+          upsert: async (payload: Record<string, unknown>) => {
+            operations.levels.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
+      if (table === "user_xp_events") {
+        return {
+          select() {
+            return this;
+          },
+          eq() {
+            return Promise.resolve({ data: operations.xpEvents.map((row) => ({ amount: row.amount })), error: null });
+          },
+          insert: async (payload: Record<string, unknown>) => {
+            operations.xpEvents.push(payload);
+            return { error: null };
+          },
+        };
+      }
+
+      if (table === "user_achievements") {
+        return {
+          select() {
+            return this;
+          },
+          eq() {
+            return this;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+          insert: async (payload: Record<string, unknown>) => {
+            operations.achievements.push(payload);
             return { error: null };
           },
         };
@@ -113,9 +286,14 @@ test("persistStudyOutcome writes review event, word progress, and lesson progres
   assert.equal(operations.reviewEvents.length, 1);
   assert.equal(operations.wordProgress.length, 1);
   assert.equal(operations.lessonProgress.length, 1);
+  assert.equal(operations.wordMemory.length, 1);
+  assert.equal(operations.learningStats.length, 1);
+  assert.equal(operations.xp.length >= 1, true);
+  assert.equal(operations.levels.length >= 1, true);
   assert.equal(operations.reviewEvents[0].user_id, "user-1");
   assert.equal(operations.wordProgress[0].status, "review");
   assert.equal(operations.wordProgress[0].interval_days, 14);
+  assert.equal(operations.wordMemory[0].word_id, "word-1");
   assert.equal(operations.lessonProgress[0].completion_percent, 100);
   assert.ok(typeof operations.lessonProgress[0].completed_at === "string");
 });
@@ -144,4 +322,6 @@ test("persistStudyOutcome rejects lesson submissions when the word is not in tha
   assert.equal(operations.reviewEvents.length, 0);
   assert.equal(operations.wordProgress.length, 0);
   assert.equal(operations.lessonProgress.length, 0);
+  assert.equal(operations.wordMemory.length, 0);
+  assert.equal(operations.learningStats.length, 0);
 });

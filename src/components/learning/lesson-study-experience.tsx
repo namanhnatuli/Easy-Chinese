@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CheckCircle2, Keyboard, LogIn, SkipForward, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
 import { FlashcardPanel } from "@/components/learning/flashcard-panel";
 import { MultipleChoicePanel } from "@/components/learning/multiple-choice-panel";
 import { TypingPanel } from "@/components/learning/typing-panel";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
 import type { LessonStudyWord, StudyOutcomeSubmission } from "@/features/learning/types";
 import { useStudySession } from "@/features/learning/use-study-session";
 import type { ReviewMode } from "@/types/domain";
@@ -34,36 +36,44 @@ export function LessonStudyExperience({
 }) {
   const { t, link } = useI18n();
   const [showAnonymousNotice, setShowAnonymousNotice] = useState(false);
+  const newCardDueHints = predictDueHintsForGrades(null, new Date());
   const session = useStudySession({
     items: words,
-    onPersistOutcome: async ({ currentItem, result, mode, nextCompletionPercent }) => {
-    if (!isAuthenticated) {
-      setShowAnonymousNotice(true);
-      return;
-    }
+    onPersistOutcome: async ({ currentItem, result, grade, mode, nextCompletionPercent }) => {
+      if (!isAuthenticated) {
+        setShowAnonymousNotice(true);
+        return;
+      }
 
-    const payload: StudyOutcomeSubmission = {
-      lessonId: lesson.id,
-      wordId: currentItem.id,
-      mode,
-      result,
-      completionPercent: nextCompletionPercent,
-    };
+      const payload: StudyOutcomeSubmission = {
+        lessonId: lesson.id,
+        wordId: currentItem.id,
+        mode,
+        result,
+        grade,
+        completionPercent: nextCompletionPercent,
+      };
 
-    const response = await fetch("/api/learning/review", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch("/api/learning/review", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { message?: string } | null;
-      toast.error(body?.message ?? t("learning.progressSaveFailed"));
-    }
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+        toast.error(body?.message ?? t("learning.progressSaveFailed"));
+      }
     },
     incorrectMessage: t("learning.needsMoreReview"),
+    flashcardMessages: {
+      again: t("learning.gradeFeedback.again"),
+      hard: t("learning.gradeFeedback.hard"),
+      good: t("learning.gradeFeedback.good"),
+      easy: t("learning.gradeFeedback.easy"),
+    },
   });
 
   if (session.totalItems === 0) {
@@ -105,6 +115,12 @@ export function LessonStudyExperience({
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Link href={link("/practice/reading/words")}>{t("practice.cta.reading")}</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Link href={link("/practice/writing")}>{t("practice.cta.writing")}</Link>
+            </Button>
             <Button
               onClick={() => {
                 session.setIndex(0);
@@ -174,10 +190,9 @@ export function LessonStudyExperience({
                   total={session.totalItems}
                   revealed={session.revealed}
                   feedback={session.feedback}
+                  dueHints={newCardDueHints}
                   onReveal={() => session.setRevealed(true)}
-                  onKnow={() => session.handleFlashcardAction("correct")}
-                  onDontKnow={() => session.handleFlashcardAction("incorrect")}
-                  onSkip={() => session.handleFlashcardAction("skipped")}
+                  onGrade={session.handleFlashcardGrade}
                   onNext={session.goToNextItem}
                 />
               ) : null}
@@ -248,6 +263,16 @@ export function LessonStudyExperience({
                   {session.summary.skipped} {t("learning.reviewSession.skipped")}
                 </div>
               </div>
+
+              {session.feedback?.result === "incorrect" ? (
+                <AiExplanationCard
+                  payload={{ kind: "word", wordId: session.currentItem.id }}
+                  title={t("ai.explanation.wordTitle", { value: session.currentItem.hanzi })}
+                  description={t("ai.explanation.incorrectDescription")}
+                  triggerLabel={t("ai.explanation.open")}
+                  autoLoad
+                />
+              ) : null}
 
               {!isAuthenticated || showAnonymousNotice ? (
                 <div className="rounded-[1.25rem] border border-amber-300/20 bg-amber-400/10 p-4">

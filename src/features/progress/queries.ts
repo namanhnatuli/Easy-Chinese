@@ -1,6 +1,13 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { filterDueReviewRows } from "@/features/progress/review-queue";
+import { getGamificationDashboardSummary } from "@/features/gamification/queries";
 import { buildDailyActivitySummary, buildProgressSummary } from "@/features/progress/summary";
+import {
+  getDailyGoalProgress,
+  listPersonalizedReviewQueue,
+  listRecommendedArticlesForUser,
+  listRecommendedLessonsForUser,
+} from "@/features/memory/queries";
+import { getPracticeDashboardSummary, listRecentPracticeActivity } from "@/features/practice/queries";
 
 import type {
   DashboardData,
@@ -20,52 +27,7 @@ function normalizeRelation<T>(value: T | T[] | null): T | null {
 }
 
 export async function listDueReviewItems(userId: string, limit = 20): Promise<DueReviewItem[]> {
-  const supabase = await createSupabaseServerClient();
-  const now = new Date();
-  const nowIso = now.toISOString();
-  const { data, error } = await supabase
-    .from("user_word_progress")
-    .select(
-      "status, next_review_at, last_reviewed_at, interval_days, streak_count, correct_count, incorrect_count, words!inner(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, is_published)",
-    )
-    .eq("user_id", userId)
-    .not("next_review_at", "is", null)
-    .lte("next_review_at", nowIso)
-    .eq("words.is_published", true)
-    .order("next_review_at", { ascending: true })
-    .limit(limit);
-
-  if (error) {
-    throw error;
-  }
-
-  return filterDueReviewRows(data ?? [], now)
-    .map((row, index) => {
-      const word = normalizeRelation(row.words);
-      if (!word || !row.next_review_at) {
-        return null;
-      }
-
-      return {
-        id: word.id,
-        slug: word.slug,
-        simplified: word.simplified,
-        traditional: word.traditional,
-        hanzi: word.hanzi,
-        pinyin: word.pinyin,
-        hanViet: word.han_viet,
-        vietnameseMeaning: word.vietnamese_meaning,
-        sortOrder: index + 1,
-        status: row.status,
-        nextReviewAt: row.next_review_at,
-        lastReviewedAt: row.last_reviewed_at,
-        intervalDays: row.interval_days,
-        streakCount: row.streak_count,
-        correctCount: row.correct_count,
-        incorrectCount: row.incorrect_count,
-      } satisfies DueReviewItem;
-    })
-    .filter((item): item is DueReviewItem => item !== null);
+  return listPersonalizedReviewQueue(userId, limit);
 }
 
 export async function listRecentReviewActivity(
@@ -79,6 +41,7 @@ export async function listRecentReviewActivity(
       "id, reviewed_at, result, mode, words!inner(id, slug, hanzi, pinyin, vietnamese_meaning, is_published)",
     )
     .eq("user_id", userId)
+    .not("mode", "is", null)
     .eq("words.is_published", true)
     .order("reviewed_at", { ascending: false })
     .limit(limit);
@@ -175,6 +138,13 @@ export async function listSuggestedLessons(limit = 3): Promise<SuggestedLessonIt
   }));
 }
 
+export async function listSuggestedLessonsForUser(
+  userId: string,
+  limit = 3,
+): Promise<SuggestedLessonItem[]> {
+  return listRecommendedLessonsForUser(userId, limit);
+}
+
 export async function listRecentArticleProgress(
   userId: string,
   limit = 5,
@@ -220,13 +190,18 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 
   const [
     { data: progressRows, error: progressError },
+    { data: memoryRows, error: memoryError },
     { data: lessonRows, error: lessonError },
     { data: articleRows, error: articleError },
     { data: dailyActivityRows, error: dailyActivityError },
   ] = await Promise.all([
     supabase
       .from("user_word_progress")
-      .select("status, next_review_at")
+      .select("word_id, status")
+      .eq("user_id", userId),
+    supabase
+      .from("user_word_memory")
+      .select("word_id, due_at")
       .eq("user_id", userId),
     supabase
       .from("user_lesson_progress")
@@ -252,6 +227,10 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     throw lessonError;
   }
 
+  if (memoryError) {
+    throw memoryError;
+  }
+
   if (articleError) {
     throw articleError;
   }
@@ -260,13 +239,59 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     throw dailyActivityError;
   }
 
-  const [recentLessonProgress, recentArticleProgress, recentReviewActivity] = await Promise.all([
+  const [
+    recentLessonProgress,
+    recentArticleProgress,
+    recentReviewActivity,
+    practiceSummary,
+    recentPracticeActivity,
+    dailyGoalProgress,
+    gamification,
+    personalizedLessons,
+    recommendedArticles,
+  ] = await Promise.all([
     listRecentLessonProgress(userId),
     listRecentArticleProgress(userId),
     listRecentReviewActivity(userId),
+    getPracticeDashboardSummary(userId),
+    listRecentPracticeActivity(userId),
+    getDailyGoalProgress(userId),
+    getGamificationDashboardSummary(userId),
+    listRecommendedLessonsForUser(userId, 3),
+    listRecommendedArticlesForUser(userId, 3),
   ]);
 
-  const summary = buildProgressSummary(progressRows ?? [], now);
+  const continueLesson = recentLessonProgress.find(
+    (lesson) => lesson.completionPercent > 0 && lesson.completionPercent < 100,
+  );
+  const memoryMap = new Map((memoryRows ?? []).map((row) => [row.word_id, row.due_at]));
+
+  const suggestedNextAction =
+    dailyGoalProgress.wordsToReviewToday > 0
+      ? {
+          href: "/practice/review",
+          titleKey: "dashboard.suggestedActions.review" as const,
+          descriptionKey: "dashboard.suggestedActionBodies.review" as const,
+        }
+      : continueLesson
+        ? {
+            href: `/learn/lesson/${continueLesson.lessonId}`,
+            titleKey: "dashboard.suggestedActions.lesson" as const,
+            descriptionKey: "dashboard.suggestedActionBodies.lesson" as const,
+          }
+        : {
+            href: "/practice/reading/words",
+            titleKey: "dashboard.suggestedActions.practice" as const,
+            descriptionKey: "dashboard.suggestedActionBodies.practice" as const,
+          };
+
+  const summary = buildProgressSummary(
+    (progressRows ?? []).map((row) => ({
+      status: row.status,
+      next_review_at: memoryMap.get(row.word_id) ?? null,
+    })),
+    now,
+  );
   const completedLessonsCount = (lessonRows ?? []).filter(
     (row) => row.completed_at || Number(row.completion_percent) >= 100,
   ).length;
@@ -283,9 +308,16 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     inProgressLessonsCount,
     completedArticlesCount,
     bookmarkedArticlesCount,
+    practiceSummary,
     recentLessonProgress,
     recentArticleProgress,
     recentReviewActivity,
+    recentPracticeActivity,
     dailyActivity: buildDailyActivitySummary(dailyActivityRows ?? [], now),
+    dailyGoalProgress,
+    gamification,
+    suggestedNextAction,
+    nextLessonRecommendation: personalizedLessons[0] ?? null,
+    recommendedArticles,
   };
 }

@@ -1,8 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { XP_VALUES } from "@/features/gamification/constants";
+import { awardXp, unlockEligibleAchievements } from "@/features/gamification/persistence";
+import { getXpForReviewResult } from "@/features/gamification/leveling";
 import { buildWordProgressPatch, type ExistingWordProgressSnapshot } from "@/features/learning/progress";
+import {
+  persistLearningStats,
+  persistWordMemoryGrade,
+} from "@/features/memory/persistence";
+import { mapMemoryGradeToReviewResult, mapReviewResultToMemoryGrade } from "@/features/memory/spaced-repetition";
 import type { StudyOutcomeSubmission } from "@/features/learning/types";
 import { logger } from "@/lib/logger";
+
+function getUtcDateKey(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
 
 export async function persistStudyOutcome({
   supabase,
@@ -13,6 +25,8 @@ export async function persistStudyOutcome({
   userId: string;
   input: StudyOutcomeSubmission;
 }) {
+  let existingLessonCompletionPercent = 0;
+
   logger.info("study_outcome_persist_started", {
     userId,
     wordId: input.wordId,
@@ -47,11 +61,26 @@ export async function persistStudyOutcome({
     if (!lessonMembership) {
       throw new Error("The reviewed word does not belong to this lesson.");
     }
+
+    const { data: existingLessonProgress, error: lessonProgressReadError } = await supabase
+      .from("user_lesson_progress")
+      .select("completion_percent")
+      .eq("user_id", userId)
+      .eq("lesson_id", input.lessonId)
+      .maybeSingle();
+
+    if (lessonProgressReadError) {
+      throw lessonProgressReadError;
+    }
+
+    existingLessonCompletionPercent = Number(existingLessonProgress?.completion_percent ?? 0);
   } else if (!existingProgress) {
     throw new Error("This word is not available in the review queue.");
   }
 
   const now = new Date();
+  const grade = input.grade ?? mapReviewResultToMemoryGrade(input.result);
+  const legacyResult = mapMemoryGradeToReviewResult(grade);
   const progressPatch = buildWordProgressPatch(
     existingProgress
       ? {
@@ -63,21 +92,19 @@ export async function persistStudyOutcome({
           easeFactor: Number(existingProgress.ease_factor),
         }
       : null satisfies ExistingWordProgressSnapshot | null,
-    input.result,
+    legacyResult,
     now,
   );
 
-  const { error: reviewEventError } = await supabase.from("review_events").insert({
-    user_id: userId,
-    word_id: input.wordId,
+  await persistWordMemoryGrade({
+    supabase,
+    userId,
+    wordId: input.wordId,
+    grade,
+    now,
     mode: input.mode,
-    result: input.result,
-    reviewed_at: now.toISOString(),
+    practiceType: input.lessonId ? `lesson_${input.mode}` : `review_${input.mode}`,
   });
-
-  if (reviewEventError) {
-    throw reviewEventError;
-  }
 
   const { error: wordProgressError } = await supabase.from("user_word_progress").upsert(
     {
@@ -109,6 +136,36 @@ export async function persistStudyOutcome({
       throw lessonProgressError;
     }
   }
+
+  await persistLearningStats({
+    supabase,
+    userId,
+    now,
+  });
+
+  await awardXp({
+    supabase,
+    userId,
+    amount: getXpForReviewResult(legacyResult),
+    reason: `review:${input.mode}:${legacyResult}`,
+    sourceKey: `review:${input.wordId}:${getUtcDateKey(now)}`,
+  });
+
+  if (input.lessonId && existingLessonCompletionPercent < 100 && input.completionPercent >= 100) {
+    await awardXp({
+      supabase,
+      userId,
+      amount: XP_VALUES.lessonCompletedBonus,
+      reason: `lesson_completed:${input.lessonId}`,
+      sourceKey: `lesson_completed:${input.lessonId}`,
+    });
+  }
+
+  await unlockEligibleAchievements({
+    supabase,
+    userId,
+    now,
+  });
 
   logger.info("study_outcome_persist_completed", {
     userId,

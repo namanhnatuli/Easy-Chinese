@@ -16,6 +16,7 @@
     "continueLearning": "Tiếp tục học",
     "continueReview": "Tiếp tục ôn tập",
     "dashboard": "Bảng tiến độ",
+    "practice": "Luyện tập",
     "review": "Ôn tập",
     "settings": "Cài đặt",
     "admin": "Quản trị",
@@ -71,6 +72,10 @@
     "grammar": {
       "label": "Ngữ pháp",
       "description": "Mẫu câu và ví dụ"
+    },
+    "practice": {
+      "label": "Luyện tập",
+      "description": "Đọc và viết Hán tự"
     },
     "articles": {
       "label": "Bài viết",
@@ -596,11 +601,17 @@
     "know": "Biết",
     "dontKnow": "Chưa biết",
     "skip": "Bỏ qua",
+    "grades": {
+      "again": "Lại",
+      "hard": "Khó",
+      "good": "Tốt",
+      "easy": "Dễ"
+    },
     "nextWord": "Từ tiếp theo",
     "checkAnswer": "Kiểm tra đáp án",
     "currentWord": "Từ hiện tại",
     "shortcuts": "Phím tắt",
-    "flashcardShortcut": "`1/2/3` chấm điểm flashcard",
+    "flashcardShortcut": "`1/2/3/4` chấm điểm flashcard",
     "multipleChoiceShortcut": "`1-4` chọn đáp án trắc nghiệm",
     "enterShortcut": "`Enter` kiểm tra hoặc tiếp tục",
     "spaceShortcut": "`Space` hiện flashcard",
@@ -615,9 +626,16 @@
     "due": "Đến hạn: {value}",
     "lastReviewed": "Lần ôn gần nhất: {value}",
     "interval": "Khoảng cách: {days} ngày · Chuỗi đúng: {streak}",
+    "lapses": "Số lần quên: {count}",
     "saving": "Đang lưu…",
     "autosaves": "Tự động lưu tiến độ",
     "skippedForNow": "Tạm bỏ qua.",
+    "gradeFeedback": {
+      "again": "Đã đánh dấu để ôn lại sớm.",
+      "hard": "Đã đánh dấu là khó.",
+      "good": "Đã đánh dấu là tốt.",
+      "easy": "Đã đánh dấu là dễ."
+    },
     "progressSaveFailed": "Không thể lưu tiến độ.",
     "reviewSoon": "Đã đánh dấu để ôn lại sớm.",
     "needsMoreReview": "Đã đánh dấu cần ôn thêm.",
@@ -666,6 +684,122 @@
       "noPriorReview": "Chưa từng ôn"
     }
   },
+  "practice": {
+    "eyebrow": "Luyện tập",
+    "anonymousBadge": "Hỗ trợ ẩn danh",
+    "title": "Luyện đọc và luyện viết Hán tự tập trung",
+    "description": "Dùng từ vựng công khai và câu ví dụ để luyện đọc, rồi chuyển sang khung viết đơn giản để luyện tay.",
+    "openModule": "Mở chế độ",
+    "signInForReview": "Đăng nhập để mở hàng đợi ôn tập cá nhân",
+    "emptyTitle": "Chưa có nội dung sẵn sàng để luyện tập",
+    "completeEyebrow": "Hoàn thành luyện tập",
+    "restart": "Làm lại",
+    "backToPractice": "Quay lại luyện tập",
+    "signInNotice": "Bạn có thể luyện tập khi ẩn danh, nhưng tiến độ chỉ được lưu sau khi đăng nhập.",
+    "signInToSave": "Đăng nhập để lưu tiến độ",
+    "status": "Trạng thái: {value}",
+    "grades": {
+      "again": "Lại",
+      "hard": "Khó",
+      "good": "Tốt",
+      "easy": "Dễ"
+    },
+    "actions": {
+      "completed": "Hoàn thành",
+      "difficult": "Khó",
+      "skipped": "Bỏ qua"
+    },
+    "cta": {
+      "reading": "Luyện đọc",
+      "writing": "Luyện viết"
+    },
+    "cards": {
+      "review": {
+        "title": "Hàng đợi ôn tập",
+        "description": "Xử lý từ đến hạn, quay lại các mục khó và duy trì vòng lặp lặp lại ngắt quãng."
+      },
+      "readingWords": {
+        "title": "Đọc từ",
+        "description": "Luyện nhận diện và phát âm từng từ."
+      },
+      "readingSentences": {
+        "title": "Đọc câu",
+        "description": "Đọc câu ví dụ với pinyin và nghĩa có thể bật/tắt."
+      },
+      "writingHanzi": {
+        "title": "Viết Hán tự",
+        "description": "Luyện từng chữ Hán trên khung viết đơn giản."
+      }
+    },
+    "review": {
+      "eyebrow": "Ôn tập thông minh",
+      "title": "Hàng đợi ôn tập cá nhân",
+      "description": "Học các từ đến hạn ngay bây giờ, quay lại các mục khó sớm hơn và thêm một ít từ mới khi hàng đợi còn nhẹ.",
+      "emptyTitle": "Hiện hàng đợi ôn tập của bạn đang trống",
+      "emptyDescription": "Hiện không có mục ôn tập khẩn cấp nào. Hãy tiếp tục một bài học hoặc mở luyện đọc để tạo vòng lặp tiếp theo.",
+      "suggestedLessons": "Bài học gợi ý tiếp theo",
+      "suggestedDescription": "Tiếp tục làm giàu hàng đợi với các bài học đã xuất bản phù hợp tiếp theo."
+    },
+    "reading": {
+      "eyebrow": "Luyện đọc",
+      "title": "Chọn trọng tâm đọc",
+      "description": "Chuyển giữa luyện từ và luyện câu trong cùng một bề mặt học tập yên tĩnh.",
+      "wordsSessionDescription": "Đọc từ vựng đã xuất bản với pinyin, nghĩa và phát âm bằng TTS của trình duyệt.",
+      "sentencesSessionDescription": "Đọc câu ví dụ, mở hỗ trợ khi cần và đánh dấu nội dung khó để quay lại sau.",
+      "playAudio": "Phát âm thanh",
+      "showPinyin": "Hiện pinyin",
+      "hidePinyin": "Ẩn pinyin",
+      "showMeaning": "Hiện nghĩa",
+      "hideMeaning": "Ẩn nghĩa",
+      "linkedWord": "Từ liên kết",
+      "openWord": "Mở từ",
+      "currentStatus": "Tiến độ đọc",
+      "attempts": "Số lần: {count}",
+      "shortcutAgain": "`1` đánh dấu lại",
+      "shortcutHard": "`2` đánh dấu khó",
+      "shortcutGood": "`3` đánh dấu tốt",
+      "shortcutEasy": "`4` đánh dấu dễ",
+      "shortcutPinyin": "`H` bật/tắt pinyin",
+      "shortcutMeaning": "`M` bật/tắt nghĩa",
+      "shortcutAudio": "`P` phát âm",
+      "shortcutsTitle": "Phím tắt",
+      "audioUnavailable": "Trình duyệt này không hỗ trợ phát âm thanh.",
+      "saveFailed": "Không thể lưu tiến độ luyện đọc.",
+      "emptyDescription": "Hãy xuất bản từ hoặc câu ví dụ trước để có nội dung luyện đọc.",
+      "ttsBadge": "TTS trình duyệt",
+      "pronunciationUnsupported": "Trình duyệt này chưa hỗ trợ nhận diện giọng nói.",
+      "pronunciationTitle": "Phản hồi phát âm",
+      "pronunciationDescription": "Đọc to nội dung và so sánh bản chép lại với Hanzi mục tiêu.",
+      "startListening": "Bắt đầu nói",
+      "stopListening": "Dừng",
+      "pronunciationCorrect": "Khớp tốt",
+      "pronunciationNeedsWork": "Cần xem lại",
+      "transcriptLabel": "Bản chép lại"
+    },
+    "writing": {
+      "eyebrow": "Luyện viết",
+      "title": "Chọn bộ Hán tự để viết",
+      "description": "Mở một từ, tách thành từng chữ Hán và luyện mỗi chữ trên khung viết tối ưu cho cảm ứng.",
+      "targetCharacter": "Chữ mục tiêu",
+      "characterStatus": "Tiến độ chữ",
+      "attempts": "Số lần: {count}",
+      "clearCanvas": "Xóa khung viết",
+      "characters": "{count} chữ",
+      "completedCount": "{count} hoàn thành",
+      "difficultCount": "{count} khó",
+      "completeDescription": "Bạn đã hoàn thành bộ chữ hiện tại. Có thể làm lại hoặc quay về danh sách luyện viết.",
+      "backToWords": "Quay lại danh sách viết",
+      "saveFailed": "Không thể lưu tiến độ luyện viết.",
+      "canvasBadge": "Khung viết sẵn sàng",
+      "strokeGuideTitle": "Gợi ý thứ tự nét",
+      "strokeGuideDescription": "Dùng ký tự mờ làm mốc thị giác khi luyện viết và ghi nhớ hình chữ.",
+      "strokeGuideRule": "Tạm thời hãy theo quy tắc quen thuộc: trên xuống dưới, trái sang phải.",
+      "showGrid": "Hiện lưới",
+      "hideGrid": "Ẩn lưới",
+      "showGuide": "Hiện mẫu",
+      "hideGuide": "Ẩn mẫu"
+    }
+  },
   "dashboard": {
     "eyebrow": "Bảng tiến độ",
     "title": "Tiến độ học của bạn",
@@ -680,12 +814,48 @@
     "reviewDueDescription": "Sẵn sàng ôn ngay bây giờ",
     "mastered": "Đã vững",
     "masteredDescription": "Từ đã ổn định dài hạn",
+    "wordsToReviewToday": "Từ cần ôn hôm nay",
+    "wordsToReviewTodayDescription": "Các từ đến hạn hoặc được đánh dấu khó",
+    "streak": "Chuỗi ngày",
+    "streakDescription": "Số ngày liên tiếp hoàn thành mục tiêu",
+    "completedToday": "Hoàn thành hôm nay",
+    "completedTodayDescription": "Mục tiêu hôm nay là {goal} thao tác",
+    "difficultWords": "Từ khó",
+    "difficultWordsDescription": "Các từ được đánh dấu cần lặp lại thêm",
+    "totalXp": "Tổng XP",
+    "totalXpDescription": "Kinh nghiệm nhận từ bài học, ôn tập và luyện tập",
+    "currentLevel": "Cấp độ hiện tại",
+    "currentLevelDescription": "Cấp độ học tập tổng thể từ XP tích lũy",
+    "achievementCount": "Thành tựu",
+    "achievementCountDescription": "Các cột mốc đã mở khóa",
+    "nextLevelProgress": "Cấp tiếp theo",
+    "nextLevelProgressDescription": "{current} / {total} XP trong cấp hiện tại",
     "lessonProgress": "Tiến độ bài học",
     "lessonProgressSummary": "{completed} hoàn thành · {inProgress} đang học",
+    "dailyGoalWidget": "Mục tiêu hằng ngày",
+    "dailyGoalWidgetDescription": "Giữ vòng lặp ôn tập sống động với một đích đến nhỏ nhưng đều đặn.",
+    "goalProgress": "Tiến độ hôm nay",
+    "goalRemaining": "Còn {count} thao tác nữa để đạt mục tiêu hôm nay",
+    "goalCompleted": "Bạn đã hoàn thành mục tiêu hôm nay. Có thể tiếp tục nếu muốn tạo thêm đà.",
+    "startReview": "Bắt đầu ôn tập",
+    "gamificationTitle": "XP và thành tựu",
+    "gamificationDescription": "Một lớp động lực đơn giản để việc học hằng ngày dễ nhìn hơn.",
+    "levelBadge": "Huy hiệu cấp độ",
+    "levelValue": "Cấp {level}",
+    "levelProgress": "{current} / {total} XP tới cấp tiếp theo",
+    "noAchievementsYet": "Chưa mở khóa thành tựu nào",
     "completedArticles": "Bài viết đã đọc xong",
     "completedArticlesDescription": "Các ghi chú học tập bạn đã hoàn thành",
     "bookmarkedArticles": "Bài viết đã lưu",
     "bookmarkedArticlesDescription": "Các ghi chú lưu lại để xem sau",
+    "readingCompleted": "Đọc đã hoàn thành",
+    "readingCompletedDescription": "Mục luyện đọc đã đánh dấu hoàn thành",
+    "difficultReading": "Đọc khó",
+    "difficultReadingDescription": "Mục luyện đọc được đánh dấu khó",
+    "writingCharacters": "Chữ đã luyện viết",
+    "writingCharactersDescription": "Số chữ có tiến độ luyện viết đã lưu",
+    "difficultWriting": "Viết khó",
+    "difficultWritingDescription": "Chữ được đánh dấu khó khi luyện viết",
     "completed": "Đã hoàn thành",
     "notYet": "Chưa có",
     "noLessonProgress": "Chưa có tiến độ bài học",
@@ -706,8 +876,75 @@
     "activeDays": "Hoạt động trong {count} ngày",
     "recentReviewActivity": "Hoạt động ôn tập gần đây",
     "recentReviewDescription": "Các câu trả lời được lưu gần nhất từ phiên học của bạn.",
+    "suggestedActions": {
+      "review": "Ôn tập ngay",
+      "lesson": "Tiếp tục bài học",
+      "practice": "Mở luyện đọc"
+    },
+    "suggestedActionBodies": {
+      "review": "Hôm nay có áp lực ôn tập, nên hãy xử lý hàng đợi đó trước.",
+      "lesson": "Bước tiếp theo hợp lý là hoàn thành bài học đang dở.",
+      "practice": "Dùng luyện đọc nhẹ để giữ vòng lặp học tập tiếp tục."
+    },
+    "nextRecommendation": "Bài học gợi ý tiếp theo",
+    "nextRecommendationDescription": "Gợi ý nhẹ dựa trên các bài học chưa xong và cấp độ hiện tại của bạn.",
+    "noRecommendation": "Chưa có gợi ý bài học",
+    "noRecommendationDescription": "Hãy bắt đầu hoặc hoàn thành một bài học để cải thiện gợi ý bài học.",
+    "recommendedArticles": "Bài viết gợi ý",
+    "recommendedArticlesDescription": "Các ghi chú đã xuất bản phù hợp với cấp độ hiện tại hoặc thẻ bài viết gần đây của bạn.",
+    "noRecommendedArticles": "Chưa có gợi ý bài viết",
+    "noRecommendedArticlesDescription": "Hãy đọc hoặc lưu một bài viết trước để cải thiện gợi ý bài viết.",
     "noReviewActivity": "Chưa có hoạt động ôn tập",
-    "noReviewActivityDescription": "Sự kiện ôn tập sẽ xuất hiện ở đây sau khi bạn hoàn thành bài học hoặc xử lý hàng đợi ôn tập."
+    "noReviewActivityDescription": "Sự kiện ôn tập sẽ xuất hiện ở đây sau khi bạn hoàn thành bài học hoặc xử lý hàng đợi ôn tập.",
+    "recentPracticeActivity": "Hoạt động luyện tập gần đây",
+    "recentPracticeActivityDescription": "Các thao tác luyện đọc và luyện viết đã lưu gần nhất.",
+    "noPracticeActivity": "Chưa có hoạt động luyện tập",
+    "noPracticeActivityDescription": "Hoạt động luyện đọc và luyện viết sẽ hiện ở đây sau phiên luyện đầu tiên.",
+    "practiceType": {
+      "reading_word": "Đọc từ",
+      "reading_sentence": "Đọc câu",
+      "writing_character": "Viết chữ"
+    },
+    "practiceResult": {
+      "completed": "hoàn thành",
+      "difficult": "khó",
+      "skipped": "bỏ qua"
+    }
+  },
+  "ai": {
+    "explanation": {
+      "open": "Giải thích AI",
+      "loading": "Đang tạo giải thích bằng tiếng Việt…",
+      "loadFailed": "Chưa thể tạo giải thích AI lúc này.",
+      "meaning": "Nghĩa",
+      "usage": "Cách dùng",
+      "comparison": "So sánh với từ gần nghĩa",
+      "tips": "Mẹo học",
+      "wordTitle": "Giải thích AI cho {value}",
+      "wordDescription": "Giải thích nghĩa, cách dùng và sắc thái khác biệt bằng tiếng Việt.",
+      "grammarTitle": "Giải thích AI cho {value}",
+      "grammarDescription": "Giải thích ngữ pháp bằng tiếng Việt kèm hướng dẫn sử dụng.",
+      "articleTitle": "Tóm tắt AI cho {value}",
+      "articleDescription": "Giải thích nhanh bằng tiếng Việt về các ý chính của bài viết.",
+      "articleCta": "Giải thích bài viết này",
+      "incorrectDescription": "Bạn vừa làm sai mục này. Hãy xem lại nghĩa và cách dùng trước khi tiếp tục."
+    },
+    "sentences": {
+      "title": "Câu ví dụ AI",
+      "description": "Tạo thêm 2-3 câu có Hanzi, pinyin và nghĩa tiếng Việt.",
+      "practiceTitle": "Ví dụ bổ sung",
+      "practiceDescription": "Lấy thêm vài ví dụ AI trước khi đánh dấu xong từ này.",
+      "generate": "Tạo câu",
+      "empty": "Tạo thêm ví dụ khi bạn cần nhiều ngữ cảnh hơn.",
+      "loadFailed": "Chưa thể tạo câu ví dụ AI lúc này.",
+      "aiBadge": "AI"
+    }
+  },
+  "achievements": {
+    "first_lesson_completed": "Hoàn thành bài học đầu tiên",
+    "seven_day_streak": "Chuỗi 7 ngày",
+    "fifty_words_learned": "Học 50 từ",
+    "hundred_characters_written": "Viết 100 chữ"
   },
   "settings": {
     "eyebrow": "Cài đặt",

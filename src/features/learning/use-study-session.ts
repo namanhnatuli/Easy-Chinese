@@ -3,13 +3,14 @@
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
 
 import { evaluateMultipleChoiceAnswer, evaluateTypingAnswer } from "@/features/learning/evaluation";
+import { mapMemoryGradeToReviewResult } from "@/features/memory/spaced-repetition";
 import {
   buildFlashcardPrompt,
   buildMultipleChoiceQuestion,
   buildTypingQuestion,
 } from "@/features/learning/session";
 import type { LessonStudyWord, StudyFeedback } from "@/features/learning/types";
-import type { ReviewMode, ReviewResult } from "@/types/domain";
+import type { ReviewMode, ReviewResult, SchedulerGrade } from "@/types/domain";
 
 type SessionMode = ReviewMode;
 
@@ -17,15 +18,18 @@ export function useStudySession<TWord extends LessonStudyWord>({
   items,
   onPersistOutcome,
   incorrectMessage = "Marked for more review.",
+  flashcardMessages,
 }: {
   items: TWord[];
   onPersistOutcome: (args: {
     currentItem: TWord;
     result: ReviewResult;
+    grade?: SchedulerGrade;
     mode: SessionMode;
     nextCompletionPercent: number;
   }) => Promise<void>;
   incorrectMessage?: string;
+  flashcardMessages?: Partial<Record<SchedulerGrade, string>>;
 }) {
   const [mode, setMode] = useState<SessionMode>("flashcard");
   const [index, setIndex] = useState(0);
@@ -52,7 +56,8 @@ export function useStudySession<TWord extends LessonStudyWord>({
     setFeedback(null);
   }, [index, mode]);
 
-  const persistOutcome = useEffectEvent(async (result: ReviewResult, activeMode: SessionMode) => {
+  const persistOutcome = useEffectEvent(
+    async (result: ReviewResult, activeMode: SessionMode, grade?: SchedulerGrade) => {
     if (!currentItem) {
       return;
     }
@@ -64,12 +69,14 @@ export function useStudySession<TWord extends LessonStudyWord>({
     await onPersistOutcome({
       currentItem,
       result,
+      grade,
       mode: activeMode,
       nextCompletionPercent,
     });
-  });
+    },
+  );
 
-  const handleOutcome = useEffectEvent((result: ReviewResult, message: string) => {
+  const handleOutcome = useEffectEvent((result: ReviewResult, message: string, grade?: SchedulerGrade) => {
     if (!currentItem) {
       return;
     }
@@ -81,7 +88,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     }));
 
     startSaving(() => {
-      void persistOutcome(result, mode);
+      void persistOutcome(result, mode, grade);
     });
   });
 
@@ -89,19 +96,26 @@ export function useStudySession<TWord extends LessonStudyWord>({
     setIndex((current) => Math.min(current + 1, totalItems));
   });
 
-  const handleFlashcardAction = useEffectEvent((result: ReviewResult) => {
+  const handleFlashcardGrade = useEffectEvent((grade: SchedulerGrade) => {
     if (feedback) {
       return;
     }
 
-    const message =
-      result === "correct"
-        ? "Marked as known."
-        : result === "incorrect"
-          ? incorrectMessage
-          : "Skipped for now.";
+    const result = mapMemoryGradeToReviewResult(grade);
+    const message = (() => {
+      switch (grade) {
+        case "again":
+          return flashcardMessages?.again ?? incorrectMessage;
+        case "hard":
+          return flashcardMessages?.hard ?? "Marked as hard.";
+        case "good":
+          return flashcardMessages?.good ?? "Marked as good.";
+        case "easy":
+          return flashcardMessages?.easy ?? "Marked as easy.";
+      }
+    })();
 
-    handleOutcome(result, message);
+    handleOutcome(result, message, grade);
   });
 
   const handleMultipleChoiceSubmit = useEffectEvent(() => {
@@ -172,21 +186,28 @@ export function useStudySession<TWord extends LessonStudyWord>({
       if (event.key === "1") {
         event.preventDefault();
         if (!feedback) {
-          handleFlashcardAction("correct");
+          handleFlashcardGrade("again");
         }
       }
 
       if (event.key === "2") {
         event.preventDefault();
         if (!feedback) {
-          handleFlashcardAction("incorrect");
+          handleFlashcardGrade("hard");
         }
       }
 
       if (event.key === "3") {
         event.preventDefault();
         if (!feedback) {
-          handleFlashcardAction("skipped");
+          handleFlashcardGrade("good");
+        }
+      }
+
+      if (event.key === "4") {
+        event.preventDefault();
+        if (!feedback) {
+          handleFlashcardGrade("easy");
         }
       }
     }
@@ -253,7 +274,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     typingQuestion,
     summary,
     handleOutcome,
-    handleFlashcardAction,
+    handleFlashcardGrade,
     handleMultipleChoiceSubmit,
     handleTypingSubmit,
     goToNextItem,

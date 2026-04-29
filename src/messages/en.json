@@ -16,6 +16,7 @@
     "continueLearning": "Continue learning",
     "continueReview": "Continue review",
     "dashboard": "Dashboard",
+    "practice": "Practice",
     "review": "Review",
     "settings": "Settings",
     "admin": "Admin",
@@ -71,6 +72,10 @@
     "grammar": {
       "label": "Grammar",
       "description": "Patterns and examples"
+    },
+    "practice": {
+      "label": "Practice",
+      "description": "Reading and Hanzi writing"
     },
     "articles": {
       "label": "Articles",
@@ -596,11 +601,17 @@
     "know": "Know",
     "dontKnow": "Don't know",
     "skip": "Skip",
+    "grades": {
+      "again": "Again",
+      "hard": "Hard",
+      "good": "Good",
+      "easy": "Easy"
+    },
     "nextWord": "Next word",
     "checkAnswer": "Check answer",
     "currentWord": "Current word",
     "shortcuts": "Shortcuts",
-    "flashcardShortcut": "`1/2/3` score flashcards",
+    "flashcardShortcut": "`1/2/3/4` score flashcards",
     "multipleChoiceShortcut": "`1-4` choose multiple-choice answers",
     "enterShortcut": "`Enter` check or continue",
     "spaceShortcut": "`Space` reveal flashcards",
@@ -615,9 +626,16 @@
     "due": "Due: {value}",
     "lastReviewed": "Last reviewed: {value}",
     "interval": "Interval: {days} day(s) · Streak: {streak}",
+    "lapses": "Lapses: {count}",
     "saving": "Saving…",
     "autosaves": "Progress autosaves",
     "skippedForNow": "Skipped for now.",
+    "gradeFeedback": {
+      "again": "Marked for another review soon.",
+      "hard": "Marked as hard.",
+      "good": "Marked as good.",
+      "easy": "Marked as easy."
+    },
     "progressSaveFailed": "Progress could not be saved.",
     "reviewSoon": "Marked for another review soon.",
     "needsMoreReview": "Marked for more review.",
@@ -666,6 +684,122 @@
       "noPriorReview": "No prior review"
     }
   },
+  "practice": {
+    "eyebrow": "Practice",
+    "anonymousBadge": "Anonymous-friendly",
+    "title": "Focused reading and Hanzi writing practice",
+    "description": "Use public vocabulary and example sentences for reading, then switch into a simple canvas flow for handwriting practice.",
+    "openModule": "Open module",
+    "signInForReview": "Sign in to open your personal review queue",
+    "emptyTitle": "Nothing is ready for practice yet",
+    "completeEyebrow": "Practice complete",
+    "restart": "Restart practice",
+    "backToPractice": "Back to practice",
+    "signInNotice": "Practice works anonymously, but progress is only saved after sign-in.",
+    "signInToSave": "Sign in to save practice progress",
+    "status": "Status: {value}",
+    "grades": {
+      "again": "Again",
+      "hard": "Hard",
+      "good": "Good",
+      "easy": "Easy"
+    },
+    "actions": {
+      "completed": "Completed",
+      "difficult": "Difficult",
+      "skipped": "Skip"
+    },
+    "cta": {
+      "reading": "Practice reading",
+      "writing": "Practice writing"
+    },
+    "cards": {
+      "review": {
+        "title": "Review Queue",
+        "description": "Clear due words, revisit difficult items, and keep your spaced repetition moving."
+      },
+      "readingWords": {
+        "title": "Reading Words",
+        "description": "Practice recognition and pronunciation one word at a time."
+      },
+      "readingSentences": {
+        "title": "Reading Sentences",
+        "description": "Read example sentences with optional pinyin and meaning support."
+      },
+      "writingHanzi": {
+        "title": "Writing Hanzi",
+        "description": "Trace and repeat each Hanzi with a simple writing canvas."
+      }
+    },
+    "review": {
+      "eyebrow": "Intelligent review",
+      "title": "Your personalized review queue",
+      "description": "Study words that are due now, revisit difficult items sooner, and pull in a few fresh words when the queue is light.",
+      "emptyTitle": "Your review queue is clear for now",
+      "emptyDescription": "There are no urgent review items right now. Continue a lesson or open reading practice to create the next loop.",
+      "suggestedLessons": "Recommended next lessons",
+      "suggestedDescription": "Keep the queue growing with the next best published lessons."
+    },
+    "reading": {
+      "eyebrow": "Reading practice",
+      "title": "Choose a reading focus",
+      "description": "Switch between word and sentence practice without leaving the same calm study surface.",
+      "wordsSessionDescription": "Read published vocabulary with optional pinyin, meaning support, and quick text-to-speech playback.",
+      "sentencesSessionDescription": "Read example sentences, reveal support when needed, and flag difficult material for later.",
+      "playAudio": "Play audio",
+      "showPinyin": "Show pinyin",
+      "hidePinyin": "Hide pinyin",
+      "showMeaning": "Show meaning",
+      "hideMeaning": "Hide meaning",
+      "linkedWord": "Linked word",
+      "openWord": "Open word",
+      "currentStatus": "Reading progress",
+      "attempts": "Attempts: {count}",
+      "shortcutAgain": "`1` mark again",
+      "shortcutHard": "`2` mark hard",
+      "shortcutGood": "`3` mark good",
+      "shortcutEasy": "`4` mark easy",
+      "shortcutPinyin": "`H` toggle pinyin",
+      "shortcutMeaning": "`M` toggle meaning",
+      "shortcutAudio": "`P` play pronunciation",
+      "shortcutsTitle": "Keyboard shortcuts",
+      "audioUnavailable": "Audio playback is not available in this browser.",
+      "saveFailed": "Reading practice progress could not be saved.",
+      "emptyDescription": "Publish words or example sentences first to populate reading practice.",
+      "ttsBadge": "Browser TTS",
+      "pronunciationUnsupported": "Speech recognition is not available in this browser yet.",
+      "pronunciationTitle": "Pronunciation feedback",
+      "pronunciationDescription": "Read the prompt aloud and compare your transcript with the expected Hanzi.",
+      "startListening": "Start speaking",
+      "stopListening": "Stop",
+      "pronunciationCorrect": "Good match",
+      "pronunciationNeedsWork": "Check the mismatch",
+      "transcriptLabel": "Transcript"
+    },
+    "writing": {
+      "eyebrow": "Writing practice",
+      "title": "Choose a Hanzi writing set",
+      "description": "Open a word, split it into characters, and rehearse each Hanzi on a simple canvas built for touch and tablet use.",
+      "targetCharacter": "Target character",
+      "characterStatus": "Character progress",
+      "attempts": "Attempts: {count}",
+      "clearCanvas": "Clear canvas",
+      "characters": "{count} characters",
+      "completedCount": "{count} completed",
+      "difficultCount": "{count} difficult",
+      "completeDescription": "You finished the current writing set. Restart the word or return to the writing list for another one.",
+      "backToWords": "Back to writing words",
+      "saveFailed": "Writing practice progress could not be saved.",
+      "canvasBadge": "Canvas ready",
+      "strokeGuideTitle": "Stroke guide",
+      "strokeGuideDescription": "Use the faint reference character as a visual target while you build muscle memory.",
+      "strokeGuideRule": "For now, follow the common rule: top to bottom, left to right.",
+      "showGrid": "Show grid",
+      "hideGrid": "Hide grid",
+      "showGuide": "Show guide",
+      "hideGuide": "Hide guide"
+    }
+  },
   "dashboard": {
     "eyebrow": "Dashboard",
     "title": "Your study progress",
@@ -680,12 +814,48 @@
     "reviewDueDescription": "Ready to review now",
     "mastered": "Mastered",
     "masteredDescription": "Stable long-term words",
+    "wordsToReviewToday": "Words to review today",
+    "wordsToReviewTodayDescription": "Due or difficult words that need attention",
+    "streak": "Streak",
+    "streakDescription": "Consecutive goal-complete days",
+    "completedToday": "Completed today",
+    "completedTodayDescription": "{goal} actions target for today",
+    "difficultWords": "Difficult words",
+    "difficultWordsDescription": "Words flagged for extra repetition",
+    "totalXp": "Total XP",
+    "totalXpDescription": "Experience earned from lessons, review, and practice",
+    "currentLevel": "Current level",
+    "currentLevelDescription": "Your overall learner level from accumulated XP",
+    "achievementCount": "Achievements",
+    "achievementCountDescription": "Unlocked learning milestones",
+    "nextLevelProgress": "Next level",
+    "nextLevelProgressDescription": "{current} / {total} XP in the current level",
     "lessonProgress": "Lesson progress",
     "lessonProgressSummary": "{completed} completed · {inProgress} in progress",
+    "dailyGoalWidget": "Daily goal",
+    "dailyGoalWidgetDescription": "Keep the review loop alive with a small, consistent finish line.",
+    "goalProgress": "Today so far",
+    "goalRemaining": "{count} more action(s) to hit today's goal",
+    "goalCompleted": "Today's goal is complete. Keep going if you want to build buffer.",
+    "startReview": "Start review",
+    "gamificationTitle": "XP and achievements",
+    "gamificationDescription": "A simple progress layer to make daily study more visible.",
+    "levelBadge": "Level badge",
+    "levelValue": "Level {level}",
+    "levelProgress": "{current} / {total} XP toward the next level",
+    "noAchievementsYet": "No achievements unlocked yet",
     "completedArticles": "Completed articles",
     "completedArticlesDescription": "Study notes you have finished reading",
     "bookmarkedArticles": "Bookmarked articles",
     "bookmarkedArticlesDescription": "Saved notes to revisit later",
+    "readingCompleted": "Reading completed",
+    "readingCompletedDescription": "Reading items marked completed",
+    "difficultReading": "Difficult reading",
+    "difficultReadingDescription": "Reading items flagged as difficult",
+    "writingCharacters": "Writing characters",
+    "writingCharactersDescription": "Characters with saved writing progress",
+    "difficultWriting": "Difficult writing",
+    "difficultWritingDescription": "Writing characters flagged as difficult",
     "completed": "Completed",
     "notYet": "Not yet",
     "noLessonProgress": "No lesson progress yet",
@@ -706,8 +876,75 @@
     "activeDays": "Active on {count} day(s)",
     "recentReviewActivity": "Recent review activity",
     "recentReviewDescription": "Latest saved answers from your study sessions.",
+    "suggestedActions": {
+      "review": "Start review now",
+      "lesson": "Continue your lesson",
+      "practice": "Open reading practice"
+    },
+    "suggestedActionBodies": {
+      "review": "You have review pressure today, so clear that queue first.",
+      "lesson": "Your next best step is finishing the lesson already in progress.",
+      "practice": "Use lightweight reading practice to keep the learning loop moving."
+    },
+    "nextRecommendation": "Recommended next lesson",
+    "nextRecommendationDescription": "A lightweight suggestion based on unfinished lessons and your current level.",
+    "noRecommendation": "No lesson recommendation yet",
+    "noRecommendationDescription": "Finish or start a lesson to improve lesson suggestions.",
+    "recommendedArticles": "Recommended articles",
+    "recommendedArticlesDescription": "Published notes that match your current level or recent article tags.",
+    "noRecommendedArticles": "No article recommendations yet",
+    "noRecommendedArticlesDescription": "Read or bookmark an article first to improve article suggestions.",
+    "recentPracticeActivity": "Recent practice activity",
+    "recentPracticeActivityDescription": "Latest saved reading and writing actions.",
     "noReviewActivity": "No review activity yet",
-    "noReviewActivityDescription": "Review events will appear here after you finish a lesson or clear items from the review queue."
+    "noReviewActivityDescription": "Review events will appear here after you finish a lesson or clear items from the review queue.",
+    "noPracticeActivity": "No practice activity yet",
+    "noPracticeActivityDescription": "Reading and writing actions will appear here after your first practice session.",
+    "practiceType": {
+      "reading_word": "Reading word",
+      "reading_sentence": "Reading sentence",
+      "writing_character": "Writing character"
+    },
+    "practiceResult": {
+      "completed": "completed",
+      "difficult": "difficult",
+      "skipped": "skipped"
+    }
+  },
+  "ai": {
+    "explanation": {
+      "open": "AI explanation",
+      "loading": "Generating a Vietnamese explanation…",
+      "loadFailed": "The AI explanation could not be generated right now.",
+      "meaning": "Meaning",
+      "usage": "Usage",
+      "comparison": "Compare with similar words",
+      "tips": "Study tips",
+      "wordTitle": "AI explanation for {value}",
+      "wordDescription": "Meaning, usage, and subtle differences in Vietnamese.",
+      "grammarTitle": "AI explanation for {value}",
+      "grammarDescription": "A Vietnamese grammar explanation with usage guidance.",
+      "articleTitle": "AI summary for {value}",
+      "articleDescription": "A quick Vietnamese explanation of the key points in this article.",
+      "articleCta": "Explain this article",
+      "incorrectDescription": "You missed this item. Review the meaning and usage before moving on."
+    },
+    "sentences": {
+      "title": "AI example sentences",
+      "description": "Generate 2-3 extra sentences with Hanzi, pinyin, and Vietnamese meaning.",
+      "practiceTitle": "More examples",
+      "practiceDescription": "Pull a few extra AI-generated examples before marking this word done.",
+      "generate": "Generate",
+      "empty": "Generate extra examples when you want more context.",
+      "loadFailed": "AI examples could not be generated right now.",
+      "aiBadge": "AI"
+    }
+  },
+  "achievements": {
+    "first_lesson_completed": "First lesson completed",
+    "seven_day_streak": "7-day streak",
+    "fifty_words_learned": "50 words learned",
+    "hundred_characters_written": "100 characters written"
   },
   "settings": {
     "eyebrow": "Settings",

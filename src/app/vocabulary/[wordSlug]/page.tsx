@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
+import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,9 +56,23 @@ export default async function VocabularyDetailPage({
         title={word.hanzi}
         description={word.notes ?? word.vietnameseMeaning}
         actions={
-          <Button asChild>
-            <Link href={link("/vocabulary")}>{t("common.backToVocabulary")}</Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline">
+              <Link href={link(`/practice/reading/words?word=${word.id}`)}>{t("practice.cta.reading")}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={link(`/practice/writing/${word.id}`)}>{t("practice.cta.writing")}</Link>
+            </Button>
+            <AiExplanationCard
+              payload={{ kind: "word", wordId: word.id }}
+              title={t("ai.explanation.wordTitle", { value: word.hanzi })}
+              description={t("ai.explanation.wordDescription")}
+              triggerLabel={t("ai.explanation.open")}
+            />
+            <Button asChild>
+              <Link href={link("/vocabulary")}>{t("common.backToVocabulary")}</Link>
+            </Button>
+          </div>
         }
       />
 
@@ -240,6 +256,12 @@ export default async function VocabularyDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <AiSentenceGeneratorCard
+        wordId={word.id}
+        title={t("ai.sentences.title")}
+        description={t("ai.sentences.description")}
+      />
     </div>
   );
 }
