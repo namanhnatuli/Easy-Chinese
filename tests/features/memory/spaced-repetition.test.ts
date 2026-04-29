@@ -135,6 +135,7 @@ test("buildWordMemoryPatch writes canonical scheduler fields", () => {
   const now = new Date("2026-04-29T00:00:00.000Z");
   const patch = buildWordMemoryPatch(createDefaultMemoryCard(), "good", now);
 
+  assert.equal(patch.scheduler_type, "sm2");
   assert.equal(patch.state, "learning");
   assert.equal(patch.learning_step_index, 1);
   assert.equal(patch.due_at, "2026-04-29T00:10:00.000Z");

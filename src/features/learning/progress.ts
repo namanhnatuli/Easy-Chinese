@@ -1,6 +1,4 @@
-import type { ProgressStatus, ReviewResult } from "@/types/domain";
-
-const intervalProgression = [1, 3, 7, 14, 30] as const;
+import type { MemoryCardState, ProgressStatus, ReviewResult } from "@/types/domain";
 
 export interface ExistingWordProgressSnapshot {
   status: ProgressStatus;
@@ -11,70 +9,36 @@ export interface ExistingWordProgressSnapshot {
   easeFactor: number;
 }
 
-function clampIntervalDay(value: number | null | undefined) {
-  return intervalProgression.includes((value ?? 1) as (typeof intervalProgression)[number])
-    ? (value ?? 1)
-    : 1;
-}
-
-export function getNextIntervalDays(
-  result: ReviewResult,
-  currentIntervalDays: number | null | undefined,
-) {
-  const intervalDays = clampIntervalDay(currentIntervalDays);
-
-  if (result === "incorrect") {
-    return 1;
-  }
-
-  if (result === "skipped") {
-    return intervalDays;
-  }
-
-  const currentIndex = intervalProgression.indexOf(intervalDays as (typeof intervalProgression)[number]);
-  const safeIndex = currentIndex === -1 ? 0 : currentIndex;
-  return intervalProgression[Math.min(safeIndex + 1, intervalProgression.length - 1)];
-}
-
-export function calculateNextReviewAt(
-  now: Date,
-  intervalDays: number,
-) {
-  return new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000).toISOString();
-}
-
 export function deriveProgressStatus(
-  result: ReviewResult,
-  previousStatus: ProgressStatus | null,
-  nextIntervalDays: number,
-  nextStreakCount: number,
+  memoryState: MemoryCardState,
+  intervalDays: number,
 ): ProgressStatus {
-  if (result === "incorrect") {
+  if (memoryState === "new") {
+    return "new";
+  }
+
+  if (memoryState === "learning" || memoryState === "relearning") {
     return "learning";
   }
 
-  if (result === "skipped") {
-    return previousStatus ?? "new";
-  }
-
-  if (nextIntervalDays >= 30 && nextStreakCount >= 4) {
+  if (intervalDays >= 30) {
     return "mastered";
   }
 
-  if (nextIntervalDays >= 7 || nextStreakCount >= 2) {
-    return "review";
-  }
-
-  return "learning";
+  return "review";
 }
 
 export function buildWordProgressPatch(
   existing: ExistingWordProgressSnapshot | null,
   result: ReviewResult,
   now: Date,
+  nextMemory?: {
+    state: MemoryCardState;
+    intervalDays: number;
+  } | null,
 ) {
-  const currentIntervalDays = existing?.intervalDays ?? 1;
-  const nextIntervalDays = getNextIntervalDays(result, currentIntervalDays);
+  // user_word_progress now mirrors learner-facing counts/status only.
+  // Scheduling lives exclusively in user_word_memory.
   const nextCorrectCount =
     (existing?.correctCount ?? 0) + (result === "correct" ? 1 : 0);
   const nextIncorrectCount =
@@ -87,18 +51,17 @@ export function buildWordProgressPatch(
         : existing?.streakCount ?? 0;
 
   return {
-    status: deriveProgressStatus(
-      result,
-      existing?.status ?? null,
-      nextIntervalDays,
-      nextStreakCount,
-    ),
+    status: nextMemory
+      ? deriveProgressStatus(nextMemory.state, nextMemory.intervalDays)
+      : result === "incorrect"
+        ? "learning"
+        : existing?.status ?? "new",
     correct_count: nextCorrectCount,
     incorrect_count: nextIncorrectCount,
     streak_count: nextStreakCount,
-    interval_days: nextIntervalDays,
+    interval_days: existing?.intervalDays ?? 1,
     ease_factor: existing?.easeFactor ?? 2.5,
     last_reviewed_at: now.toISOString(),
-    next_review_at: calculateNextReviewAt(now, nextIntervalDays),
+    next_review_at: null,
   };
 }

@@ -5,6 +5,7 @@ import type {
   PracticeProgressStatus,
   ReadingPracticeType,
   SchedulerGrade,
+  SchedulerType,
 } from "@/types/domain";
 
 export interface ReadingProgressSnapshot {
@@ -32,6 +33,7 @@ export interface ReadingPracticeWordItem {
   hskLevel: number;
   progress: ReadingProgressSnapshot | null;
   memory: {
+    schedulerType: SchedulerType;
     state: MemoryCardState;
     easeFactor: number;
     intervalDays: number;
@@ -39,6 +41,11 @@ export interface ReadingPracticeWordItem {
     reps: number;
     lapses: number;
     learningStepIndex: number;
+    fsrsStability: number | null;
+    fsrsDifficulty: number | null;
+    fsrsRetrievability: number | null;
+    scheduledDays: number;
+    elapsedDays: number;
     lastReviewedAt: string | null;
     lastGrade: SchedulerGrade | null;
   } | null;

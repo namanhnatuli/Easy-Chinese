@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
       theme: payload.theme,
       font: payload.font,
       language: payload.language,
+      schedulerType: payload.schedulerType,
+      desiredRetention: payload.desiredRetention,
+      maximumIntervalDays: payload.maximumIntervalDays,
     });
 
     const response = NextResponse.json({ ok: true });

@@ -10,6 +10,7 @@ import { PronunciationFeedback } from "@/components/practice/pronunciation-feedb
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import { useI18n } from "@/i18n/client";
 import type { ReadingPracticeItem } from "@/features/practice/types";
 import type { SchedulerGrade } from "@/types/domain";
@@ -44,12 +45,14 @@ export function ReadingPracticeSession({
   description,
   isAuthenticated,
   signInHref,
+  schedulerSettings,
 }: {
   items: ReadingPracticeItem[];
   title: string;
   description: string;
   isAuthenticated: boolean;
   signInHref: string;
+  schedulerSettings?: Partial<LearningSchedulerSettings> | null;
 }) {
   const { t, link } = useI18n();
   const [index, setIndex] = useState(0);
@@ -72,7 +75,7 @@ export function ReadingPracticeSession({
     return Math.round((Math.min(index + 1, items.length) / items.length) * 100);
   }, [index, items.length]);
   const dueHints = currentItem
-    ? predictDueHintsForGrades(getItemMemory(currentItem), new Date())
+    ? predictDueHintsForGrades(getItemMemory(currentItem), new Date(), schedulerSettings)
     : null;
 
   function playAudio() {

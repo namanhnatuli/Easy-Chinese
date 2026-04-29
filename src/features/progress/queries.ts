@@ -189,19 +189,14 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const now = new Date();
 
   const [
-    { data: progressRows, error: progressError },
     { data: memoryRows, error: memoryError },
     { data: lessonRows, error: lessonError },
     { data: articleRows, error: articleError },
     { data: dailyActivityRows, error: dailyActivityError },
   ] = await Promise.all([
     supabase
-      .from("user_word_progress")
-      .select("word_id, status")
-      .eq("user_id", userId),
-    supabase
       .from("user_word_memory")
-      .select("word_id, due_at")
+      .select("word_id, state, interval_days, due_at")
       .eq("user_id", userId),
     supabase
       .from("user_lesson_progress")
@@ -218,10 +213,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
       .order("reviewed_at", { ascending: false })
       .limit(120),
   ]);
-
-  if (progressError) {
-    throw progressError;
-  }
 
   if (lessonError) {
     throw lessonError;
@@ -264,7 +255,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const continueLesson = recentLessonProgress.find(
     (lesson) => lesson.completionPercent > 0 && lesson.completionPercent < 100,
   );
-  const memoryMap = new Map((memoryRows ?? []).map((row) => [row.word_id, row.due_at]));
 
   const suggestedNextAction =
     dailyGoalProgress.wordsToReviewToday > 0
@@ -286,9 +276,16 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
           };
 
   const summary = buildProgressSummary(
-    (progressRows ?? []).map((row) => ({
-      status: row.status,
-      next_review_at: memoryMap.get(row.word_id) ?? null,
+    (memoryRows ?? []).map((row) => ({
+      status:
+        row.state === "review"
+          ? row.interval_days >= 30
+            ? "mastered"
+            : "review"
+          : row.state === "new"
+            ? "new"
+            : "learning",
+      next_review_at: row.due_at ?? null,
     })),
     now,
   );

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import type { LessonStudyWord, StudyOutcomeSubmission } from "@/features/learning/types";
 import { useStudySession } from "@/features/learning/use-study-session";
 import type { ReviewMode } from "@/types/domain";
@@ -24,6 +25,7 @@ export function LessonStudyExperience({
   words,
   isAuthenticated,
   signInHref,
+  schedulerSettings,
 }: {
   lesson: {
     id: string;
@@ -33,10 +35,11 @@ export function LessonStudyExperience({
   words: LessonStudyWord[];
   isAuthenticated: boolean;
   signInHref: string;
+  schedulerSettings?: Partial<LearningSchedulerSettings> | null;
 }) {
   const { t, link } = useI18n();
   const [showAnonymousNotice, setShowAnonymousNotice] = useState(false);
-  const newCardDueHints = predictDueHintsForGrades(null, new Date());
+  const newCardDueHints = predictDueHintsForGrades(null, new Date(), schedulerSettings);
   const session = useStudySession({
     items: words,
     onPersistOutcome: async ({ currentItem, result, grade, mode, nextCompletionPercent }) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Globe2, MoonStar, Palette, Save, Type } from "lucide-react";
+import { Globe2, MoonStar, Palette, Save, SlidersHorizontal, Type } from "lucide-react";
 import { toast } from "sonner";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  getSchedulerLabel,
   getFontLabel,
   getInitialUserSettings,
   getLanguageLabel,
@@ -30,19 +31,24 @@ import type { Profile } from "@/types/domain";
 
 export function SettingsForm({
   profile,
+  learningSettings,
 }: {
   profile: Profile;
+  learningSettings?: Partial<Pick<UserSettingsInput, "schedulerType" | "desiredRetention" | "maximumIntervalDays">> | null;
 }) {
   const { t, link } = useI18n();
   const [isSaving, startSaving] = useTransition();
-  const [values, setValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile));
-  const [savedValues, setSavedValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile));
+  const [values, setValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile, learningSettings));
+  const [savedValues, setSavedValues] = useState<UserSettingsInput>(() => getInitialUserSettings(profile, learningSettings));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const hasChanges =
     values.language !== savedValues.language ||
     values.theme !== savedValues.theme ||
-    values.font !== savedValues.font;
+    values.font !== savedValues.font ||
+    values.schedulerType !== savedValues.schedulerType ||
+    values.desiredRetention !== savedValues.desiredRetention ||
+    values.maximumIntervalDays !== savedValues.maximumIntervalDays;
 
   function updateField<Key extends keyof UserSettingsInput>(
     key: Key,
@@ -198,6 +204,76 @@ export function SettingsForm({
               </p>
             </CardContent>
           </Card>
+
+          <Card className="border-border/80 bg-card/95">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4" />
+                {t("settings.schedulerTitle")}
+              </CardTitle>
+              <CardDescription>{t("settings.schedulerDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-3">
+                <Label htmlFor="scheduler-type">{t("settings.schedulerLabel")}</Label>
+                <Select
+                  value={values.schedulerType}
+                  onValueChange={(value) => updateField("schedulerType", value as UserSettingsInput["schedulerType"])}
+                >
+                  <SelectTrigger id="scheduler-type" aria-describedby="scheduler-help">
+                    <SelectValue placeholder={t("settings.schedulerLabel")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sm2">{t("settings.schedulerSm2")}</SelectItem>
+                    <SelectItem value="fsrs">{t("settings.schedulerFsrs")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p id="scheduler-help" className="text-sm text-muted-foreground">
+                  {t("settings.schedulerHelp")}
+                </p>
+                <p className="text-sm text-muted-foreground">{t("settings.hardMeaningHelp")}</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="desired-retention">{t("settings.desiredRetention")}</Label>
+                  <span className="text-sm font-medium text-foreground">{values.desiredRetention.toFixed(2)}</span>
+                </div>
+                <input
+                  id="desired-retention"
+                  type="range"
+                  min="0.70"
+                  max="0.99"
+                  step="0.01"
+                  value={values.desiredRetention}
+                  onChange={(event) => updateField("desiredRetention", Number(event.target.value))}
+                  className="w-full accent-primary"
+                />
+                <p className="text-sm text-muted-foreground">{t("settings.retentionHelp")}</p>
+                {values.desiredRetention > 0.95 ? (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">{t("settings.retentionWarning")}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="maximum-interval">{t("settings.maximumInterval")}</Label>
+                  <span className="text-sm font-medium text-foreground">{values.maximumIntervalDays}</span>
+                </div>
+                <input
+                  id="maximum-interval"
+                  type="range"
+                  min="30"
+                  max="36500"
+                  step="1"
+                  value={values.maximumIntervalDays}
+                  onChange={(event) => updateField("maximumIntervalDays", Number(event.target.value))}
+                  className="w-full accent-primary"
+                />
+                <p className="text-sm text-muted-foreground">{t("settings.maximumIntervalHelp")}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-4">
@@ -214,6 +290,8 @@ export function SettingsForm({
                 <Badge variant="secondary">{getLanguageLabel(values.language)}</Badge>
                 <Badge variant="secondary">{getThemeLabel(values.theme)}</Badge>
                 <Badge variant="secondary">{getFontLabel(values.font)}</Badge>
+                <Badge variant="secondary">{getSchedulerLabel(values.schedulerType)}</Badge>
+                <Badge variant="secondary">{t("settings.retentionBadge", { value: values.desiredRetention.toFixed(2) })}</Badge>
               </div>
 
               <div className="rounded-[1.5rem] border border-border/80 bg-muted/30 p-4">
@@ -245,6 +323,10 @@ export function SettingsForm({
               <p>
                 {t("settings.email", { value: profile.email ?? t("settings.unavailable") })}{" "}
                 <span className="font-medium text-foreground">{profile.email ?? t("settings.unavailable")}</span>
+              </p>
+              <p>
+                {t("settings.schedulerCurrent", { value: getSchedulerLabel(values.schedulerType) })}{" "}
+                <span className="font-medium text-foreground">{getSchedulerLabel(values.schedulerType)}</span>
               </p>
             </CardContent>
           </Card>

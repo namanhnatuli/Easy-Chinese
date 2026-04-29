@@ -1,4 +1,4 @@
-import type { MemoryCardState, ProgressStatus, ReviewMode, ReviewResult, SchedulerGrade } from "@/types/domain";
+import type { MemoryCardState, ProgressStatus, ReviewMode, ReviewResult, SchedulerGrade, SchedulerType } from "@/types/domain";
 import type { GamificationDashboardSummary } from "@/features/gamification/queries";
 import type { PracticeDashboardSummary, RecentPracticeActivityItem } from "@/features/practice/types";
 
@@ -14,6 +14,7 @@ export interface DueReviewItem {
   sortOrder: number;
   status: ProgressStatus;
   memoryState: MemoryCardState;
+  schedulerType: SchedulerType;
   dueAt: string | null;
   lastReviewedAt: string | null;
   intervalDays: number;
@@ -25,6 +26,11 @@ export interface DueReviewItem {
   lapses: number;
   easeFactor: number;
   learningStepIndex: number;
+  fsrsStability: number | null;
+  fsrsDifficulty: number | null;
+  fsrsRetrievability: number | null;
+  scheduledDays: number;
+  elapsedDays: number;
   lastGrade: SchedulerGrade | null;
 }
 

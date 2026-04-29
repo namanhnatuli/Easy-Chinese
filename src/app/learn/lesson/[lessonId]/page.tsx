@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LessonStudyExperience } from "@/components/learning/lesson-study-experience";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
+import { getUserLearningSchedulerSettings } from "@/features/memory/queries";
 import { getPublicLessonById } from "@/features/public/lessons";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,6 +18,7 @@ export default async function LearnLessonPage({
     getPublicLessonById(lessonId),
     getCurrentUser(),
   ]);
+  const schedulerSettings = user ? await getUserLearningSchedulerSettings(user.id) : null;
   const { t, link } = await getServerI18n();
 
   if (!lesson) {
@@ -51,6 +53,7 @@ export default async function LearnLessonPage({
           words={lesson.words}
           isAuthenticated={Boolean(user)}
           signInHref={signInHref}
+          schedulerSettings={schedulerSettings}
         />
       )}
     </div>

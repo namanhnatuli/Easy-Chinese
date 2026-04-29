@@ -28,9 +28,11 @@ function createQueryBuilder({
 function createSupabaseStub({
   existingProgress,
   lessonMembership,
+  existingMemory = null,
 }: {
   existingProgress: unknown;
   lessonMembership?: unknown;
+  existingMemory?: unknown;
 }) {
   const operations = {
     reviewEvents: [] as Array<Record<string, unknown>>,
@@ -126,7 +128,7 @@ function createSupabaseStub({
           eq() {
             return this;
           },
-          maybeSingle: async () => ({ data: null, error: null }),
+          maybeSingle: async () => ({ data: existingMemory, error: null }),
           upsert: async (payload: Record<string, unknown>) => {
             operations.wordMemory.push(payload);
             return { error: null };
@@ -291,8 +293,9 @@ test("persistStudyOutcome writes review event, word progress, and lesson progres
   assert.equal(operations.xp.length >= 1, true);
   assert.equal(operations.levels.length >= 1, true);
   assert.equal(operations.reviewEvents[0].user_id, "user-1");
-  assert.equal(operations.wordProgress[0].status, "review");
-  assert.equal(operations.wordProgress[0].interval_days, 14);
+  assert.equal(operations.wordProgress[0].status, "learning");
+  assert.equal(operations.wordProgress[0].interval_days, 7);
+  assert.equal(operations.wordProgress[0].next_review_at, null);
   assert.equal(operations.wordMemory[0].word_id, "word-1");
   assert.equal(operations.lessonProgress[0].completion_percent, 100);
   assert.ok(typeof operations.lessonProgress[0].completed_at === "string");
@@ -324,4 +327,36 @@ test("persistStudyOutcome rejects lesson submissions when the word is not in tha
   assert.equal(operations.lessonProgress.length, 0);
   assert.equal(operations.wordMemory.length, 0);
   assert.equal(operations.learningStats.length, 0);
+});
+
+test("persistStudyOutcome accepts queue reviews based on due memory rows", async () => {
+  const { supabase, operations } = createSupabaseStub({
+    existingProgress: null,
+    existingMemory: {
+      due_at: "2026-04-18T00:00:00.000Z",
+      state: "review",
+      ease_factor: 2.5,
+      interval_days: 7,
+      reps: 3,
+      lapses: 0,
+      learning_step_index: 0,
+      last_reviewed_at: "2026-04-17T00:00:00.000Z",
+      last_grade: "good",
+    },
+  });
+
+  await persistStudyOutcome({
+    supabase: supabase as never,
+    userId: "user-1",
+    input: {
+      wordId: "word-1",
+      mode: "flashcard",
+      result: "correct",
+      completionPercent: 100,
+    },
+  });
+
+  assert.equal(operations.wordMemory.length, 1);
+  assert.equal(operations.wordProgress.length, 1);
+  assert.equal(operations.reviewEvents.length, 1);
 });

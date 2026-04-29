@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import type { DueReviewItem } from "@/features/progress/types";
 import type { StudyOutcomeSubmission } from "@/features/learning/types";
 import type { ReviewMode } from "@/types/domain";
@@ -32,13 +33,16 @@ function formatDateTime(value: string | null, locale: string, fallback: string) 
 
 export function ReviewStudyExperience({
   items,
+  schedulerSettings,
 }: {
   items: DueReviewItem[];
+  schedulerSettings?: Partial<LearningSchedulerSettings> | null;
 }) {
   const { t, link, locale } = useI18n();
   const reviewDueHints = items.length
     ? predictDueHintsForGrades(
         {
+          schedulerType: items[0]?.schedulerType ?? "sm2",
           state: items[0]?.memoryState ?? "new",
           easeFactor: items[0]?.easeFactor ?? 2.5,
           intervalDays: items[0]?.intervalDays ?? 0,
@@ -46,10 +50,16 @@ export function ReviewStudyExperience({
           reps: items[0]?.reps ?? 0,
           lapses: items[0]?.lapses ?? 0,
           learningStepIndex: items[0]?.learningStepIndex ?? 0,
+          fsrsStability: items[0]?.fsrsStability ?? null,
+          fsrsDifficulty: items[0]?.fsrsDifficulty ?? null,
+          fsrsRetrievability: items[0]?.fsrsRetrievability ?? null,
+          scheduledDays: items[0]?.scheduledDays ?? 0,
+          elapsedDays: items[0]?.elapsedDays ?? 0,
           lastReviewedAt: items[0]?.lastReviewedAt ?? null,
           lastGrade: items[0]?.lastGrade ?? null,
         },
         new Date(),
+        schedulerSettings,
       )
     : undefined;
   const session = useStudySession({
@@ -202,6 +212,7 @@ export function ReviewStudyExperience({
                     session.currentItem
                       ? predictDueHintsForGrades(
                           {
+                            schedulerType: session.currentItem.schedulerType,
                             state: session.currentItem.memoryState,
                             easeFactor: session.currentItem.easeFactor,
                             intervalDays: session.currentItem.intervalDays,
@@ -209,10 +220,16 @@ export function ReviewStudyExperience({
                             reps: session.currentItem.reps,
                             lapses: session.currentItem.lapses,
                             learningStepIndex: session.currentItem.learningStepIndex,
+                            fsrsStability: session.currentItem.fsrsStability,
+                            fsrsDifficulty: session.currentItem.fsrsDifficulty,
+                            fsrsRetrievability: session.currentItem.fsrsRetrievability,
+                            scheduledDays: session.currentItem.scheduledDays,
+                            elapsedDays: session.currentItem.elapsedDays,
                             lastReviewedAt: session.currentItem.lastReviewedAt,
                             lastGrade: session.currentItem.lastGrade,
                           },
                           new Date(),
+                          schedulerSettings,
                         )
                       : reviewDueHints
                   }

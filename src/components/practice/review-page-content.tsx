@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import type { DueReviewItem, SuggestedLessonItem } from "@/features/progress/types";
 import { getServerI18n } from "@/i18n/server";
 
@@ -13,10 +14,12 @@ export async function ReviewPageContent({
   dueItems,
   suggestedLessons,
   continueLesson,
+  schedulerSettings,
 }: {
   dueItems: DueReviewItem[];
   suggestedLessons: SuggestedLessonItem[];
   continueLesson: SuggestedLessonItem | null;
+  schedulerSettings?: Partial<LearningSchedulerSettings> | null;
 }) {
   const { t, link } = await getServerI18n();
 
@@ -92,7 +95,7 @@ export async function ReviewPageContent({
           </Card>
         </div>
       ) : (
-        <ReviewStudyExperience items={dueItems} />
+        <ReviewStudyExperience items={dueItems} schedulerSettings={schedulerSettings} />
       )}
     </div>
   );

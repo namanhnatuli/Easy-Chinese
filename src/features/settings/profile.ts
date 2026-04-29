@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { userSettingsSchema } from "@/features/settings/schema";
+import { normalizeLearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import { getProfileForUserId } from "@/features/auth/profile";
 import { normalizeFontPreference, normalizeLanguage, normalizeThemePreference } from "@/features/settings/preferences";
 import type { UserSettingsInput } from "@/features/settings/types";
@@ -35,5 +36,25 @@ export async function updateUserSettings({
 
   if (error) {
     throw error;
+  }
+
+  const schedulerSettings = normalizeLearningSchedulerSettings({
+    schedulerType: parsed.schedulerType,
+    desiredRetention: parsed.desiredRetention,
+    maximumIntervalDays: parsed.maximumIntervalDays,
+  });
+
+  const { error: learningStatsError } = await supabase.from("user_learning_stats").upsert(
+    {
+      user_id: userId,
+      scheduler_type: schedulerSettings.schedulerType,
+      desired_retention: schedulerSettings.desiredRetention,
+      maximum_interval_days: schedulerSettings.maximumIntervalDays,
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (learningStatsError) {
+    throw learningStatsError;
   }
 }

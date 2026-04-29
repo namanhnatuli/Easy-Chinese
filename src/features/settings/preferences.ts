@@ -2,6 +2,7 @@ import type { Profile, PreferredFont, PreferredTheme } from "@/types/domain";
 
 import type { SupportedLanguage, UserSettingsInput } from "@/features/settings/types";
 import { localeLabels } from "@/i18n/config";
+import { DEFAULT_LEARNING_SCHEDULER_SETTINGS, clampDesiredRetention, clampMaximumIntervalDays } from "@/features/memory/spaced-repetition";
 
 export function normalizeLanguage(value: string | null | undefined): SupportedLanguage {
   return value === "vi" || value === "zh" ? value : "en";
@@ -21,11 +22,19 @@ export function normalizeFontPreference(
   return "sans";
 }
 
-export function getInitialUserSettings(profile: Profile): UserSettingsInput {
+export function getInitialUserSettings(
+  profile: Profile,
+  learningSettings?: Partial<Pick<UserSettingsInput, "schedulerType" | "desiredRetention" | "maximumIntervalDays">> | null,
+): UserSettingsInput {
   return {
     language: normalizeLanguage(profile.preferredLanguage),
     theme: normalizeThemePreference(profile.preferredTheme),
     font: normalizeFontPreference(profile.preferredFont),
+    schedulerType: learningSettings?.schedulerType === "fsrs" ? "fsrs" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
+    desiredRetention: clampDesiredRetention(learningSettings?.desiredRetention ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.desiredRetention),
+    maximumIntervalDays: clampMaximumIntervalDays(
+      learningSettings?.maximumIntervalDays ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.maximumIntervalDays,
+    ),
   };
 }
 
@@ -43,4 +52,8 @@ export function getFontLabel(font: PreferredFont) {
   if (font === "serif") return "Readable Serif";
   if (font === "kai") return "Kaiti Brush";
   return "Modern Sans";
+}
+
+export function getSchedulerLabel(schedulerType: UserSettingsInput["schedulerType"]) {
+  return schedulerType === "fsrs" ? "FSRS" : "SM-2 / Anki-like";
 }

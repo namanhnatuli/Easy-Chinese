@@ -239,7 +239,7 @@ async function getLessonComposition(lessonId: string) {
           })),
         } satisfies PublicLessonWord;
       })
-      .filter((item): item is PublicLessonWord => item !== null),
+      .filter((item): item is NonNullable<typeof item> => item !== null),
     grammarPoints: (lessonGrammar ?? [])
       .map((item) => {
         const point = normalizeRelation(item.grammar_points);
@@ -256,7 +256,7 @@ async function getLessonComposition(lessonId: string) {
           sortOrder: item.sort_order,
         } satisfies PublicLessonGrammarPoint;
       })
-      .filter((item): item is PublicLessonGrammarPoint => item !== null),
+      .filter((item): item is NonNullable<typeof item> => item !== null),
   };
 }
 

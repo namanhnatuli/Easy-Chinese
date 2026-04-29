@@ -6,7 +6,12 @@ import type {
   RecommendedArticleItem,
   SuggestedLessonItem,
 } from "@/features/progress/types";
-import { getDefaultDailyGoal, getVisibleStreakCount } from "@/features/memory/spaced-repetition";
+import {
+  getDefaultDailyGoal,
+  getVisibleStreakCount,
+  normalizeLearningSchedulerSettings,
+} from "@/features/memory/spaced-repetition";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 
 function normalizeRelation<T>(value: T | T[] | null): T | null {
   if (Array.isArray(value)) {
@@ -30,35 +35,6 @@ async function listDueMemoryWordIds(userId: string, nowIso: string) {
   }
 
   return new Set((data ?? []).map((row) => row.word_id));
-}
-
-async function listWordProgressMap(userId: string, wordIds: string[]) {
-  if (wordIds.length === 0) {
-    return new Map<string, { status: DueReviewItem["status"]; correctCount: number; incorrectCount: number; streakCount: number }>();
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("user_word_progress")
-    .select("word_id, status, correct_count, incorrect_count, streak_count")
-    .eq("user_id", userId)
-    .in("word_id", wordIds);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Map(
-    (data ?? []).map((row) => [
-      row.word_id,
-      {
-        status: row.status,
-        correctCount: row.correct_count,
-        incorrectCount: row.incorrect_count,
-        streakCount: row.streak_count,
-      },
-    ]),
-  );
 }
 
 async function listPublishedWordsByIds(wordIds: string[]) {
@@ -147,7 +123,7 @@ export async function listPersonalizedReviewQueue(
   const { data: memoryRows, error: memoryError } = await supabase
     .from("user_word_memory")
     .select(
-      "word_id, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, last_reviewed_at, last_grade",
+      "word_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
     )
     .eq("user_id", userId)
     .lte("due_at", now.toISOString())
@@ -168,13 +144,11 @@ export async function listPersonalizedReviewQueue(
     }
   }
 
-  const wordProgressMap = await listWordProgressMap(userId, queueWords.map((word) => word.id));
   const memoryMap = new Map((memoryRows ?? []).map((row) => [row.word_id, row]));
 
   return queueWords
     .map((word) => {
       const memory = memoryMap.get(word.id);
-      const progress = wordProgressMap.get(word.id);
       const intervalDays = memory?.interval_days ?? 0;
       const queueSource: DueReviewItem["queueSource"] = memory ? "due" : "new";
 
@@ -189,26 +163,34 @@ export async function listPersonalizedReviewQueue(
         vietnameseMeaning: word.vietnamese_meaning,
         sortOrder: 0,
         status:
-          progress?.status ??
-          (memory?.state === "review"
+          memory?.state === "review"
             ? intervalDays >= 30
               ? "mastered"
               : "review"
             : memory?.state === "new"
               ? "new"
-              : "learning"),
+              : "learning",
         memoryState: memory?.state ?? "new",
+        schedulerType: memory?.scheduler_type === "fsrs" ? "fsrs" : "sm2",
         dueAt: memory?.due_at ?? null,
         lastReviewedAt: memory?.last_reviewed_at ?? null,
         intervalDays,
-        streakCount: progress?.streakCount ?? Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
-        correctCount: progress?.correctCount ?? Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
-        incorrectCount: progress?.incorrectCount ?? (memory?.lapses ?? 0),
+        streakCount: Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
+        correctCount: Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
+        incorrectCount: memory?.lapses ?? 0,
         queueSource,
         reps: memory?.reps ?? 0,
         lapses: memory?.lapses ?? 0,
         easeFactor: Number(memory?.ease_factor ?? 2.5),
         learningStepIndex: memory?.learning_step_index ?? 0,
+        fsrsStability: memory?.fsrs_stability === null || memory?.fsrs_stability === undefined ? null : Number(memory.fsrs_stability),
+        fsrsDifficulty: memory?.fsrs_difficulty === null || memory?.fsrs_difficulty === undefined ? null : Number(memory.fsrs_difficulty),
+        fsrsRetrievability:
+          memory?.fsrs_retrievability === null || memory?.fsrs_retrievability === undefined
+            ? null
+            : Number(memory.fsrs_retrievability),
+        scheduledDays: memory?.scheduled_days ?? 0,
+        elapsedDays: memory?.elapsed_days ?? 0,
         lastGrade: memory?.last_grade ?? null,
       } satisfies DueReviewItem;
     })
@@ -223,6 +205,25 @@ export async function listPersonalizedReviewQueue(
     })
     .slice(0, limit)
     .map((item, index) => ({ ...item, sortOrder: index + 1 }));
+}
+
+export async function getUserLearningSchedulerSettings(userId: string): Promise<LearningSchedulerSettings> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("user_learning_stats")
+    .select("scheduler_type, desired_retention, maximum_interval_days")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeLearningSchedulerSettings({
+    schedulerType: data?.scheduler_type,
+    desiredRetention: data?.desired_retention === undefined || data?.desired_retention === null ? undefined : Number(data.desired_retention),
+    maximumIntervalDays: data?.maximum_interval_days ?? undefined,
+  });
 }
 
 export async function getDailyGoalProgress(userId: string): Promise<DailyGoalProgress> {
@@ -242,7 +243,7 @@ export async function getDailyGoalProgress(userId: string): Promise<DailyGoalPro
     listDueMemoryWordIds(userId, nowIso),
     supabase
       .from("user_learning_stats")
-      .select("streak_count, last_active_date, daily_goal")
+      .select("streak_count, last_active_date, daily_goal, scheduler_type, desired_retention, maximum_interval_days")
       .eq("user_id", userId)
       .maybeSingle(),
     supabase
@@ -264,6 +265,11 @@ export async function getDailyGoalProgress(userId: string): Promise<DailyGoalPro
 
   const completedToday = reviewCount ?? 0;
   const dailyGoal = statsRow?.daily_goal ?? getDefaultDailyGoal();
+  const schedulerSettings = normalizeLearningSchedulerSettings({
+    schedulerType: statsRow?.scheduler_type,
+    desiredRetention: statsRow?.desired_retention === undefined || statsRow?.desired_retention === null ? undefined : Number(statsRow.desired_retention),
+    maximumIntervalDays: statsRow?.maximum_interval_days ?? undefined,
+  });
 
   return {
     dailyGoal,
@@ -275,6 +281,9 @@ export async function getDailyGoalProgress(userId: string): Promise<DailyGoalPro
             streakCount: statsRow.streak_count,
             lastActiveDate: statsRow.last_active_date,
             dailyGoal: statsRow.daily_goal,
+            schedulerType: schedulerSettings.schedulerType,
+            desiredRetention: schedulerSettings.desiredRetention,
+            maximumIntervalDays: schedulerSettings.maximumIntervalDays,
           }
         : null,
       now,

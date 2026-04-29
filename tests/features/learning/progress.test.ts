@@ -3,19 +3,18 @@ import test from "node:test";
 
 import {
   buildWordProgressPatch,
-  calculateNextReviewAt,
   deriveProgressStatus,
-  getNextIntervalDays,
 } from "@/features/learning/progress";
 
-test("interval progression follows the simple spaced repetition ladder", () => {
-  assert.equal(getNextIntervalDays("correct", 1), 3);
-  assert.equal(getNextIntervalDays("correct", 14), 30);
-  assert.equal(getNextIntervalDays("incorrect", 14), 1);
-  assert.equal(getNextIntervalDays("skipped", 7), 7);
+test("progress status is derived from the canonical memory state", () => {
+  assert.equal(deriveProgressStatus("new", 0), "new");
+  assert.equal(deriveProgressStatus("learning", 0), "learning");
+  assert.equal(deriveProgressStatus("relearning", 1), "learning");
+  assert.equal(deriveProgressStatus("review", 7), "review");
+  assert.equal(deriveProgressStatus("review", 30), "mastered");
 });
 
-test("progress patch resets incorrect streaks and advances mastered words", () => {
+test("progress patch updates counts but does not maintain an independent schedule", () => {
   const now = new Date("2026-04-18T00:00:00.000Z");
 
   const incorrectPatch = buildWordProgressPatch(
@@ -29,11 +28,13 @@ test("progress patch resets incorrect streaks and advances mastered words", () =
     },
     "incorrect",
     now,
+    { state: "relearning", intervalDays: 1 },
   );
 
   assert.equal(incorrectPatch.streak_count, 0);
-  assert.equal(incorrectPatch.interval_days, 1);
+  assert.equal(incorrectPatch.interval_days, 7);
   assert.equal(incorrectPatch.status, "learning");
+  assert.equal(incorrectPatch.next_review_at, null);
 
   const correctPatch = buildWordProgressPatch(
     {
@@ -46,13 +47,10 @@ test("progress patch resets incorrect streaks and advances mastered words", () =
     },
     "correct",
     now,
+    { state: "review", intervalDays: 30 },
   );
 
-  assert.equal(correctPatch.interval_days, 30);
+  assert.equal(correctPatch.interval_days, 14);
   assert.equal(correctPatch.status, "mastered");
-  assert.equal(
-    calculateNextReviewAt(now, 30),
-    new Date("2026-05-18T00:00:00.000Z").toISOString(),
-  );
-  assert.equal(deriveProgressStatus("skipped", "review", 7, 3), "review");
+  assert.equal(correctPatch.next_review_at, null);
 });

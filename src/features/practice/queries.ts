@@ -9,29 +9,34 @@ import type {
 } from "@/features/practice/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-async function listWordMemoryByWordIds(userId: string, wordIds: string[]) {
+type WordMemoryRow = {
+  scheduler_type: "sm2" | "fsrs";
+  state: "new" | "learning" | "review" | "relearning";
+  ease_factor: number;
+  interval_days: number;
+  due_at: string | null;
+  reps: number;
+  lapses: number;
+  learning_step_index: number;
+  fsrs_stability: number | null;
+  fsrs_difficulty: number | null;
+  fsrs_retrievability: number | null;
+  scheduled_days: number;
+  elapsed_days: number;
+  last_reviewed_at: string | null;
+  last_grade: "again" | "hard" | "good" | "easy" | null;
+};
+
+async function listWordMemoryByWordIds(userId: string, wordIds: string[]): Promise<Map<string, WordMemoryRow>> {
   if (wordIds.length === 0) {
-    return new Map<
-      string,
-      {
-        state: "new" | "learning" | "review" | "relearning";
-        ease_factor: number;
-        interval_days: number;
-        due_at: string | null;
-        reps: number;
-        lapses: number;
-        learning_step_index: number;
-        last_reviewed_at: string | null;
-        last_grade: "again" | "hard" | "good" | "easy" | null;
-      }
-    >();
+    return new Map<string, WordMemoryRow>();
   }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("user_word_memory")
     .select(
-      "word_id, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, last_reviewed_at, last_grade",
+      "word_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
     )
     .eq("user_id", userId)
     .in("word_id", wordIds);
@@ -194,6 +199,7 @@ export async function listReadingWordPracticeItems({
         : null,
       memory: memory
         ? {
+            schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
             state: memory.state,
             easeFactor: Number(memory.ease_factor),
             intervalDays: memory.interval_days,
@@ -201,6 +207,11 @@ export async function listReadingWordPracticeItems({
             reps: memory.reps,
             lapses: memory.lapses,
             learningStepIndex: memory.learning_step_index,
+            fsrsStability: memory.fsrs_stability === null ? null : Number(memory.fsrs_stability),
+            fsrsDifficulty: memory.fsrs_difficulty === null ? null : Number(memory.fsrs_difficulty),
+            fsrsRetrievability: memory.fsrs_retrievability === null ? null : Number(memory.fsrs_retrievability),
+            scheduledDays: memory.scheduled_days,
+            elapsedDays: memory.elapsed_days,
             lastReviewedAt: memory.last_reviewed_at,
             lastGrade: memory.last_grade,
           }
@@ -280,6 +291,7 @@ export async function listReadingSentencePracticeItems({
         : null,
       memory: memory
         ? {
+            schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
             state: memory.state,
             easeFactor: Number(memory.ease_factor),
             intervalDays: memory.interval_days,
@@ -287,6 +299,11 @@ export async function listReadingSentencePracticeItems({
             reps: memory.reps,
             lapses: memory.lapses,
             learningStepIndex: memory.learning_step_index,
+            fsrsStability: memory.fsrs_stability === null ? null : Number(memory.fsrs_stability),
+            fsrsDifficulty: memory.fsrs_difficulty === null ? null : Number(memory.fsrs_difficulty),
+            fsrsRetrievability: memory.fsrs_retrievability === null ? null : Number(memory.fsrs_retrievability),
+            scheduledDays: memory.scheduled_days,
+            elapsedDays: memory.elapsed_days,
             lastReviewedAt: memory.last_reviewed_at,
             lastGrade: memory.last_grade,
           }
@@ -424,19 +441,7 @@ export async function getWritingPracticeWordDetail({
   }
 
   const progressByCharacter = new Map<string, { status: "new" | "practicing" | "completed" | "difficult"; attempt_count: number; last_practiced_at: string | null }>();
-  let memory:
-    | {
-        state: "new" | "learning" | "review" | "relearning";
-        ease_factor: number;
-        interval_days: number;
-        due_at: string | null;
-        reps: number;
-        lapses: number;
-        learning_step_index: number;
-        last_reviewed_at: string | null;
-        last_grade: "again" | "hard" | "good" | "easy" | null;
-      }
-    | null = null;
+  let memory: WordMemoryRow | null = null;
 
   if (userId) {
     const memoryByWordId = await listWordMemoryByWordIds(userId, [wordId]);
@@ -466,6 +471,7 @@ export async function getWritingPracticeWordDetail({
     hskLevel: word.hsk_level,
     memory: memory
       ? {
+          schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
           state: memory.state,
           easeFactor: Number(memory.ease_factor),
           intervalDays: memory.interval_days,
@@ -473,6 +479,11 @@ export async function getWritingPracticeWordDetail({
           reps: memory.reps,
           lapses: memory.lapses,
           learningStepIndex: memory.learning_step_index,
+          fsrsStability: memory.fsrs_stability === null ? null : Number(memory.fsrs_stability),
+          fsrsDifficulty: memory.fsrs_difficulty === null ? null : Number(memory.fsrs_difficulty),
+          fsrsRetrievability: memory.fsrs_retrievability === null ? null : Number(memory.fsrs_retrievability),
+          scheduledDays: memory.scheduled_days,
+          elapsedDays: memory.elapsed_days,
           lastReviewedAt: memory.last_reviewed_at,
           lastGrade: memory.last_grade,
         }

@@ -46,6 +46,8 @@ export async function persistStudyOutcome({
     throw progressReadError;
   }
 
+  let existingMemory: { due_at: string | null; state: string } | null = null;
+
   if (input.lessonId) {
     const { data: lessonMembership, error: membershipError } = await supabase
       .from("lesson_words")
@@ -74,13 +76,38 @@ export async function persistStudyOutcome({
     }
 
     existingLessonCompletionPercent = Number(existingLessonProgress?.completion_percent ?? 0);
-  } else if (!existingProgress) {
-    throw new Error("This word is not available in the review queue.");
+  } else {
+    const { data: memoryRow, error: memoryReadError } = await supabase
+      .from("user_word_memory")
+      .select("due_at, state")
+      .eq("user_id", userId)
+      .eq("word_id", input.wordId)
+      .maybeSingle();
+
+    if (memoryReadError) {
+      throw memoryReadError;
+    }
+
+    existingMemory = memoryRow;
+
+    if (!existingMemory?.due_at || new Date(existingMemory.due_at) > new Date()) {
+      throw new Error("This word is not available in the review queue.");
+    }
   }
 
   const now = new Date();
   const grade = input.grade ?? mapReviewResultToMemoryGrade(input.result);
   const legacyResult = mapMemoryGradeToReviewResult(grade);
+  const memoryTransition = await persistWordMemoryGrade({
+    supabase,
+    userId,
+    wordId: input.wordId,
+    grade,
+    now,
+    mode: input.mode,
+    practiceType: input.lessonId ? `lesson_${input.mode}` : `review_${input.mode}`,
+  });
+
   const progressPatch = buildWordProgressPatch(
     existingProgress
       ? {
@@ -94,17 +121,8 @@ export async function persistStudyOutcome({
       : null satisfies ExistingWordProgressSnapshot | null,
     legacyResult,
     now,
+    memoryTransition.next,
   );
-
-  await persistWordMemoryGrade({
-    supabase,
-    userId,
-    wordId: input.wordId,
-    grade,
-    now,
-    mode: input.mode,
-    practiceType: input.lessonId ? `lesson_${input.mode}` : `review_${input.mode}`,
-  });
 
   const { error: wordProgressError } = await supabase.from("user_word_progress").upsert(
     {
@@ -172,7 +190,8 @@ export async function persistStudyOutcome({
     wordId: input.wordId,
     lessonId: input.lessonId ?? null,
     status: progressPatch.status,
-    nextReviewAt: progressPatch.next_review_at,
-    intervalDays: progressPatch.interval_days,
+    dueAt: memoryTransition.next.dueAt,
+    intervalDays: memoryTransition.next.intervalDays,
+    memoryState: memoryTransition.next.state,
   });
 }

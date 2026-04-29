@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { ReadingPracticeSession } from "@/components/practice/reading-practice-session";
 import { PageHeader } from "@/components/shared/page-header";
+import { getUserLearningSchedulerSettings } from "@/features/memory/queries";
 import { listReadingWordPracticeItems } from "@/features/practice/queries";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -27,6 +28,7 @@ export default async function PracticeReadingWordsPage({
     wordId: resolvedSearchParams.word,
     lessonId: resolvedSearchParams.lessonId,
   });
+  const schedulerSettings = user ? await getUserLearningSchedulerSettings(user.id) : null;
 
   const signInHref = `${link("/auth/sign-in")}?next=${encodeURIComponent(link("/practice/reading/words"))}`;
 
@@ -45,6 +47,7 @@ export default async function PracticeReadingWordsPage({
         description={t("practice.reading.wordsSessionDescription")}
         isAuthenticated={Boolean(user)}
         signInHref={signInHref}
+        schedulerSettings={schedulerSettings}
       />
     </div>
   );

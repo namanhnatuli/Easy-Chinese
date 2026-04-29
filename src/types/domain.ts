@@ -4,6 +4,7 @@ export type StoredUserRole = Exclude<UserRole, "anonymous">;
 export type ReviewMode = "flashcard" | "multiple_choice" | "typing";
 export type ReviewResult = "correct" | "incorrect" | "skipped";
 export type SchedulerGrade = "again" | "hard" | "good" | "easy";
+export type SchedulerType = "sm2" | "fsrs";
 export type MemoryCardState = "new" | "learning" | "review" | "relearning";
 export type ReadingPracticeType = "word" | "sentence";
 export type PracticeProgressStatus = "new" | "practicing" | "completed" | "difficult";
@@ -224,6 +225,7 @@ export interface UserWordMemory extends TimestampedEntity {
   id: string;
   userId: string;
   wordId: string;
+  schedulerType: SchedulerType;
   state: MemoryCardState;
   easeFactor: number;
   intervalDays: number;
@@ -231,6 +233,11 @@ export interface UserWordMemory extends TimestampedEntity {
   reps: number;
   lapses: number;
   learningStepIndex: number;
+  fsrsStability: number | null;
+  fsrsDifficulty: number | null;
+  fsrsRetrievability: number | null;
+  scheduledDays: number;
+  elapsedDays: number;
   lastReviewedAt: string | null;
   lastGrade: SchedulerGrade | null;
 }
@@ -240,6 +247,9 @@ export interface UserLearningStats extends TimestampedEntity {
   streakCount: number;
   lastActiveDate: string | null;
   dailyGoal: number;
+  schedulerType: SchedulerType;
+  desiredRetention: number;
+  maximumIntervalDays: number;
 }
 
 export interface UserXp extends TimestampedEntity {
@@ -267,12 +277,19 @@ export interface ReviewEvent {
   wordId: string;
   mode: ReviewMode | null;
   result: ReviewResult | null;
+  schedulerType: SchedulerType;
   practiceType: string;
   grade: SchedulerGrade;
   previousState: MemoryCardState | null;
   nextState: MemoryCardState | null;
   previousIntervalDays: number | null;
   nextIntervalDays: number | null;
+  previousStability: number | null;
+  nextStability: number | null;
+  previousDifficulty: number | null;
+  nextDifficulty: number | null;
+  previousRetrievability: number | null;
+  nextRetrievability: number | null;
   previousDueAt: string | null;
   nextDueAt: string | null;
   reviewedAt: string;

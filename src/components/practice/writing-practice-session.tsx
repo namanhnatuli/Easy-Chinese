@@ -11,6 +11,7 @@ import { HanziWritingCanvas } from "@/components/practice/hanzi-writing-canvas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
+import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import type { WritingPracticeWordDetail } from "@/features/practice/types";
 import { useI18n } from "@/i18n/client";
 import type { SchedulerGrade } from "@/types/domain";
@@ -19,10 +20,12 @@ export function WritingPracticeSession({
   word,
   isAuthenticated,
   signInHref,
+  schedulerSettings,
 }: {
   word: WritingPracticeWordDetail;
   isAuthenticated: boolean;
   signInHref: string;
+  schedulerSettings?: Partial<LearningSchedulerSettings> | null;
 }) {
   const { t, link } = useI18n();
   const [index, setIndex] = useState(0);
@@ -44,7 +47,7 @@ export function WritingPracticeSession({
 
     return Math.round((Math.min(index + 1, word.characters.length) / word.characters.length) * 100);
   }, [index, word.characters.length]);
-  const dueHints = predictDueHintsForGrades(word.memory, new Date());
+  const dueHints = predictDueHintsForGrades(word.memory, new Date(), schedulerSettings);
 
   useEffect(() => {
     setClearSignal((value) => value + 1);

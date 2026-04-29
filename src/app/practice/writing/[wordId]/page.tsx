@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { WritingPracticeSession } from "@/components/practice/writing-practice-session";
 import { PageHeader } from "@/components/shared/page-header";
+import { getUserLearningSchedulerSettings } from "@/features/memory/queries";
 import { getWritingPracticeWordDetail } from "@/features/practice/queries";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,6 +18,7 @@ export default async function PracticeWritingWordPage({
     wordId,
     userId: user?.id,
   });
+  const schedulerSettings = user ? await getUserLearningSchedulerSettings(user.id) : null;
 
   if (!word) {
     notFound();
@@ -37,6 +39,7 @@ export default async function PracticeWritingWordPage({
         word={word}
         isAuthenticated={Boolean(user)}
         signInHref={signInHref}
+        schedulerSettings={schedulerSettings}
       />
     </div>
   );

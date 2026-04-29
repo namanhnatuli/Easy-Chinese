@@ -6,8 +6,10 @@ import {
   getDefaultDailyGoal,
   mapMemoryGradeToReviewResult,
   type ExistingWordMemorySnapshot,
+  type LearningSchedulerSettings,
   type SchedulerTransition,
   applySchedulerGrade,
+  resolveLearningSchedulerSettings,
 } from "@/features/memory/spaced-repetition";
 import { logger } from "@/lib/logger";
 import type { ReviewMode, SchedulerGrade } from "@/types/domain";
@@ -20,7 +22,7 @@ async function readExistingWordMemory(
   const { data, error } = await supabase
     .from("user_word_memory")
     .select(
-      "state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, last_reviewed_at, last_grade",
+      "scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
     )
     .eq("user_id", userId)
     .eq("word_id", wordId)
@@ -35,6 +37,7 @@ async function readExistingWordMemory(
   }
 
   return {
+    schedulerType: data.scheduler_type === "fsrs" ? "fsrs" : "sm2",
     state: data.state,
     easeFactor: Number(data.ease_factor),
     intervalDays: data.interval_days,
@@ -42,6 +45,11 @@ async function readExistingWordMemory(
     reps: data.reps,
     lapses: data.lapses,
     learningStepIndex: data.learning_step_index,
+    fsrsStability: data.fsrs_stability === null ? null : Number(data.fsrs_stability),
+    fsrsDifficulty: data.fsrs_difficulty === null ? null : Number(data.fsrs_difficulty),
+    fsrsRetrievability: data.fsrs_retrievability === null ? null : Number(data.fsrs_retrievability),
+    scheduledDays: data.scheduled_days ?? 0,
+    elapsedDays: data.elapsed_days ?? 0,
     lastReviewedAt: data.last_reviewed_at,
     lastGrade: data.last_grade,
   };
@@ -50,10 +58,10 @@ async function readExistingWordMemory(
 async function readExistingLearningStats(
   supabase: SupabaseClient,
   userId: string,
-) {
+): Promise<(LearningSchedulerSettings & { streakCount: number; lastActiveDate: string | null; dailyGoal: number }) | null> {
   const { data, error } = await supabase
     .from("user_learning_stats")
-    .select("streak_count, last_active_date, daily_goal")
+    .select("streak_count, last_active_date, daily_goal, scheduler_type, desired_retention, maximum_interval_days")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -69,6 +77,9 @@ async function readExistingLearningStats(
     streakCount: data.streak_count,
     lastActiveDate: data.last_active_date,
     dailyGoal: data.daily_goal,
+    schedulerType: data.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+    desiredRetention: Number(data.desired_retention ?? 0.9),
+    maximumIntervalDays: data.maximum_interval_days ?? 36500,
   };
 }
 
@@ -102,6 +113,7 @@ function getWordMemoryLogPayload(transition: SchedulerTransition, userId: string
     userId,
     wordId,
     grade,
+    schedulerType: transition.next.schedulerType,
     previousState: transition.previous.state,
     nextState: transition.next.state,
     intervalDays: transition.next.intervalDays,
@@ -137,12 +149,19 @@ async function insertReviewEvent({
     word_id: wordId,
     mode: mode ?? null,
     result: mapMemoryGradeToReviewResult(grade),
+    scheduler_type: next.schedulerType,
     practice_type: practiceType,
     grade,
     previous_state: previous.state,
     next_state: next.state,
     previous_interval_days: previous.intervalDays,
     next_interval_days: next.intervalDays,
+    previous_stability: previous.fsrsStability,
+    next_stability: next.fsrsStability,
+    previous_difficulty: previous.fsrsDifficulty,
+    next_difficulty: next.fsrsDifficulty,
+    previous_retrievability: previous.fsrsRetrievability,
+    next_retrievability: next.fsrsRetrievability,
     previous_due_at: previous.dueAt,
     next_due_at: next.dueAt,
     reviewed_at: now.toISOString(),
@@ -170,13 +189,18 @@ export async function persistWordMemoryGrade({
   practiceType: string;
   mode?: ReviewMode | null;
 }) {
-  const existing = await readExistingWordMemory(supabase, userId, wordId);
+  const [existing, learningStats] = await Promise.all([
+    readExistingWordMemory(supabase, userId, wordId),
+    readExistingLearningStats(supabase, userId),
+  ]);
+  const schedulerSettings = resolveLearningSchedulerSettings(existing, learningStats);
   const transition = applySchedulerGrade({
     existing,
     grade,
     now,
+    settings: schedulerSettings,
   });
-  const patch = buildWordMemoryPatch(existing, grade, now);
+  const patch = buildWordMemoryPatch(existing, grade, now, schedulerSettings);
 
   const { error } = await supabase.from("user_word_memory").upsert(
     {
@@ -227,6 +251,9 @@ export async function persistLearningStats({
       streakCount: 0,
       lastActiveDate: null,
       dailyGoal: getDefaultDailyGoal(),
+      schedulerType: "sm2",
+      desiredRetention: 0.9,
+      maximumIntervalDays: 36500,
     },
     completedToday,
     now,
