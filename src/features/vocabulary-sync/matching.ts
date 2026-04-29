@@ -2,7 +2,13 @@ import "server-only";
 
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import type { ParsedVocabSyncRow } from "@/features/vocabulary-sync/normalize";
-import type { VocabSyncChangeKind, WordAiStatus, WordReviewStatus, WordSourceConfidence } from "@/features/vocabulary-sync/types";
+import type {
+  VocabSyncChangeKind,
+  VocabSyncMatchResult,
+  WordAiStatus,
+  WordReviewStatus,
+  WordSourceConfidence,
+} from "@/features/vocabulary-sync/types";
 
 interface ExistingWordExample {
   chineseText: string;
@@ -48,14 +54,14 @@ export interface ExistingWordPreviewSnapshot {
 export interface ClassifiedVocabSyncRow {
   sourceRowKey: string;
   changeClassification: VocabSyncChangeKind;
-  matchResult: string | null;
+  matchResult: VocabSyncMatchResult | null;
   matchedWordIds: string[];
   diffSummary: Record<string, unknown> | null;
   errorMessage: string | null;
 }
 
 export interface ResolvedVocabSyncMatch {
-  matchResult: "external_id" | "source_row_key" | "normalized_text" | "none" | "conflict";
+  matchResult: VocabSyncMatchResult;
   candidates: ExistingWordPreviewSnapshot[];
 }
 
@@ -289,7 +295,7 @@ export function classifyVocabSyncRow(
     return {
       sourceRowKey: row.sourceRowKey,
       changeClassification: "invalid",
-      matchResult: "parse_error",
+      matchResult: "none",
       matchedWordIds: [],
       diffSummary: null,
       errorMessage: row.parseErrors.join(" "),
@@ -303,7 +309,7 @@ export function classifyVocabSyncRow(
     return {
       sourceRowKey: row.sourceRowKey,
       changeClassification: "new",
-      matchResult: "no_match",
+      matchResult: "none",
       matchedWordIds: [],
       diffSummary: null,
       errorMessage: null,
@@ -314,7 +320,7 @@ export function classifyVocabSyncRow(
     return {
       sourceRowKey: row.sourceRowKey,
       changeClassification: "conflict",
-      matchResult: "multiple_matches",
+      matchResult: "conflict",
       matchedWordIds: candidates.map((candidate) => candidate.id),
       diffSummary: {
         candidateCount: candidates.length,

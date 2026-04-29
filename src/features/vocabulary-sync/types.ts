@@ -6,6 +6,7 @@ export type WordAiStatus = "pending" | "processing" | "done" | "failed" | "skipp
 export type VocabSyncBatchStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
 export type VocabSyncChangeKind = "new" | "changed" | "unchanged" | "conflict" | "invalid";
 export type VocabSyncApplyStatus = "pending" | "applied" | "failed" | "skipped";
+export type VocabSyncMatchResult = "external_id" | "source_row_key" | "normalized_text" | "none" | "conflict";
 
 export interface NormalizedExample {
   chineseText: string;
@@ -95,7 +96,7 @@ export interface VocabSyncRow extends TimestampedEntity {
   adminEditedPayload: Record<string, unknown> | null;
   contentHash: string | null;
   changeClassification: VocabSyncChangeKind;
-  matchResult: string | null;
+  matchResult: VocabSyncMatchResult | null;
   matchedWordIds: string[];
   parseErrors: string[];
   reviewStatus: WordReviewStatus;

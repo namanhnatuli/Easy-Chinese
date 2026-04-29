@@ -5,6 +5,7 @@ import { requireAdminSupabase } from "@/features/admin/shared";
 import type {
   VocabSyncBatch,
   VocabSyncBatchStatus,
+  VocabSyncMatchResult,
   VocabSyncRow,
 } from "@/features/vocabulary-sync/types";
 
@@ -28,7 +29,7 @@ interface NewVocabSyncRowInput {
   normalizedPayload?: Record<string, unknown>;
   contentHash?: string | null;
   changeClassification?: VocabSyncRow["changeClassification"];
-  matchResult?: string | null;
+  matchResult?: VocabSyncMatchResult | null;
   matchedWordIds?: string[];
   parseErrors?: string[];
   reviewStatus?: VocabSyncRow["reviewStatus"];
@@ -97,7 +98,7 @@ function mapRow(row: {
   admin_edited_payload: Record<string, unknown> | null;
   content_hash: string | null;
   change_classification: VocabSyncRow["changeClassification"];
-  match_result: string | null;
+  match_result: VocabSyncMatchResult | null;
   matched_word_ids: string[];
   parse_errors: string[];
   review_status: VocabSyncRow["reviewStatus"];
@@ -596,7 +597,7 @@ export async function updateVocabSyncRow(
     normalizedPayload: Record<string, unknown>;
     contentHash: string | null;
     changeClassification: VocabSyncRow["changeClassification"];
-    matchResult: string | null;
+    matchResult: VocabSyncMatchResult | null;
     matchedWordIds: string[];
     parseErrors: string[];
     reviewStatus: VocabSyncRow["reviewStatus"];

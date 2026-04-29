@@ -1,9 +1,29 @@
 -- ==========================================
 -- 0002_SEED_CORE.SQL
--- Consolidated core seed data (Radicals)
+-- Consolidated core seed data
 -- ==========================================
 
--- 1. KANGXI RADICALS (214)
+-- 1. TOPICS
+insert into public.topics (name, slug)
+values
+  ('Giáo dục', 'giao_duc'),
+  ('Giao tiếp', 'giao_tiep'),
+  ('Con người', 'con_nguoi'),
+  ('Đời sống', 'doi_song'),
+  ('Hành động', 'hanh_dong'),
+  ('Thời gian', 'thoi_gian'),
+  ('Thiên nhiên', 'thien_nhien'),
+  ('Trừu tường', 'truu_tuong'),
+  ('Cảm xúc', 'cam_xuc'),
+  ('Sức khoẻ', 'suc_khoe'),
+  ('Giao thông', 'giao_thong'),
+  ('Công nghệ', 'cong_nghe'),
+  ('Văn hoá', 'van_hoa'),
+  ('Xã hội', 'xa_hoi')
+on conflict (slug) do update set
+  name = excluded.name;
+
+-- 2. KANGXI RADICALS (214)
 with raw_seed(raw_label) as (
   values
     ('Nhất 一'), ('Cổn 丨'), ('Chủ 丶'), ('Phiệt 丿'), ('Ất 乙'), ('Quyết 亅'),
@@ -80,7 +100,7 @@ on conflict (radical) do update set
   variant_forms = excluded.variant_forms,
   updated_at = timezone('utc', now());
 
--- 2. ADDITIONAL COMMON COMPONENTS (from archived 0010)
+-- 3. ADDITIONAL COMMON COMPONENTS (from archived 0010)
 insert into public.radicals (radical, display_label, han_viet_name, meaning_vi, stroke_count)
 values 
   ('电', 'Điện 电', 'Điện', 'Điện / Chớp / Sét', 5),
@@ -93,7 +113,7 @@ on conflict (radical) do update set
   stroke_count = excluded.stroke_count,
   updated_at = timezone('utc', now());
 
--- 3. LEARNING ARTICLE TAGS
+-- 4. LEARNING ARTICLE TAGS
 insert into public.learning_article_tags (name, slug)
 values
   ('So sánh từ gần nghĩa', 'so-sanh-tu-gan-nghia'),
@@ -102,7 +122,7 @@ values
 on conflict (slug) do update set
   name = excluded.name;
 
--- 4. SEED LEARNING ARTICLE
+-- 5. SEED LEARNING ARTICLE
 with article_seed as (
   insert into public.learning_articles (
     title,

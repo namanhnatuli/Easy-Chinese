@@ -106,8 +106,8 @@ ADMIN_EMAILS=admin@example.com,second-admin@example.com
 
 ### Local development
 1. Start Supabase and the app normally.
-2. Apply the latest migrations so the profile-role hardening is active:
-   `npm run supabase:db:push`
+2. Reset the local database so the clean init migration is applied from scratch:
+   `npm run supabase:db:reset`
 3. Add your Google account email to `ADMIN_EMAILS` in `.env`.
 4. Copy the local Supabase keys from `npm run supabase:status`:
    - `Publishable` -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -118,9 +118,49 @@ ADMIN_EMAILS=admin@example.com,second-admin@example.com
 ### Production
 1. Set `ADMIN_EMAILS` in your deployment environment.
 2. Set `SUPABASE_SERVICE_ROLE_KEY` in your deployment environment.
-3. Apply the latest database migration, including `0003_admin_bootstrap_hardening.sql`.
+3. Apply the current database migration set. The active path is now `supabase/migrations/0001_init_database.sql` followed by `supabase/migrations/0002_seed_core.sql`.
 4. Redeploy or restart the application.
 5. Have the target admin sign in again.
+
+## Database setup
+
+This project now uses a clean active migration pair for fresh database setup:
+
+- schema migration: `supabase/migrations/0001_init_database.sql`
+- seed migration: `supabase/migrations/0002_seed_core.sql`
+- archived iterative history: `supabase/migrations_archive/`
+
+What changed:
+- the old development-time migration chain was consolidated into a clean schema migration plus a separate seed migration
+- the active migrations define the final schema and seed data directly instead of replaying historical `ALTER`/`DROP` steps
+- older active migrations were moved to `supabase/migrations_archive/` for reference only
+
+### Reset local database
+
+Use this when you want to rebuild the local database from scratch:
+
+```bash
+npm run supabase:start
+npm run supabase:db:reset
+```
+
+### Apply current migration state
+
+Use this when you want Supabase to apply the current active migration set without a full local reset:
+
+```bash
+npm run supabase:db:push
+```
+
+### Verify the local database
+
+After reset:
+
+```bash
+npm run supabase:status
+npm run typecheck
+npm test
+```
 
 ## Production notes
 - authenticated surfaces rely on both middleware checks and server-side permission checks
@@ -286,7 +326,7 @@ Admin preview API:
 
 ## Deployment checklist
 Before launch:
-1. Apply all Supabase migrations, including `0004_phase9_query_hardening.sql` and `0005_default_profile_locale_en.sql`.
+1. Apply the active Supabase migration set. Fresh installs should start from `supabase/migrations/0001_init_database.sql`.
 2. Verify Google OAuth redirect URLs in Supabase for local and production environments.
 3. Confirm `ADMIN_EMAILS` and `SUPABASE_SERVICE_ROLE_KEY` are set in production.
 4. Run `npm test` and `npm run typecheck`.
