@@ -279,6 +279,12 @@ export default async function AdminContentSyncPage({
                     sheetHint: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME
                       ? t("contentSync.batchSync.sheetHintDefault", { value: env.GOOGLE_SHEETS_DEFAULT_SHEET_NAME })
                       : t("contentSync.batchSync.sheetHintRequired"),
+                    fromRow: t("contentSync.batchSync.fromRow"),
+                    fromRowPlaceholder: t("contentSync.batchSync.fromRowPlaceholder"),
+                    fromRowHint: t("contentSync.batchSync.fromRowHint"),
+                    toRow: t("contentSync.batchSync.toRow"),
+                    toRowPlaceholder: t("contentSync.batchSync.toRowPlaceholder"),
+                    toRowHint: t("contentSync.batchSync.toRowHint"),
                     submit: t("contentSync.batchSync.startPreview"),
                     pending: t("contentSync.batchSync.startingPreview"),
                   }}

@@ -127,33 +127,51 @@ export async function listReadingWordPracticeItems({
   userId,
   limit = 18,
   wordId,
+  lessonId,
 }: {
   userId?: string | null;
   limit?: number;
   wordId?: string;
+  lessonId?: string;
 }): Promise<ReadingPracticeWordItem[]> {
   const supabase = await createSupabaseServerClient();
-  let query = supabase
-    .from("words")
-    .select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level")
-    .eq("is_published", true)
-    .order("hsk_level")
-    .order("hanzi")
-    .limit(Math.max(limit * 3, 24));
+  let query: any = supabase.from("words");
+
+  if (lessonId) {
+    query = query
+      .select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level, lesson_words!inner(lesson_id)")
+      .eq("lesson_words.lesson_id", lessonId);
+  } else {
+    query = query.select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level");
+  }
 
   if (wordId) {
     query = query.eq("id", wordId);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query
+    .eq("is_published", true)
+    .order("hsk_level")
+    .order("hanzi")
+    .limit(Math.max(limit * 3, 24));
+
+  const typedData = data as Array<{
+    id: string;
+    slug: string;
+    hanzi: string;
+    simplified: string;
+    pinyin: string;
+    vietnamese_meaning: string;
+    hsk_level: number;
+  }> | null;
 
   if (error) {
     throw error;
   }
 
-  const progressByWordId = userId ? await listReadingProgressByWordIds(userId, (data ?? []).map((row) => row.id)) : new Map();
-  const memoryByWordId = userId ? await listWordMemoryByWordIds(userId, (data ?? []).map((row) => row.id)) : new Map();
-  const items = (data ?? []).map((row) => {
+  const progressByWordId = userId ? await listReadingProgressByWordIds(userId, (typedData ?? []).map((row) => row.id)) : new Map();
+  const memoryByWordId = userId ? await listWordMemoryByWordIds(userId, (typedData ?? []).map((row) => row.id)) : new Map();
+  const items = (typedData ?? []).map((row) => {
     const progress = progressByWordId.get(row.id);
     const memory = memoryByWordId.get(row.id);
 
@@ -282,24 +300,44 @@ export async function listReadingSentencePracticeItems({
 export async function listWritingPracticeWords({
   userId,
   limit = 24,
+  lessonId,
 }: {
   userId?: string | null;
   limit?: number;
+  lessonId?: string;
 }): Promise<WritingPracticeWordListItem[]> {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("words")
-    .select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level")
+  let query: any = supabase.from("words");
+
+  if (lessonId) {
+    query = query
+      .select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level, lesson_words!inner(lesson_id)")
+      .eq("lesson_words.lesson_id", lessonId);
+  } else {
+    query = query.select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level");
+  }
+
+  const { data, error } = await query
     .eq("is_published", true)
     .order("hsk_level")
     .order("hanzi")
     .limit(Math.max(limit * 3, 30));
 
+  const typedData = data as Array<{
+    id: string;
+    slug: string;
+    hanzi: string;
+    simplified: string;
+    pinyin: string;
+    vietnamese_meaning: string;
+    hsk_level: number;
+  }> | null;
+
   if (error) {
     throw error;
   }
 
-  const wordIds = (data ?? []).map((row) => row.id);
+  const wordIds = (typedData ?? []).map((row) => row.id);
   const progressByWordId = new Map<
     string,
     Array<{ status: "new" | "practicing" | "completed" | "difficult"; attempt_count: number; last_practiced_at: string | null }>
@@ -323,7 +361,7 @@ export async function listWritingPracticeWords({
     }
   }
 
-  const items = (data ?? [])
+  const items = (typedData ?? [])
     .map((row) => {
       const characters = splitWordIntoHanziCharacters(row.hanzi || row.simplified);
       if (characters.length === 0) {

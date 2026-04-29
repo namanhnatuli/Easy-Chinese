@@ -33,6 +33,8 @@ import { z } from "zod";
 export const vocabSyncPreviewRequestSchema = z.object({
   spreadsheetId: z.string().trim().min(1).optional(),
   sheetName: z.string().trim().min(1).optional(),
+  syncFromRow: z.number().int().positive().optional(),
+  syncToRow: z.number().int().positive().optional(),
 });
 
 function requireSpreadsheetId(inputSpreadsheetId?: string) {
@@ -83,6 +85,8 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
     const sheet = await readGoogleSheetRows({
       spreadsheetId,
       sheetName,
+      fromRow: input.syncFromRow,
+      toRow: input.syncToRow,
     });
 
     const parsedRows = sheet.rows

@@ -32,17 +32,17 @@ export function MultipleChoicePanel({
   const isLocked = feedback !== null;
 
   return (
-    <section className="rounded-[2rem] bg-slate-950 text-white">
-      <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
+    <section>
+      <div className="mb-6 flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("learning.multipleChoice")}</span>
         <span>
           {currentIndex} / {total}
         </span>
       </div>
 
-      <div className="space-y-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-8">
+      <div className="space-y-5 rounded-[1.5rem] border bg-card p-8 shadow-sm">
         <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">
+          <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
             {question.variant === "hanzi_to_meaning"
               ? t("learning.hanziToMeaning")
               : t("learning.meaningToHanzi")}
@@ -69,11 +69,11 @@ export function MultipleChoicePanel({
                 disabled={isLocked}
                 className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
                   active
-                    ? "border-emerald-300 bg-emerald-400/10 text-emerald-100"
-                    : "border-white/10 bg-white/0 text-slate-200 hover:border-white/20 hover:bg-white/5"
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                    : "bg-background text-foreground hover:bg-muted"
                 }`}
               >
-                <span className="mr-3 text-xs uppercase tracking-[0.22em] text-slate-400">
+                <span className="mr-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">
                   {index + 1}
                 </span>
                 {choice}
@@ -84,12 +84,12 @@ export function MultipleChoicePanel({
 
         {feedback ? (
           <div
-            className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-200"
+            className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
             role="status"
             aria-live="polite"
           >
             <p>{feedback.message}</p>
-            <p className="mt-2 text-slate-300">{question.explanation}</p>
+            <p className="mt-2 text-muted-foreground">{question.explanation}</p>
           </div>
         ) : null}
       </div>
@@ -100,7 +100,6 @@ export function MultipleChoicePanel({
             <Button
               onClick={onSubmit}
               variant="secondary"
-              className="bg-white text-slate-950 hover:bg-white/90"
               disabled={!selectedChoice}
             >
               {t("learning.checkAnswer")}
@@ -108,7 +107,6 @@ export function MultipleChoicePanel({
             <Button
               onClick={onSkip}
               variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
             >
               {t("learning.skip")}
             </Button>
@@ -117,7 +115,6 @@ export function MultipleChoicePanel({
           <Button
             onClick={onNext}
             variant="outline"
-            className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
             {t("learning.nextWord")}
           </Button>

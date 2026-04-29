@@ -50,6 +50,8 @@ export interface AdminLessonEditor {
 export interface LessonCompositionOption {
   id: string;
   label: string;
+  hskLevel?: number;
+  tags?: { slug: string; label: string }[];
 }
 
 export async function listLessons(): Promise<AdminLessonListItem[]> {
@@ -110,7 +112,7 @@ export async function listLessonFormOptions(): Promise<{
     { data: grammarPoints, error: grammarError },
   ] = await Promise.all([
     supabase.from("topics").select("id, name").order("name"),
-    supabase.from("words").select("id, hanzi, pinyin").order("hanzi"),
+    supabase.from("words").select("id, hanzi, pinyin, hsk_level, word_tag_links(word_tags(slug, label))").order("hanzi"),
     supabase.from("grammar_points").select("id, title").order("title"),
   ]);
 
@@ -120,7 +122,17 @@ export async function listLessonFormOptions(): Promise<{
 
   return {
     topics: (topics ?? []).map((topic) => ({ id: topic.id, label: topic.name })),
-    words: (words ?? []).map((word) => ({ id: word.id, label: `${word.hanzi} - ${word.pinyin}` })),
+    words: (words ?? []).map((word: any) => {
+      const tags = word.word_tag_links
+        ?.map((link: any) => link.word_tags)
+        .filter(Boolean) || [];
+      return { 
+        id: word.id, 
+        label: `${word.hanzi} - ${word.pinyin}`,
+        hskLevel: word.hsk_level,
+        tags,
+      };
+    }),
     grammarPoints: (grammarPoints ?? []).map((point) => ({ id: point.id, label: point.title })),
   };
 }

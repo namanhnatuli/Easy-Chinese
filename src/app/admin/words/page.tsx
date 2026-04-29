@@ -2,12 +2,14 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminPageSizeSelect } from "@/components/admin/admin-page-size-select";
+import { AdminWordsFilterBar } from "@/components/admin/admin-words-filter-bar";
 import { WordDeleteDialogButton } from "@/components/admin/word-delete-dialog-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listWordsPage } from "@/features/admin/words";
+import { requireAdminSupabase } from "@/features/admin/shared";
 import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 
@@ -19,15 +21,38 @@ function parsePositiveInteger(value: string | string[] | undefined, fallback: nu
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
-function buildAdminWordsPath(params: { page?: number; pageSize?: number }) {
-  const searchParams = new URLSearchParams();
+function buildAdminWordsPath(params: { page?: number; pageSize?: number; q?: string | null; hsk?: string | null; tag?: string | null; searchParams?: URLSearchParams }) {
+  const searchParams = params.searchParams ? new URLSearchParams(params.searchParams) : new URLSearchParams();
 
-  if (params.page && params.page > 1) {
-    searchParams.set("page", String(params.page));
+  if (params.page !== undefined) {
+    if (params.page > 1) {
+      searchParams.set("page", String(params.page));
+    } else {
+      searchParams.delete("page");
+    }
   }
 
-  if (params.pageSize && params.pageSize !== 10) {
-    searchParams.set("pageSize", String(params.pageSize));
+  if (params.pageSize !== undefined) {
+    if (params.pageSize !== 10) {
+      searchParams.set("pageSize", String(params.pageSize));
+    } else {
+      searchParams.delete("pageSize");
+    }
+  }
+
+  if (params.q !== undefined) {
+    if (params.q) searchParams.set("q", params.q);
+    else searchParams.delete("q");
+  }
+
+  if (params.hsk !== undefined) {
+    if (params.hsk && params.hsk !== "all") searchParams.set("hsk", params.hsk);
+    else searchParams.delete("hsk");
+  }
+
+  if (params.tag !== undefined) {
+    if (params.tag && params.tag !== "all") searchParams.set("tag", params.tag);
+    else searchParams.delete("tag");
   }
 
   const query = searchParams.toString();
@@ -42,13 +67,21 @@ export default async function AdminWordsPage({
   await requireAdminUser();
   const { t, link } = await getServerI18n();
   const searchParamsValue = await searchParams;
+  const { supabase } = await requireAdminSupabase();
+  const q = typeof searchParamsValue.q === "string" ? searchParamsValue.q : undefined;
+  const hsk = typeof searchParamsValue.hsk === "string" ? parseInt(searchParamsValue.hsk, 10) : undefined;
+  const tag = typeof searchParamsValue.tag === "string" ? searchParamsValue.tag : undefined;
+
   const requestedPageSize = parsePositiveInteger(searchParamsValue.pageSize, 10);
   const pageSize = PAGE_SIZE_OPTIONS.includes(requestedPageSize as (typeof PAGE_SIZE_OPTIONS)[number])
     ? requestedPageSize
     : 10;
   const requestedPage = parsePositiveInteger(searchParamsValue.page, 1);
-  const wordsPage = await listWordsPage({ page: requestedPage, pageSize });
+  const wordsPage = await listWordsPage({ page: requestedPage, pageSize, q, hsk: isNaN(hsk as number) ? undefined : hsk, tag });
   const words = wordsPage.items;
+  
+  const { data: wordTags } = await supabase.from("word_tags").select("slug, label").order("label");
+  const availableTags = wordTags ?? [];
   const start = wordsPage.totalItems === 0 ? 0 : (wordsPage.page - 1) * wordsPage.pageSize + 1;
   const end = wordsPage.totalItems === 0
     ? 0
@@ -70,6 +103,13 @@ export default async function AdminWordsPage({
             </Button>
           </div>
         }
+      />
+
+      <AdminWordsFilterBar 
+        availableTags={availableTags} 
+        searchPlaceholder={t("filters.searchPlaceholder") || "Search words..."}
+        hskPlaceholder={t("filters.allLevels")}
+        tagsPlaceholder={t("filters.allTopics")}
       />
 
       {words.length === 0 ? (
@@ -153,7 +193,7 @@ export default async function AdminWordsPage({
               <AdminPageSizeSelect value={wordsPage.pageSize} options={PAGE_SIZE_OPTIONS} />
               <Button asChild type="button" variant="outline" size="sm" disabled={wordsPage.page <= 1}>
                 <Link
-                  href={link(buildAdminWordsPath({ page: wordsPage.page - 1, pageSize: wordsPage.pageSize }))}
+                  href={link(buildAdminWordsPath({ page: wordsPage.page - 1, searchParams: new URLSearchParams(searchParamsValue as Record<string, string>) }))}
                   aria-disabled={wordsPage.page <= 1}
                   tabIndex={wordsPage.page <= 1 ? -1 : undefined}
                 >
@@ -171,7 +211,7 @@ export default async function AdminWordsPage({
                 disabled={wordsPage.page >= wordsPage.pageCount}
               >
                 <Link
-                  href={link(buildAdminWordsPath({ page: wordsPage.page + 1, pageSize: wordsPage.pageSize }))}
+                  href={link(buildAdminWordsPath({ page: wordsPage.page + 1, searchParams: new URLSearchParams(searchParamsValue as Record<string, string>) }))}
                   aria-disabled={wordsPage.page >= wordsPage.pageCount}
                   tabIndex={wordsPage.page >= wordsPage.pageCount ? -1 : undefined}
                 >

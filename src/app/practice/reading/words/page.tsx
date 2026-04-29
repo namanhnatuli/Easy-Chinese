@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 const readingWordSearchSchema = z.object({
   word: z.string().uuid().optional(),
+  lessonId: z.string().uuid().optional(),
 });
 
 export default async function PracticeReadingWordsPage({
@@ -18,11 +19,13 @@ export default async function PracticeReadingWordsPage({
   const rawSearchParams = (await searchParams) ?? {};
   const resolvedSearchParams = readingWordSearchSchema.parse({
     word: Array.isArray(rawSearchParams.word) ? rawSearchParams.word[0] : rawSearchParams.word,
+    lessonId: Array.isArray(rawSearchParams.lessonId) ? rawSearchParams.lessonId[0] : rawSearchParams.lessonId,
   });
   const [user, { t, link }] = await Promise.all([getCurrentUser(), getServerI18n()]);
   const items = await listReadingWordPracticeItems({
     userId: user?.id,
     wordId: resolvedSearchParams.word,
+    lessonId: resolvedSearchParams.lessonId,
   });
 
   const signInHref = `${link("/auth/sign-in")}?next=${encodeURIComponent(link("/practice/reading/words"))}`;

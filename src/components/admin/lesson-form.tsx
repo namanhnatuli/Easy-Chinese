@@ -1,53 +1,12 @@
 import Link from "next/link";
 
+import { ClientSelectionGrid } from "@/components/admin/client-selection-grid";
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
 import { buttonVariants } from "@/components/ui/button";
 import type { AdminLessonEditor, LessonCompositionOption } from "@/features/admin/lessons";
 import { getServerI18n } from "@/i18n/server";
 
-async function SelectionGrid({
-  title,
-  prefix,
-  options,
-  selectedMap,
-}: {
-  title: string;
-  prefix: "word" | "grammar";
-  options: LessonCompositionOption[];
-  selectedMap: Record<string, number>;
-}) {
-  return (
-    <AdminFormCard title={title}>
-      <div className="space-y-3">
-        {options.map((option, index) => {
-          const selected = selectedMap[option.id];
-          return (
-            <div
-              key={option.id}
-              className="grid gap-3 rounded-2xl border border-border bg-muted/20 p-4 md:grid-cols-[1fr_120px]"
-            >
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name={`${prefix}_select_${option.id}`}
-                  defaultChecked={typeof selected === "number"}
-                />
-                <span className="text-sm text-slate-800">{option.label}</span>
-              </label>
-              <input
-                type="number"
-                min={1}
-                name={`${prefix}_order_${option.id}`}
-                defaultValue={selected ?? index + 1}
-                className={inputClassName()}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </AdminFormCard>
-  );
-}
+// Server component SelectionGrid removed.
 
 export async function LessonForm({
   action,
@@ -99,14 +58,23 @@ export async function LessonForm({
             />
           </Field>
           <Field label={t("admin.lessons.form.topic")}>
-            <select name="topic_id" defaultValue={lesson?.topic_id ?? ""} className={inputClassName()}>
-              <option value="">{t("admin.lessons.form.noTopic")}</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2 items-center">
+              <select name="topic_id" defaultValue={lesson?.topic_id ?? ""} className={inputClassName()}>
+                <option value="">{t("admin.lessons.form.noTopic")}</option>
+                {topics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.label}
+                  </option>
+                ))}
+              </select>
+              <Link 
+                href={link("/admin/topics")} 
+                target="_blank" 
+                className="text-sm font-medium whitespace-nowrap text-primary hover:underline"
+              >
+                {t("admin.lessons.form.manageTopics")}
+              </Link>
+            </div>
           </Field>
           <label className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3">
             <input
@@ -140,19 +108,29 @@ export async function LessonForm({
         />
       </AdminFormCard>
 
-      {await SelectionGrid({
-        title: t("admin.lessons.form.orderedWords"),
-        prefix: "word",
-        options: words,
-        selectedMap: initialValue?.selectedWordIds ?? {},
-      })}
+      <ClientSelectionGrid
+        title={t("admin.lessons.form.orderedWords")}
+        prefix="word"
+        options={words}
+        initialSelectedMap={initialValue?.selectedWordIds ?? {}}
+        searchPlaceholder={t("admin.lessons.form.searchOptions")}
+        previousLabel={t("admin.lessons.form.previousPage")}
+        nextLabel={t("admin.lessons.form.nextPage")}
+        selectedCountTemplate={t("admin.lessons.form.selectedCount")}
+        clearAllLabel={t("admin.lessons.form.clearAll")}
+      />
 
-      {await SelectionGrid({
-        title: t("admin.lessons.form.orderedGrammar"),
-        prefix: "grammar",
-        options: grammarPoints,
-        selectedMap: initialValue?.selectedGrammarIds ?? {},
-      })}
+      <ClientSelectionGrid
+        title={t("admin.lessons.form.orderedGrammar")}
+        prefix="grammar"
+        options={grammarPoints}
+        initialSelectedMap={initialValue?.selectedGrammarIds ?? {}}
+        searchPlaceholder={t("admin.lessons.form.searchOptions")}
+        previousLabel={t("admin.lessons.form.previousPage")}
+        nextLabel={t("admin.lessons.form.nextPage")}
+        selectedCountTemplate={t("admin.lessons.form.selectedCount")}
+        clearAllLabel={t("admin.lessons.form.clearAll")}
+      />
     </form>
   );
 }

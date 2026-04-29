@@ -319,7 +319,7 @@ export function buildLessonGeneratorPreview(
       return false;
     }
 
-    if (!input.includeUnapprovedWords && (!word.isPublished || word.reviewStatus !== "approved")) {
+    if (!input.includeUnapprovedWords && !word.isPublished && word.reviewStatus !== "approved") {
       return false;
     }
 

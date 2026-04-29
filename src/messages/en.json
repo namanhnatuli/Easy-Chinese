@@ -222,7 +222,8 @@
     "radical": "Radical",
     "allLevels": "All levels",
     "allTopics": "All topics",
-    "allRadicals": "All radicals"
+    "allRadicals": "All radicals",
+    "searchPlaceholder": "Search..."
   },
   "lessons": {
     "eyebrow": "Lessons",
@@ -432,6 +433,12 @@
       "sheetPlaceholder": "Vocabulary",
       "sheetHintDefault": "Optional. Defaults to \"{value}\".",
       "sheetHintRequired": "Required if GOOGLE_SHEETS_DEFAULT_SHEET_NAME is not set.",
+      "fromRow": "From row",
+      "fromRowPlaceholder": "e.g. 2",
+      "fromRowHint": "Optional. Specify starting row.",
+      "toRow": "To row",
+      "toRowPlaceholder": "e.g. 100",
+      "toRowHint": "Optional. Specify ending row.",
       "startPreview": "Start preview",
       "startingPreview": "Starting preview…",
       "historyTitle": "Batch history",
@@ -1162,10 +1169,16 @@
         "sortOrder": "Sort order",
         "topic": "Topic",
         "noTopic": "No topic",
+        "manageTopics": "Manage topics",
         "published": "Published",
         "description": "Description",
         "orderedWords": "Ordered words",
-        "orderedGrammar": "Ordered grammar points"
+        "orderedGrammar": "Ordered grammar points",
+        "searchOptions": "Search...",
+        "previousPage": "Previous",
+        "nextPage": "Next",
+        "selectedCount": "{count} selected",
+        "clearAll": "Clear all"
       },
       "create": {
         "title": "New lesson",

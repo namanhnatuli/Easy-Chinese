@@ -188,30 +188,30 @@ export function ReadingPracticeSession({
 
   if (isFinished) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-6 text-white shadow-panel">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+      <section className="surface-panel p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           {t("practice.completeEyebrow")}
         </p>
-        <h2 className="mt-2 text-3xl font-semibold">{title}</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">{description}</p>
+        <h2 className="mt-2 text-3xl font-semibold text-foreground">{title}</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-[1.5rem] bg-emerald-400/10 p-4">
-            <p className="text-sm text-emerald-200">{t("practice.grades.good")}</p>
-            <p className="mt-2 text-3xl font-semibold">{goodCount}</p>
+          <div className="rounded-[1.5rem] bg-emerald-500/10 p-4">
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("practice.grades.good")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{goodCount}</p>
           </div>
-          <div className="rounded-[1.5rem] bg-amber-400/10 p-4">
-            <p className="text-sm text-amber-200">{t("practice.grades.hard")}</p>
-            <p className="mt-2 text-3xl font-semibold">{hardCount}</p>
+          <div className="rounded-[1.5rem] bg-amber-500/10 p-4">
+            <p className="text-sm text-amber-600 dark:text-amber-400">{t("practice.grades.hard")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{hardCount}</p>
           </div>
           <div className="grid gap-4 sm:col-span-1">
-            <div className="rounded-[1.5rem] bg-slate-400/10 p-4">
-              <p className="text-sm text-slate-200">{t("practice.grades.again")}</p>
-              <p className="mt-2 text-3xl font-semibold">{againCount}</p>
+            <div className="rounded-[1.5rem] bg-slate-500/10 p-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t("practice.grades.again")}</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{againCount}</p>
             </div>
-            <div className="rounded-[1.5rem] bg-sky-400/10 p-4">
-              <p className="text-sm text-sky-200">{t("practice.grades.easy")}</p>
-              <p className="mt-2 text-3xl font-semibold">{easyCount}</p>
+            <div className="rounded-[1.5rem] bg-sky-500/10 p-4">
+              <p className="text-sm text-sky-600 dark:text-sky-400">{t("practice.grades.easy")}</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{easyCount}</p>
             </div>
           </div>
         </div>
@@ -225,11 +225,10 @@ export function ReadingPracticeSession({
               setGoodCount(0);
               setEasyCount(0);
             }}
-            className="bg-white text-slate-950 hover:bg-white/90"
           >
             {t("practice.restart")}
           </Button>
-          <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+          <Button asChild variant="outline">
             <Link href={link("/practice")}>{t("practice.backToPractice")}</Link>
           </Button>
         </div>
@@ -242,15 +241,15 @@ export function ReadingPracticeSession({
   const meaning = currentItem.kind === "word" ? currentItem.vietnameseMeaning : currentItem.vietnameseMeaning;
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-5 text-white shadow-panel sm:p-6 lg:p-8">
+    <section className="surface-panel p-5 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {t("practice.reading.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">{title}</h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">{description}</p>
+            <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -260,50 +259,50 @@ export function ReadingPracticeSession({
           </div>
         </div>
 
-        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-white transition-all" style={{ width: `${Math.max(progressPercent, 6)}%` }} />
+        <div className="h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.max(progressPercent, 6)}%` }} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-          <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+          <div className="rounded-[1.75rem] border bg-muted/30 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" variant="secondary" onClick={playAudio}>
                 <Volume2 className="size-4" />
                 {t("practice.reading.playAudio")}
               </Button>
-              <Button type="button" variant="ghost" className="text-white hover:bg-white/10 hover:text-white" onClick={() => setShowPinyin((value) => !value)}>
+              <Button type="button" variant="ghost" onClick={() => setShowPinyin((value) => !value)}>
                 {showPinyin ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 {showPinyin ? t("practice.reading.hidePinyin") : t("practice.reading.showPinyin")}
               </Button>
-              <Button type="button" variant="ghost" className="text-white hover:bg-white/10 hover:text-white" onClick={() => setShowMeaning((value) => !value)}>
+              <Button type="button" variant="ghost" onClick={() => setShowMeaning((value) => !value)}>
                 <Languages className="size-4" />
                 {showMeaning ? t("practice.reading.hideMeaning") : t("practice.reading.showMeaning")}
               </Button>
             </div>
 
             <div className="mt-8 text-center">
-              <p className="text-[3rem] font-semibold leading-tight tracking-[0.04em] text-white sm:text-[4.5rem]">
+              <p className="text-[3rem] font-semibold leading-tight tracking-[0.04em] text-foreground sm:text-[4.5rem]">
                 {chineseText}
               </p>
               {showPinyin && pinyin ? (
-                <p className="mt-4 text-lg text-slate-300 sm:text-xl">{pinyin}</p>
+                <p className="mt-4 text-lg text-muted-foreground sm:text-xl">{pinyin}</p>
               ) : null}
               {showMeaning ? (
-                <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                   {meaning}
                 </p>
               ) : null}
             </div>
 
             {currentItem.kind === "sentence" && currentItem.linkedWord ? (
-              <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="mt-8 rounded-[1.5rem] border bg-card p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   {t("practice.reading.linkedWord")}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <p className="text-2xl font-semibold text-white">{currentItem.linkedWord.hanzi}</p>
-                  <p className="text-sm text-slate-300">{currentItem.linkedWord.pinyin}</p>
-                  <Button asChild variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                  <p className="text-2xl font-semibold text-foreground">{currentItem.linkedWord.hanzi}</p>
+                  <p className="text-sm text-muted-foreground">{currentItem.linkedWord.pinyin}</p>
+                  <Button asChild variant="outline">
                     <Link href={link(`/vocabulary/${currentItem.linkedWord.slug}`)}>{t("practice.reading.openWord")}</Link>
                   </Button>
                 </div>
@@ -311,7 +310,7 @@ export function ReadingPracticeSession({
             ) : null}
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button type="button" size="lg" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => void handleGrade("again")}>
+              <Button type="button" size="lg" variant="outline" onClick={() => void handleGrade("again")}>
                 <span className="flex flex-col items-center leading-tight">
                   <span>{t("practice.grades.again")}</span>
                   <span className="text-[0.68rem] opacity-80">{dueHints?.again ?? "now"}</span>
@@ -323,14 +322,14 @@ export function ReadingPracticeSession({
                   <span className="text-[0.68rem] opacity-80">{dueHints?.hard ?? "now"}</span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-emerald-500 text-white hover:bg-emerald-400" onClick={() => void handleGrade("good")}>
+              <Button type="button" size="lg" className="bg-emerald-600 text-white hover:bg-emerald-500" onClick={() => void handleGrade("good")}>
                 <CheckCircle2 className="size-4" />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{t("practice.grades.good")}</span>
                   <span className="text-[0.68rem] opacity-80">{dueHints?.good ?? "now"}</span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-sky-500 text-white hover:bg-sky-400" onClick={() => void handleGrade("easy")}>
+              <Button type="button" size="lg" className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => void handleGrade("easy")}>
                 <SkipForward className="size-4" />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{t("practice.grades.easy")}</span>
@@ -350,21 +349,21 @@ export function ReadingPracticeSession({
             ) : null}
           </div>
 
-          <aside className="space-y-4 rounded-[1.75rem] border border-white/10 bg-white/5 p-5">
+          <aside className="space-y-4 rounded-[1.75rem] border bg-muted/10 p-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 {t("practice.reading.currentStatus")}
               </p>
-              <p className="mt-3 text-sm text-slate-300">
+              <p className="mt-3 text-sm text-foreground">
                 {t("practice.status", { value: currentItem.progress?.status ?? "new" })}
               </p>
-              <p className="mt-1 text-sm text-slate-300">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {t("practice.reading.attempts", { count: currentItem.progress?.attemptCount ?? 0 })}
               </p>
             </div>
 
-            <div className="rounded-[1.25rem] bg-black/20 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">{t("practice.reading.shortcutsTitle")}</p>
+            <div className="rounded-[1.25rem] bg-secondary/50 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{t("practice.reading.shortcutsTitle")}</p>
               <p className="mt-3">{t("practice.reading.shortcutAgain")}</p>
               <p className="mt-1">{t("practice.reading.shortcutHard")}</p>
               <p className="mt-1">{t("practice.reading.shortcutGood")}</p>
@@ -375,9 +374,9 @@ export function ReadingPracticeSession({
             </div>
 
             {(!isAuthenticated || showAnonymousNotice) ? (
-              <div className="rounded-[1.25rem] border border-amber-300/20 bg-amber-400/10 p-4">
-                <p className="text-sm font-semibold text-amber-100">{t("practice.signInNotice")}</p>
-                <Button asChild className="mt-3 bg-white text-slate-950 hover:bg-white/90">
+              <div className="rounded-[1.25rem] border border-amber-500/20 bg-amber-500/10 p-4">
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{t("practice.signInNotice")}</p>
+                <Button asChild variant="outline" className="mt-3">
                   <Link href={signInHref}>
                     <LogIn className="size-4" />
                     {t("practice.signInToSave")}

@@ -317,12 +317,19 @@ export async function getContentSyncPageData(filters: ContentSyncFilters): Promi
 export async function startContentSyncPreviewAction(formData: FormData) {
   const spreadsheetId = optionalText(formData.get("spreadsheet_id"));
   const sheetName = optionalText(formData.get("sheet_name"));
+  const syncFromRowRaw = optionalText(formData.get("sync_from_row"));
+  const syncToRowRaw = optionalText(formData.get("sync_to_row"));
+
+  const syncFromRow = syncFromRowRaw ? parseInt(syncFromRowRaw, 10) : undefined;
+  const syncToRow = syncToRowRaw ? parseInt(syncToRowRaw, 10) : undefined;
 
   let result;
   try {
     result = await startVocabSyncPreview({
       spreadsheetId: spreadsheetId ?? undefined,
       sheetName: sheetName ?? undefined,
+      syncFromRow: isNaN(syncFromRow as number) ? undefined : syncFromRow,
+      syncToRow: isNaN(syncToRow as number) ? undefined : syncToRow,
     });
 
     revalidateAdminPaths(["/admin", "/admin/content-sync"]);

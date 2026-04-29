@@ -79,6 +79,8 @@ async function fetchSheetValues(spreadsheetId: string, sheetName: string) {
 export async function readGoogleSheetRows(input: {
   spreadsheetId: string;
   sheetName: string;
+  fromRow?: number;
+  toRow?: number;
 }): Promise<GoogleSheetReadResult> {
   const [metadata, valuesResponse] = await Promise.all([
     fetchSpreadsheetProperties(input.spreadsheetId),
@@ -132,7 +134,16 @@ export async function readGoogleSheetRows(input: {
         values: rowValues,
       };
     })
-    .filter((row) => Object.values(row.values).some((value) => value.length > 0));
+    .filter((row) => Object.values(row.values).some((value) => value.length > 0))
+    .filter((row) => {
+      if (input.fromRow !== undefined && row.rowNumber < input.fromRow) {
+        return false;
+      }
+      if (input.toRow !== undefined && row.rowNumber > input.toRow) {
+        return false;
+      }
+      return true;
+    });
 
   return {
     spreadsheetId: input.spreadsheetId,

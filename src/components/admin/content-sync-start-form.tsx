@@ -18,6 +18,12 @@ export function ContentSyncStartForm({
     sheetName: string;
     sheetPlaceholder: string;
     sheetHint: string;
+    fromRow: string;
+    fromRowPlaceholder: string;
+    fromRowHint: string;
+    toRow: string;
+    toRowPlaceholder: string;
+    toRowHint: string;
     submit: string;
     pending: string;
   };
@@ -31,7 +37,7 @@ export function ContentSyncStartForm({
   };
 
   return (
-    <form action={handleAction} className="grid gap-x-6 gap-y-4 lg:grid-cols-[1fr_1fr_auto] lg:items-start relative">
+    <form action={handleAction} className="grid gap-x-4 gap-y-4 lg:grid-cols-[2fr_2fr_1fr_1fr_auto] lg:items-start relative">
       {isPending && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl" />
       )}
@@ -47,6 +53,24 @@ export function ContentSyncStartForm({
           name="sheet_name"
           className={inputClassName()}
           placeholder={labels.sheetPlaceholder}
+        />
+      </Field>
+      <Field label={labels.fromRow} hint={labels.fromRowHint}>
+        <input
+          name="sync_from_row"
+          type="number"
+          min="1"
+          className={inputClassName()}
+          placeholder={labels.fromRowPlaceholder}
+        />
+      </Field>
+      <Field label={labels.toRow} hint={labels.toRowHint}>
+        <input
+          name="sync_to_row"
+          type="number"
+          min="1"
+          className={inputClassName()}
+          placeholder={labels.toRowPlaceholder}
         />
       </Field>
       <div className="lg:pt-7 relative z-20">

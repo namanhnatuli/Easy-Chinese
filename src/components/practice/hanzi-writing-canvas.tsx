@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PenTool } from "lucide-react";
 
 function drawGrid(context: CanvasRenderingContext2D, width: number, height: number) {
   context.clearRect(0, 0, width, height);
@@ -55,6 +56,9 @@ export function HanziWritingCanvas({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawingRef = useRef(false);
+  const [strokeWidth, setStrokeWidth] = useState(8);
+  const strokeWidthRef = useRef(strokeWidth);
+  strokeWidthRef.current = strokeWidth;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,7 +79,6 @@ export function HanziWritingCanvas({
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.lineCap = "round";
     context.lineJoin = "round";
-    context.lineWidth = 8;
     context.strokeStyle = "#0f172a";
     context.clearRect(0, 0, width, height);
     context.fillStyle = "#f8fafc";
@@ -117,6 +120,7 @@ export function HanziWritingCanvas({
       drawingRef.current = true;
       event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
+      ctx.lineWidth = strokeWidthRef.current;
       ctx.beginPath();
       ctx.moveTo(point.x, point.y);
     }
@@ -172,10 +176,25 @@ export function HanziWritingCanvas({
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="h-[20rem] w-full touch-none rounded-[1.5rem] bg-slate-50 shadow-inner sm:h-[24rem]"
-      aria-label="Hanzi writing canvas"
-    />
+    <div className="group relative">
+      <canvas
+        ref={canvasRef}
+        className="h-[20rem] w-full touch-none rounded-[1.5rem] bg-slate-50 shadow-inner sm:h-[24rem]"
+        aria-label="Hanzi writing canvas"
+      />
+      <div className="absolute bottom-4 right-4 flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 px-4 py-2 opacity-0 shadow-sm backdrop-blur transition-opacity focus-within:opacity-100 group-hover:opacity-100 dark:border-white/10 dark:bg-black/40">
+        <PenTool className="size-4 text-slate-500 dark:text-slate-400" />
+        <input
+          type="range"
+          min="2"
+          max="20"
+          step="1"
+          value={strokeWidth}
+          onChange={(e) => setStrokeWidth(parseInt(e.target.value, 10))}
+          className="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-slate-200 accent-emerald-500 dark:bg-slate-700 dark:accent-emerald-400"
+          aria-label="Stroke width"
+        />
+      </div>
+    </div>
   );
 }

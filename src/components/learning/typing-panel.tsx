@@ -42,17 +42,17 @@ export function TypingPanel({
   }
 
   return (
-    <section className="rounded-[2rem] bg-slate-950 text-white">
-      <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
+    <section>
+      <div className="mb-6 flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("learning.typing")}</span>
         <span>
           {currentIndex} / {total}
         </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-8">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-[1.5rem] border bg-card p-8 shadow-sm">
         <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">
+          <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
             {question.variant === "meaning_to_pinyin"
               ? t("learning.meaningToPinyin")
               : t("learning.pinyinToChinese")}
@@ -67,18 +67,18 @@ export function TypingPanel({
           aria-label={t("learning.typeYourAnswer")}
           aria-describedby={question.hint ? "typing-question-hint" : undefined}
           disabled={isLocked}
-          className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-base text-white outline-none placeholder:text-slate-500 focus:border-emerald-300"
+          className="w-full rounded-2xl border bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-emerald-500"
         />
 
         {question.hint ? (
-          <p id="typing-question-hint" className="text-sm text-slate-400">
+          <p id="typing-question-hint" className="text-sm text-muted-foreground">
             {t("learning.hint", { value: question.hint })}
           </p>
         ) : null}
 
         {feedback ? (
           <div
-            className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-200"
+            className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
             role="status"
             aria-live="polite"
           >
@@ -89,14 +89,13 @@ export function TypingPanel({
         <div className="flex flex-wrap gap-3">
           {!feedback ? (
             <>
-              <Button type="submit" variant="secondary" className="bg-white text-slate-950 hover:bg-white/90">
+              <Button type="submit" variant="secondary">
                 {t("learning.checkAnswer")}
               </Button>
               <Button
                 type="button"
                 onClick={onSkip}
                 variant="outline"
-                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 disabled={isLocked}
               >
                 {t("learning.skip")}
@@ -107,7 +106,6 @@ export function TypingPanel({
               type="button"
               onClick={onNext}
               variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
             >
               {t("learning.nextWord")}
             </Button>

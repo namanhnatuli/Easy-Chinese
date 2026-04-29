@@ -222,7 +222,8 @@
     "radical": "部首",
     "allLevels": "所有等级",
     "allTopics": "所有主题",
-    "allRadicals": "所有部首"
+    "allRadicals": "所有部首",
+    "searchPlaceholder": "搜索..."
   },
   "lessons": {
     "eyebrow": "课程",
@@ -432,6 +433,12 @@
       "sheetPlaceholder": "Vocabulary",
       "sheetHintDefault": "可选。默认使用“{value}”。",
       "sheetHintRequired": "如果未设置 GOOGLE_SHEETS_DEFAULT_SHEET_NAME，则此项必填。",
+      "fromRow": "起始行",
+      "fromRowPlaceholder": "例如: 2",
+      "fromRowHint": "可选。指定同步起始行。",
+      "toRow": "结束行",
+      "toRowPlaceholder": "例如: 100",
+      "toRowHint": "可选。指定同步结束行。",
       "startPreview": "开始预览",
       "startingPreview": "正在开始预览…",
       "historyTitle": "批次历史",
@@ -1162,10 +1169,16 @@
         "sortOrder": "排序",
         "topic": "主题",
         "noTopic": "无主题",
+        "manageTopics": "管理主题",
         "published": "已发布",
         "description": "描述",
         "orderedWords": "有序词汇",
-        "orderedGrammar": "有序语法点"
+        "orderedGrammar": "有序语法点",
+        "searchOptions": "搜索...",
+        "previousPage": "上一页",
+        "nextPage": "下一页",
+        "selectedCount": "已选择 {count} 个",
+        "clearAll": "清除全部"
       },
       "create": {
         "title": "新建课程",

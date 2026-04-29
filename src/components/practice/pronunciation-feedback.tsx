@@ -125,23 +125,22 @@ export function PronunciationFeedback({
 
   if (!supported) {
     return (
-      <div className="rounded-[1.25rem] border border-dashed border-white/15 bg-black/20 p-4 text-sm text-slate-300">
+      <div className="rounded-[1.25rem] border border-dashed bg-secondary/50 p-4 text-sm text-muted-foreground">
         {t("practice.reading.pronunciationUnsupported")}
       </div>
     );
   }
 
   return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
+    <div className="rounded-[1.25rem] border bg-secondary/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-white">{t("practice.reading.pronunciationTitle")}</p>
-          <p className="mt-1 text-sm text-slate-300">{t("practice.reading.pronunciationDescription")}</p>
+          <p className="text-sm font-semibold text-foreground">{t("practice.reading.pronunciationTitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("practice.reading.pronunciationDescription")}</p>
         </div>
         <Button
           type="button"
           variant={listening ? "secondary" : "outline"}
-          className={!listening ? "border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white" : undefined}
           onClick={toggleListening}
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
@@ -157,14 +156,14 @@ export function PronunciationFeedback({
             </Badge>
             <Badge variant="outline">{Math.round(comparison.matchRatio * 100)}%</Badge>
           </div>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-muted-foreground">
             {t("practice.reading.transcriptLabel")}: {comparison.transcript}
           </p>
           <div className="flex flex-wrap gap-2">
             {comparison.segments.map((segment, index) => (
               <span
                 key={`${segment.character}-${index}`}
-                className={segment.expected ? "rounded-lg bg-emerald-400/15 px-2 py-1 text-emerald-100" : "rounded-lg bg-rose-400/15 px-2 py-1 text-rose-100"}
+                className={segment.expected ? "rounded-lg bg-emerald-500/10 px-2 py-1 text-emerald-600 dark:text-emerald-400" : "rounded-lg bg-rose-500/10 px-2 py-1 text-rose-600 dark:text-rose-400"}
               >
                 {segment.character}
               </span>

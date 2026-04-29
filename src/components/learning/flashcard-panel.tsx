@@ -41,54 +41,54 @@ export function FlashcardPanel({
     {
       grade: "hard",
       labelKey: "hard",
-      className: "bg-amber-300 text-slate-950 hover:bg-amber-200",
+      className: "bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50",
     },
     {
       grade: "good",
       labelKey: "good",
-      className: "bg-emerald-300 text-slate-950 hover:bg-emerald-200",
+      className: "bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50",
     },
     {
       grade: "easy",
       labelKey: "easy",
-      className: "bg-sky-300 text-slate-950 hover:bg-sky-200",
+      className: "bg-sky-100 text-sky-900 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-200 dark:hover:bg-sky-900/50",
     },
   ];
 
   return (
-    <section className="rounded-[2rem] bg-slate-950 text-white">
-      <div className="mb-6 flex items-center justify-between text-sm text-slate-300">
+    <section>
+      <div className="mb-6 flex items-center justify-between text-sm text-muted-foreground">
         <span>{t("learning.flashcard")}</span>
         <span>
           {currentIndex} / {total}
         </span>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-8 text-center">
-        <p className="text-sm uppercase tracking-[0.24em] text-slate-400">{prompt.frontLabel}</p>
+      <div className="rounded-[1.5rem] border bg-card p-8 text-center shadow-sm">
+        <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">{prompt.frontLabel}</p>
         <p className="text-hanzi mt-4 text-5xl">{prompt.frontText}</p>
 
         {revealed ? (
           <div className="mt-6 space-y-2">
-            <p className="text-sm uppercase tracking-[0.24em] text-emerald-300">{t("learning.answer")}</p>
-            <p className="text-hanzi mt-1 text-emerald-100">{prompt.back.hanzi}</p>
-            <p className="text-pinyin text-slate-200">{prompt.back.pinyin}</p>
-            <p className="text-meaning text-slate-200">{prompt.back.vietnameseMeaning}</p>
+            <p className="text-sm uppercase tracking-[0.24em] text-emerald-600 dark:text-emerald-400">{t("learning.answer")}</p>
+            <p className="text-hanzi mt-1 text-emerald-700 dark:text-emerald-300">{prompt.back.hanzi}</p>
+            <p className="text-pinyin text-foreground">{prompt.back.pinyin}</p>
+            <p className="text-meaning text-foreground">{prompt.back.vietnameseMeaning}</p>
             {prompt.back.hanViet ? (
-              <p className="text-sm text-slate-400">Hán Việt: {prompt.back.hanViet}</p>
+              <p className="text-sm text-muted-foreground">Hán Việt: {prompt.back.hanViet}</p>
             ) : null}
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Simplified: {prompt.back.simplified} · Traditional: {prompt.back.traditional ?? "—"}
             </p>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-slate-400">{t("learning.revealAnswer")}</p>
+          <p className="mt-6 text-sm text-muted-foreground">{t("learning.revealAnswer")}</p>
         )}
       </div>
 
       {feedback ? (
         <div
-          className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-200"
+          className="mt-5 rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
           role="status"
           aria-live="polite"
         >
@@ -101,7 +101,6 @@ export function FlashcardPanel({
           <Button
             onClick={onReveal}
             variant="secondary"
-            className="bg-white text-slate-950 hover:bg-white/90"
             disabled={isLocked}
           >
             {t("learning.revealAnswer")}
@@ -131,7 +130,6 @@ export function FlashcardPanel({
           <Button
             onClick={onNext}
             variant="outline"
-            className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
           >
             {t("learning.nextWord")}
           </Button>

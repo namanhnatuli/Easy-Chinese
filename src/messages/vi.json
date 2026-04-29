@@ -222,7 +222,8 @@
     "radical": "Bộ thủ",
     "allLevels": "Tất cả cấp độ",
     "allTopics": "Tất cả chủ đề",
-    "allRadicals": "Tất cả bộ thủ"
+    "allRadicals": "Tất cả bộ thủ",
+    "searchPlaceholder": "Tìm kiếm..."
   },
   "lessons": {
     "eyebrow": "Bài học",
@@ -432,6 +433,12 @@
       "sheetPlaceholder": "Vocabulary",
       "sheetHintDefault": "Tùy chọn. Mặc định dùng \"{value}\".",
       "sheetHintRequired": "Bắt buộc nếu GOOGLE_SHEETS_DEFAULT_SHEET_NAME chưa được thiết lập.",
+      "fromRow": "Từ dòng",
+      "fromRowPlaceholder": "VD: 2",
+      "fromRowHint": "Tùy chọn. Chỉ định dòng bắt đầu đồng bộ.",
+      "toRow": "Đến dòng",
+      "toRowPlaceholder": "VD: 100",
+      "toRowHint": "Tùy chọn. Chỉ định dòng kết thúc đồng bộ.",
       "startPreview": "Bắt đầu preview",
       "startingPreview": "Đang bắt đầu preview…",
       "historyTitle": "Lịch sử batch",
@@ -1162,10 +1169,16 @@
         "sortOrder": "Thứ tự sắp xếp",
         "topic": "Chủ đề",
         "noTopic": "Không có chủ đề",
+        "manageTopics": "Quản lý chủ đề",
         "published": "Đã xuất bản",
         "description": "Mô tả",
         "orderedWords": "Từ theo thứ tự",
-        "orderedGrammar": "Điểm ngữ pháp theo thứ tự"
+        "orderedGrammar": "Điểm ngữ pháp theo thứ tự",
+        "searchOptions": "Tìm kiếm...",
+        "previousPage": "Trước",
+        "nextPage": "Sau",
+        "selectedCount": "Đã chọn {count}",
+        "clearAll": "Bỏ chọn tất cả"
       },
       "create": {
         "title": "Bài học mới",

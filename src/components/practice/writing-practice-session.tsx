@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Eraser, LogIn } from "lucide-react
 import { toast } from "sonner";
 
 import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
+import { HanziWriterAnimator } from "@/components/practice/hanzi-writer-animator";
 import { HanziWritingCanvas } from "@/components/practice/hanzi-writing-canvas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -133,29 +134,29 @@ export function WritingPracticeSession({
 
   if (!currentCharacter) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-6 text-white shadow-panel">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+      <section className="surface-panel p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           {t("practice.completeEyebrow")}
         </p>
-        <h2 className="mt-2 text-3xl font-semibold">{word.hanzi}</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">{t("practice.writing.completeDescription")}</p>
+        <h2 className="mt-2 text-3xl font-semibold text-foreground">{word.hanzi}</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{t("practice.writing.completeDescription")}</p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-[1.5rem] bg-slate-400/10 p-4">
-            <p className="text-sm text-slate-200">{t("practice.grades.again")}</p>
-            <p className="mt-2 text-3xl font-semibold">{againCount}</p>
+          <div className="rounded-[1.5rem] bg-slate-500/10 p-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t("practice.grades.again")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{againCount}</p>
           </div>
-          <div className="rounded-[1.5rem] bg-amber-400/10 p-4">
-            <p className="text-sm text-amber-200">{t("practice.grades.hard")}</p>
-            <p className="mt-2 text-3xl font-semibold">{hardCount}</p>
+          <div className="rounded-[1.5rem] bg-amber-500/10 p-4">
+            <p className="text-sm text-amber-600 dark:text-amber-400">{t("practice.grades.hard")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{hardCount}</p>
           </div>
-          <div className="rounded-[1.5rem] bg-emerald-400/10 p-4">
-            <p className="text-sm text-emerald-200">{t("practice.grades.good")}</p>
-            <p className="mt-2 text-3xl font-semibold">{goodCount}</p>
+          <div className="rounded-[1.5rem] bg-emerald-500/10 p-4">
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("practice.grades.good")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{goodCount}</p>
           </div>
-          <div className="rounded-[1.5rem] bg-sky-400/10 p-4">
-            <p className="text-sm text-sky-200">{t("practice.grades.easy")}</p>
-            <p className="mt-2 text-3xl font-semibold">{easyCount}</p>
+          <div className="rounded-[1.5rem] bg-sky-500/10 p-4">
+            <p className="text-sm text-sky-600 dark:text-sky-400">{t("practice.grades.easy")}</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{easyCount}</p>
           </div>
         </div>
 
@@ -169,11 +170,10 @@ export function WritingPracticeSession({
               setEasyCount(0);
               setClearSignal((value) => value + 1);
             }}
-            className="bg-white text-slate-950 hover:bg-white/90"
           >
             {t("practice.restart")}
           </Button>
-          <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+          <Button asChild variant="outline">
             <Link href={link("/practice/writing")}>{t("practice.writing.backToWords")}</Link>
           </Button>
         </div>
@@ -182,15 +182,15 @@ export function WritingPracticeSession({
   }
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-5 text-white shadow-panel sm:p-6 lg:p-8">
+    <section className="surface-panel p-5 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {t("practice.writing.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">{word.hanzi}</h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">{t("practice.writing.description")}</p>
+            <h2 className="text-3xl font-semibold text-foreground">{word.hanzi}</h2>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t("practice.writing.description")}</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -200,39 +200,44 @@ export function WritingPracticeSession({
           </div>
         </div>
 
-        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-white transition-all" style={{ width: `${Math.max(progressPercent, 6)}%` }} />
+        <div className="h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.max(progressPercent, 6)}%` }} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <aside className="space-y-4 rounded-[1.75rem] border border-white/10 bg-white/5 p-5">
+          <aside className="space-y-4 rounded-[1.75rem] border bg-muted/10 p-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 {t("practice.writing.targetCharacter")}
               </p>
-              <p className="mt-4 text-[5rem] font-semibold leading-none text-white sm:text-[6rem]">
-                {currentCharacter.character}
-              </p>
-              <p className="mt-4 text-lg text-slate-300">{word.pinyin}</p>
-              <p className="mt-2 text-base text-slate-300">{word.vietnameseMeaning}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-6">
+                <p className="text-[5rem] font-semibold leading-none text-foreground sm:text-[6rem]">
+                  {currentCharacter.character}
+                </p>
+                <div className="flex items-center justify-center rounded-2xl bg-secondary/50 p-2 shadow-inner">
+                  <HanziWriterAnimator character={currentCharacter.character} size={90} />
+                </div>
+              </div>
+              <p className="mt-4 text-lg text-muted-foreground">{word.pinyin}</p>
+              <p className="mt-2 text-base text-muted-foreground">{word.vietnameseMeaning}</p>
             </div>
 
-            <div className="rounded-[1.25rem] bg-black/20 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">{t("practice.writing.characterStatus")}</p>
+            <div className="rounded-[1.25rem] bg-secondary/50 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{t("practice.writing.characterStatus")}</p>
               <p className="mt-3">{t("practice.status", { value: currentCharacter.status })}</p>
               <p className="mt-1">{t("practice.writing.attempts", { count: currentCharacter.attemptCount })}</p>
             </div>
 
-            <div className="rounded-[1.25rem] bg-black/20 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">{t("practice.writing.strokeGuideTitle")}</p>
+            <div className="rounded-[1.25rem] bg-secondary/50 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{t("practice.writing.strokeGuideTitle")}</p>
               <p className="mt-3">{t("practice.writing.strokeGuideDescription")}</p>
               <p className="mt-2">{t("practice.writing.strokeGuideRule")}</p>
             </div>
 
             {(!isAuthenticated || showAnonymousNotice) ? (
-              <div className="rounded-[1.25rem] border border-amber-300/20 bg-amber-400/10 p-4">
-                <p className="text-sm font-semibold text-amber-100">{t("practice.signInNotice")}</p>
-                <Button asChild className="mt-3 bg-white text-slate-950 hover:bg-white/90">
+              <div className="rounded-[1.25rem] border border-amber-500/20 bg-amber-500/10 p-4">
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{t("practice.signInNotice")}</p>
+                <Button asChild variant="outline" className="mt-3">
                   <Link href={signInHref}>
                     <LogIn className="size-4" />
                     {t("practice.signInToSave")}
@@ -242,7 +247,7 @@ export function WritingPracticeSession({
             ) : null}
           </aside>
 
-          <div className="space-y-4 rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-4 sm:p-6">
+          <div className="space-y-4 rounded-[1.75rem] border bg-muted/30 p-4 sm:p-6">
             <HanziWritingCanvas
               clearSignal={clearSignal}
               showGrid={showGrid}
@@ -284,14 +289,14 @@ export function WritingPracticeSession({
                   <span className="text-[0.68rem] opacity-80">{dueHints.hard}</span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-emerald-500 text-white hover:bg-emerald-400" onClick={() => void handlePersist("good")}>
+              <Button type="button" size="lg" className="bg-emerald-600 text-white hover:bg-emerald-500" onClick={() => void handlePersist("good")}>
                 <CheckCircle2 className="size-4" />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{t("practice.grades.good")}</span>
                   <span className="text-[0.68rem] opacity-80">{dueHints.good}</span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-sky-500 text-white hover:bg-sky-400" onClick={() => void handlePersist("easy")}>
+              <Button type="button" size="lg" className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => void handlePersist("easy")}>
                 <span className="flex flex-col items-center leading-tight">
                   <span>{t("practice.grades.easy")}</span>
                   <span className="text-[0.68rem] opacity-80">{dueHints.easy}</span>

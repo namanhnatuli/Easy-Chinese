@@ -35,7 +35,7 @@ export default async function LearnLessonPage({
       />
 
       {lesson.words.length === 0 ? (
-        <section className="rounded-[2rem] border border-white/10 bg-slate-950 p-5 text-white shadow-panel sm:p-6 lg:p-8">
+        <section className="rounded-[2rem] border border-border bg-card p-5 text-card-foreground shadow-panel sm:p-6 lg:p-8">
           <EmptyState
             title={t("learn.notReadyTitle")}
             description={t("learn.notReadyDescription")}

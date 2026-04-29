@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { z } from "zod";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +8,25 @@ import { listWritingPracticeWords } from "@/features/practice/queries";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 
-export default async function PracticeWritingPage() {
+const writingSearchSchema = z.object({
+  lessonId: z.string().uuid().optional(),
+});
+
+export default async function PracticeWritingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const rawSearchParams = (await searchParams) ?? {};
+  const resolvedSearchParams = writingSearchSchema.parse({
+    lessonId: Array.isArray(rawSearchParams.lessonId) ? rawSearchParams.lessonId[0] : rawSearchParams.lessonId,
+  });
+
   const [user, { t, link }] = await Promise.all([getCurrentUser(), getServerI18n()]);
-  const words = await listWritingPracticeWords({ userId: user?.id });
+  const words = await listWritingPracticeWords({
+    userId: user?.id,
+    lessonId: resolvedSearchParams.lessonId,
+  });
 
   return (
     <div className="page-shell">

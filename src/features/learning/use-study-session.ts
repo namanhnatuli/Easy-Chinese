@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+
+function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
+  const ref = useRef(fn);
+  useLayoutEffect(() => {
+    ref.current = fn;
+  });
+  return useCallback((...args: Parameters<T>) => ref.current(...args), []) as T;
+}
 
 import { evaluateMultipleChoiceAnswer, evaluateTypingAnswer } from "@/features/learning/evaluation";
 import { mapMemoryGradeToReviewResult } from "@/features/memory/spaced-repetition";
@@ -56,7 +64,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     setFeedback(null);
   }, [index, mode]);
 
-  const persistOutcome = useEffectEvent(
+  const persistOutcome = useEventCallback(
     async (result: ReviewResult, activeMode: SessionMode, grade?: SchedulerGrade) => {
     if (!currentItem) {
       return;
@@ -76,7 +84,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     },
   );
 
-  const handleOutcome = useEffectEvent((result: ReviewResult, message: string, grade?: SchedulerGrade) => {
+  const handleOutcome = useEventCallback((result: ReviewResult, message: string, grade?: SchedulerGrade) => {
     if (!currentItem) {
       return;
     }
@@ -92,11 +100,11 @@ export function useStudySession<TWord extends LessonStudyWord>({
     });
   });
 
-  const goToNextItem = useEffectEvent(() => {
+  const goToNextItem = useEventCallback(() => {
     setIndex((current) => Math.min(current + 1, totalItems));
   });
 
-  const handleFlashcardGrade = useEffectEvent((grade: SchedulerGrade) => {
+  const handleFlashcardGrade = useEventCallback((grade: SchedulerGrade) => {
     if (feedback) {
       return;
     }
@@ -118,7 +126,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     handleOutcome(result, message, grade);
   });
 
-  const handleMultipleChoiceSubmit = useEffectEvent(() => {
+  const handleMultipleChoiceSubmit = useEventCallback(() => {
     if (feedback || !multipleChoiceQuestion) {
       return;
     }
@@ -142,7 +150,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     );
   });
 
-  const handleTypingSubmit = useEffectEvent(() => {
+  const handleTypingSubmit = useEventCallback(() => {
     if (feedback || !typingQuestion) {
       return;
     }
@@ -163,7 +171,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     );
   });
 
-  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+  const handleKeyDown = useEventCallback((event: KeyboardEvent) => {
     if (!currentItem) {
       return;
     }

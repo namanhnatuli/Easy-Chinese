@@ -124,17 +124,35 @@ export interface AdminSelectOption {
 export async function listWordsPage(input: {
   page: number;
   pageSize: number;
+  q?: string;
+  hsk?: number;
+  tag?: string;
 }): Promise<AdminWordListPage> {
   const { supabase } = await requireAdminSupabase();
   const requestedPage = Number.isFinite(input.page) && input.page > 0 ? Math.floor(input.page) : 1;
   const pageSize =
     Number.isFinite(input.pageSize) && input.pageSize > 0 ? Math.floor(input.pageSize) : 10;
-  const { count, error: countError } = await supabase
-    .from("words")
-    .select("id", {
+  let query: any = supabase.from("words").select("id", {
+    count: "exact",
+    head: true,
+  });
+
+  if (input.tag) {
+    query = supabase.from("words").select("id, word_tag_links!inner(word_tags!inner(slug))", {
       count: "exact",
       head: true,
-    });
+    }).eq("word_tag_links.word_tags.slug", input.tag);
+  }
+
+  if (input.q) {
+    query = query.or(`hanzi.ilike.%${input.q}%,pinyin.ilike.%${input.q}%,vietnamese_meaning.ilike.%${input.q}%,slug.ilike.%${input.q}%`);
+  }
+
+  if (input.hsk) {
+    query = query.eq("hsk_level", input.hsk);
+  }
+
+  const { count, error: countError } = await query;
 
   if (countError) throw countError;
 
@@ -143,15 +161,34 @@ export async function listWordsPage(input: {
   const page = Math.min(requestedPage, pageCount);
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, error } = await supabase
+  let dataQuery: any = supabase
     .from("words")
     .select("id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published, updated_at")
     .order("updated_at", { ascending: false })
     .range(from, to);
 
+  if (input.tag) {
+    dataQuery = supabase
+      .from("words")
+      .select("id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published, updated_at, word_tag_links!inner(word_tags!inner(slug))")
+      .eq("word_tag_links.word_tags.slug", input.tag)
+      .order("updated_at", { ascending: false })
+      .range(from, to);
+  }
+
+  if (input.q) {
+    dataQuery = dataQuery.or(`hanzi.ilike.%${input.q}%,pinyin.ilike.%${input.q}%,vietnamese_meaning.ilike.%${input.q}%,slug.ilike.%${input.q}%`);
+  }
+
+  if (input.hsk) {
+    dataQuery = dataQuery.eq("hsk_level", input.hsk);
+  }
+
+  const { data, error } = await dataQuery;
+
   if (error) throw error;
 
-  const wordIds = (data ?? []).map((word) => word.id);
+  const wordIds = (data ?? []).map((word: any) => word.id);
   const lessonLinksByWordId = new Map<
     string,
     Array<{
@@ -197,7 +234,7 @@ export async function listWordsPage(input: {
 
   return {
     items:
-      (data ?? []).map((word) => {
+      (data ?? []).map((word: any) => {
         const lessonLinks = lessonLinksByWordId.get(word.id) ?? [];
         return {
           ...word,

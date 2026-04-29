@@ -369,7 +369,7 @@ async function listGeneratorWords(input: LessonGeneratorInput): Promise<LessonGe
     .order("pinyin");
 
   if (!input.includeUnapprovedWords) {
-    query = query.eq("is_published", true).eq("review_status", "approved");
+    query = query.or("is_published.eq.true,review_status.eq.approved");
   }
 
   const { data, error } = await query;
