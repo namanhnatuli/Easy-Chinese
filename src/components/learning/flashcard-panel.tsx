@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Volume2 } from "lucide-react";
+import { StudyDetailedAnswer } from "@/components/learning/study-detailed-answer";
 import type { FlashcardPrompt, StudyFeedback } from "@/features/learning/types";
 import type { SchedulerGrade } from "@/types/domain";
 import { useI18n } from "@/i18n/client";
@@ -28,6 +30,12 @@ export function FlashcardPanel({
 }) {
   const { t } = useI18n();
   const isLocked = feedback !== null;
+
+  const handlePlayAudio = () => {
+    const utterance = new SpeechSynthesisUtterance(prompt.back.hanzi);
+    utterance.lang = "zh-CN";
+    window.speechSynthesis.speak(utterance);
+  };
   const gradeButtons: Array<{
     grade: SchedulerGrade;
     labelKey: "again" | "hard" | "good" | "easy";
@@ -36,7 +44,7 @@ export function FlashcardPanel({
     {
       grade: "again",
       labelKey: "again",
-      className: "border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white",
+      className: "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-900/30 dark:text-slate-200 dark:hover:bg-slate-900/50",
     },
     {
       grade: "hard",
@@ -66,21 +74,18 @@ export function FlashcardPanel({
 
       <div className="rounded-[1.5rem] border bg-card p-8 text-center shadow-sm">
         <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">{prompt.frontLabel}</p>
-        <p className="text-hanzi mt-4 text-5xl">{prompt.frontText}</p>
+        <div className="mt-4 flex flex-col items-center gap-4">
+          <p className="text-hanzi text-5xl">{prompt.frontText}</p>
+          {!revealed ? (
+            <Button variant="outline" size="sm" onClick={handlePlayAudio} className="text-muted-foreground hover:text-foreground">
+              <Volume2 className="mr-2 h-4 w-4" />
+              Nghe phát âm
+            </Button>
+          ) : null}
+        </div>
 
         {revealed ? (
-          <div className="mt-6 space-y-2">
-            <p className="text-sm uppercase tracking-[0.24em] text-emerald-600 dark:text-emerald-400">{t("learning.answer")}</p>
-            <p className="text-hanzi mt-1 text-emerald-700 dark:text-emerald-300">{prompt.back.hanzi}</p>
-            <p className="text-pinyin text-foreground">{prompt.back.pinyin}</p>
-            <p className="text-meaning text-foreground">{prompt.back.vietnameseMeaning}</p>
-            {prompt.back.hanViet ? (
-              <p className="text-sm text-muted-foreground">Hán Việt: {prompt.back.hanViet}</p>
-            ) : null}
-            <p className="text-sm text-muted-foreground">
-              Simplified: {prompt.back.simplified} · Traditional: {prompt.back.traditional ?? "—"}
-            </p>
-          </div>
+          <StudyDetailedAnswer details={prompt.back} />
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{t("learning.revealAnswer")}</p>
         )}

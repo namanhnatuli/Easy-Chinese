@@ -2,6 +2,7 @@
 
 import { FormEvent } from "react";
 
+import { StudyDetailedAnswer } from "@/components/learning/study-detailed-answer";
 import { Button } from "@/components/ui/button";
 import type { StudyFeedback, TypingStudyQuestion } from "@/features/learning/types";
 import { useI18n } from "@/i18n/client";
@@ -55,7 +56,9 @@ export function TypingPanel({
           <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">
             {question.variant === "meaning_to_pinyin"
               ? t("learning.meaningToPinyin")
-              : t("learning.pinyinToChinese")}
+              : question.variant === "pinyin_to_hanzi"
+                ? t("learning.pinyinToChinese")
+                : t("learning.meaningToHanzi")}
           </p>
           <p className="mt-4 text-2xl font-semibold">{question.prompt}</p>
         </div>
@@ -77,12 +80,18 @@ export function TypingPanel({
         ) : null}
 
         {feedback ? (
-          <div
-            className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
-            role="status"
-            aria-live="polite"
-          >
-            <p>{feedback.message}</p>
+          <div className="space-y-4">
+            <div
+              className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              <p>{feedback.message}</p>
+            </div>
+
+            {question.detailedAnswer ? (
+              <StudyDetailedAnswer details={question.detailedAnswer} />
+            ) : null}
           </div>
         ) : null}
 

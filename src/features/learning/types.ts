@@ -10,6 +10,14 @@ export interface LessonStudyWord {
   hanViet: string | null;
   vietnameseMeaning: string;
   sortOrder: number;
+  notes?: string | null;
+  mnemonic?: string | null;
+  examples?: Array<{
+    id: string;
+    chineseText: string;
+    pinyin: string;
+    vietnameseMeaning: string;
+  }>;
 }
 
 export interface FlashcardPrompt {
@@ -23,6 +31,14 @@ export interface FlashcardPrompt {
     pinyin: string;
     hanViet: string | null;
     vietnameseMeaning: string;
+    notes?: string | null;
+    mnemonic?: string | null;
+    examples?: Array<{
+      id: string;
+      chineseText: string;
+      pinyin: string;
+      vietnameseMeaning: string;
+    }>;
   };
 }
 
@@ -33,15 +49,17 @@ export interface MultipleChoiceStudyQuestion {
   choices: string[];
   correctChoice: string;
   explanation: string;
+  detailedAnswer?: FlashcardPrompt["back"];
 }
 
 export interface TypingStudyQuestion {
   mode: "typing";
-  variant: "meaning_to_pinyin" | "pinyin_to_hanzi";
+  variant: "meaning_to_pinyin" | "pinyin_to_hanzi" | "meaning_to_hanzi";
   prompt: string;
   acceptedAnswers: string[];
   placeholder: string;
   hint?: string;
+  detailedAnswer?: FlashcardPrompt["back"];
 }
 
 export interface StudyOutcomeSubmission {

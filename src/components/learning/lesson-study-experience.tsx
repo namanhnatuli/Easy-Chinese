@@ -231,9 +231,15 @@ export function LessonStudyExperience({
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   {t("learning.currentWord")}
                 </p>
-                <p className="text-hanzi mt-3">{session.currentItem.hanzi}</p>
-                <p className="text-pinyin mt-2 text-muted-foreground">{session.currentItem.pinyin}</p>
-                <p className="text-meaning mt-3 text-muted-foreground">{session.currentItem.vietnameseMeaning}</p>
+                {(session.mode === "flashcard" && !session.revealed) || (session.mode !== "flashcard" && !session.feedback) ? (
+                  <p className="mt-4 text-2xl font-bold tracking-widest text-muted-foreground/30">???</p>
+                ) : (
+                  <>
+                    <p className="text-hanzi mt-3">{session.currentItem.hanzi}</p>
+                    <p className="text-pinyin mt-2 text-muted-foreground">{session.currentItem.pinyin}</p>
+                    <p className="text-meaning mt-3 text-muted-foreground">{session.currentItem.vietnameseMeaning}</p>
+                  </>
+                )}
               </div>
 
               <div className="rounded-[1.25rem] bg-muted/50 p-4">

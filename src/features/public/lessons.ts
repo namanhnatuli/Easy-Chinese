@@ -59,6 +59,14 @@ export interface PublicLessonWord {
   hanViet: string | null;
   vietnameseMeaning: string;
   sortOrder: number;
+  notes?: string | null;
+  mnemonic?: string | null;
+  examples?: Array<{
+    id: string;
+    chineseText: string;
+    pinyin: string;
+    vietnameseMeaning: string;
+  }>;
 }
 
 export interface PublicLessonGrammarPoint {
@@ -185,7 +193,7 @@ async function getLessonComposition(lessonId: string) {
     await Promise.all([
       supabase
         .from("lesson_words")
-        .select("sort_order, words(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning)")
+        .select("sort_order, words(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, notes, mnemonic, word_examples(id, chinese_text, pinyin, vietnamese_meaning))")
         .eq("lesson_id", lessonId)
         .order("sort_order"),
       supabase
@@ -221,6 +229,14 @@ async function getLessonComposition(lessonId: string) {
           hanViet: word.han_viet,
           vietnameseMeaning: word.vietnamese_meaning,
           sortOrder: item.sort_order,
+          notes: word.notes,
+          mnemonic: word.mnemonic,
+          examples: (word.word_examples ?? []).map((ex: any) => ({
+            id: ex.id,
+            chineseText: ex.chinese_text,
+            pinyin: ex.pinyin,
+            vietnameseMeaning: ex.vietnamese_meaning,
+          })),
         } satisfies PublicLessonWord;
       })
       .filter((item): item is PublicLessonWord => item !== null),

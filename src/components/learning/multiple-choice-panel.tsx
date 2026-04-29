@@ -1,5 +1,6 @@
 "use client";
 
+import { StudyDetailedAnswer } from "@/components/learning/study-detailed-answer";
 import { Button } from "@/components/ui/button";
 import type {
   MultipleChoiceStudyQuestion,
@@ -83,13 +84,19 @@ export function MultipleChoicePanel({
         </div>
 
         {feedback ? (
-          <div
-            className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
-            role="status"
-            aria-live="polite"
-          >
-            <p>{feedback.message}</p>
-            <p className="mt-2 text-muted-foreground">{question.explanation}</p>
+          <div className="space-y-4">
+            <div
+              className="rounded-2xl border bg-secondary/50 p-4 text-sm text-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              <p>{feedback.message}</p>
+              <p className="mt-2 text-muted-foreground">{question.explanation}</p>
+            </div>
+            
+            {question.detailedAnswer ? (
+              <StudyDetailedAnswer details={question.detailedAnswer} />
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -14,12 +14,10 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 export function buildFlashcardPrompt(word: LessonStudyWord, index: number): FlashcardPrompt {
-  const showChineseFront = index % 2 === 0;
-
   return {
     mode: "flashcard",
-    frontLabel: showChineseFront ? "Chinese" : "Vietnamese meaning",
-    frontText: showChineseFront ? word.hanzi : word.vietnameseMeaning,
+    frontLabel: "Hanzi",
+    frontText: word.hanzi,
     back: {
       hanzi: word.hanzi,
       simplified: word.simplified,
@@ -27,6 +25,9 @@ export function buildFlashcardPrompt(word: LessonStudyWord, index: number): Flas
       pinyin: word.pinyin,
       hanViet: word.hanViet,
       vietnameseMeaning: word.vietnameseMeaning,
+      notes: word.notes,
+      mnemonic: word.mnemonic,
+      examples: word.examples,
     },
   };
 }
@@ -70,6 +71,17 @@ export function buildMultipleChoiceQuestion(
       variant === "hanzi_to_meaning"
         ? `${word.hanzi} means “${word.vietnameseMeaning}”.`
         : `“${word.vietnameseMeaning}” is ${word.hanzi}.`,
+    detailedAnswer: {
+      hanzi: word.hanzi,
+      simplified: word.simplified,
+      traditional: word.traditional,
+      pinyin: word.pinyin,
+      hanViet: word.hanViet,
+      vietnameseMeaning: word.vietnameseMeaning,
+      notes: word.notes,
+      mnemonic: word.mnemonic,
+      examples: word.examples,
+    },
   };
 }
 
@@ -78,30 +90,28 @@ export function buildTypingQuestion(
   currentIndex: number,
 ): TypingStudyQuestion {
   const word = words[currentIndex];
-  const variant =
-    currentIndex % 2 === 0 ? "meaning_to_pinyin" : "pinyin_to_hanzi";
-
-  if (variant === "meaning_to_pinyin") {
-    return {
-      mode: "typing",
-      variant,
-      prompt: `Type the pinyin for: ${word.vietnameseMeaning}`,
-      acceptedAnswers: [word.pinyin],
-      placeholder: "Enter pinyin",
-      hint: word.hanzi,
-    };
-  }
 
   return {
     mode: "typing",
-    variant,
-    prompt: `Type the Chinese word for: ${word.pinyin}`,
+    variant: "meaning_to_hanzi",
+    prompt: `${word.vietnameseMeaning}`,
     acceptedAnswers: uniqueStrings([
       word.simplified,
       word.hanzi,
       word.traditional ?? "",
     ].filter(Boolean)),
     placeholder: "Enter Chinese characters",
-    hint: word.vietnameseMeaning,
+    hint: word.pinyin,
+    detailedAnswer: {
+      hanzi: word.hanzi,
+      simplified: word.simplified,
+      traditional: word.traditional,
+      pinyin: word.pinyin,
+      hanViet: word.hanViet,
+      vietnameseMeaning: word.vietnameseMeaning,
+      notes: word.notes,
+      mnemonic: word.mnemonic,
+      examples: word.examples,
+    },
   };
 }

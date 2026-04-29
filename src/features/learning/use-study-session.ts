@@ -84,7 +84,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
     },
   );
 
-  const handleOutcome = useEventCallback((result: ReviewResult, message: string, grade?: SchedulerGrade) => {
+  const handleOutcome = useEventCallback((result: ReviewResult, message: string, grade?: SchedulerGrade, autoAdvance?: boolean) => {
     if (!currentItem) {
       return;
     }
@@ -98,6 +98,10 @@ export function useStudySession<TWord extends LessonStudyWord>({
     startSaving(() => {
       void persistOutcome(result, mode, grade);
     });
+
+    if (autoAdvance) {
+      goToNextItem();
+    }
   });
 
   const goToNextItem = useEventCallback(() => {
@@ -123,7 +127,7 @@ export function useStudySession<TWord extends LessonStudyWord>({
       }
     })();
 
-    handleOutcome(result, message, grade);
+    handleOutcome(result, message, grade, true);
   });
 
   const handleMultipleChoiceSubmit = useEventCallback(() => {
@@ -186,6 +190,8 @@ export function useStudySession<TWord extends LessonStudyWord>({
         event.preventDefault();
         if (!revealed) {
           setRevealed(true);
+        } else if (!feedback && event.key === "Enter") {
+          handleFlashcardGrade("good");
         } else if (feedback) {
           goToNextItem();
         }
