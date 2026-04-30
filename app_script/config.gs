@@ -2,6 +2,7 @@ const CONFIG = {
   HANZI_SHEET: 'Hanzi',
   CACHE_SHEET: 'AI_CACHE',
   HEADER_ROW: 1,
+  HEADER_WIDTH: 28,
 
   COL_INPUT_TEXT: 1,
   COL_NORMALIZED_TEXT: 2,
@@ -45,13 +46,52 @@ const CONFIG = {
 
   MAX_RETRY_ATTEMPTS_PER_MODEL: 1,
   BASE_RETRY_DELAY_MS: 1500,
+  MAX_RETRY_DELAY_MS: 12000,
 
   AI_MICRO_BATCH_SIZE: 3,
   WORKER_COUNT: 5,
   WORKER_TRIGGER_INTERVAL_MIN: 5,
+  RECOVERY_TRIGGER_INTERVAL_MIN: 15,
 
-  STALE_PROCESSING_MINUTES: 15
+  STALE_PROCESSING_MINUTES: 15,
+  INLINE_PASTE_THRESHOLD_ROWS: 1,
+  ENABLE_INLINE_SINGLE_CELL_PROCESSING: true,
+  MANUAL_PROCESS_BATCH_LIMIT: 3,
+  CLAIM_LOCK_TIMEOUT_MS: 3000,
+  ROUTE_LOCK_TIMEOUT_MS: 3000,
+  GEMINI_ROUTE_STATE_PROPERTY: 'GEMINI_ROUTE_STATE'
 };
+
+const HANZI_HEADERS = [
+  'input_text',
+  'normalized_text',
+  'pinyin',
+  'meanings_vi',
+  'han_viet',
+  'traditional_variant',
+  'main_radicals',
+  'component_breakdown_json',
+  'radical_summary',
+  'hsk_level',
+  'part_of_speech',
+  'topic_tags',
+  'examples',
+  'similar_chars',
+  'character_structure_type',
+  'structure_explanation',
+  'mnemonic',
+  'notes',
+  'source_confidence',
+  'ambiguity_flag',
+  'ambiguity_note',
+  'reading_candidates',
+  'review_status',
+  'ai_status',
+  'updated_at',
+  'last_used_api_key',
+  'last_used_model',
+  'last_duration_ms'
+];
 
 const ALLOWED_TOPIC_TAGS = [
   'hoc_tap',

@@ -1,161 +1,257 @@
 function generateEntryWithGemini_(inputText, forceRefresh) {
-  if (!forceRefresh) {
-    const cached = getCachedEntry_(inputText);
-    if (cached) return cached;
+  const normalizedInput = safeString_(inputText);
+  if (!normalizedInput) {
+    throw new Error('Input text is required');
   }
 
-  const result = callGeminiRoundRobin_(inputText);
-  upsertCachedEntry_(inputText, result);
-  return result;
+  if (!forceRefresh) {
+    const cached = getCachedEntry_(normalizedInput);
+    if (cached) {
+      console.log(`[GEMINI SINGLE] cache hit input="${normalizedInput}"`);
+      return cached;
+    }
+  }
+
+  const response = generateBatchEntriesWithGemini_(
+    [{ row_key: 'single', input_text: normalizedInput }],
+    { source: 'single' }
+  );
+
+  const items = Array.isArray(response.items) ? response.items : [];
+  const item = items.find(entry => safeString_(entry.row_key) === 'single');
+
+  if (!item) {
+    const error = new Error('Gemini returned no item for single request');
+    error.__meta = response.__meta || {};
+    throw error;
+  }
+
+  item.__meta = response.__meta || {};
+  upsertCachedEntry_(normalizedInput, item);
+  return item;
 }
 
-function generateBatchEntriesWithGemini_(batchItems) {
-  return callGeminiBatchRoundRobin_(batchItems);
-}
+function generateBatchEntriesWithGemini_(batchItems, context) {
+  const requestItems = normalizeBatchItems_(batchItems);
+  if (!requestItems.length) {
+    return { items: [], __meta: {} };
+  }
 
-function generateBatchEntriesWithGeminiForKey_(batchItems, workerIndex) {
-  const keyInfo = takeNextGeminiApiKey_();
-  const modelInfo = takeNextGeminiModel_();
-
-  const apiKey = keyInfo.apiKey;
-  const model = modelInfo.model;
-
+  const route = takeNextGeminiRoute_();
   const startedAt = Date.now();
-  const keyMasked = maskApiKey_(apiKey);
+  const apiKeyMasked = maskApiKey_(route.apiKey);
+  const source = safeString_(context && context.source) || 'batch';
+  const workerLabel =
+    context && context.workerIndex !== undefined ? ` worker=${context.workerIndex}` : '';
 
   console.log(
-    `[WORKER ${workerIndex}] GEMINI START keyIndex=${keyInfo.keyIndex} key=${keyMasked} modelIndex=${modelInfo.modelIndex} model=${model} size=${batchItems.length}`
+    `[GEMINI ${source.toUpperCase()}] START${workerLabel} key=${apiKeyMasked} model=${route.model} size=${requestItems.length}`
   );
 
   try {
-    const result = callGeminiBatchWithRetryPerModel_(model, apiKey, batchItems);
+    const response = callGeminiBatchWithRetry_(route.model, route.apiKey, requestItems);
     const durationMs = Date.now() - startedAt;
 
-    result.__meta = { apiKey, model, durationMs };
+    response.__meta = {
+      apiKey: route.apiKey,
+      model: route.model,
+      durationMs
+    };
 
     console.log(
-      `[WORKER ${workerIndex}] GEMINI SUCCESS keyIndex=${keyInfo.keyIndex} model=${model} duration=${durationMs}ms`
+      `[GEMINI ${source.toUpperCase()}] SUCCESS${workerLabel} key=${apiKeyMasked} model=${route.model} duration=${durationMs}ms returned=${Array.isArray(response.items) ? response.items.length : 0}`
     );
 
-    return result;
+    return response;
   } catch (err) {
     const durationMs = Date.now() - startedAt;
-
-    err.__meta = { apiKey, model, durationMs };
+    err.__meta = {
+      apiKey: route.apiKey,
+      model: route.model,
+      durationMs
+    };
 
     console.log(
-      `[WORKER ${workerIndex}] GEMINI FAIL keyIndex=${keyInfo.keyIndex} model=${model} duration=${durationMs}ms error=${err.message}`
+      `[GEMINI ${source.toUpperCase()}] FAIL${workerLabel} key=${apiKeyMasked} model=${route.model} duration=${durationMs}ms error=${err.message}`
     );
 
     throw err;
   }
 }
 
-function callGeminiRoundRobin_(inputText) {
-  const apiKey = getRoundRobinOrderedApiKeys_()[0];
-  const model = getRoundRobinOrderedModels_()[0];
+function normalizeBatchItems_(batchItems) {
+  if (!Array.isArray(batchItems)) return [];
 
-  const keyMasked = maskApiKey_(apiKey);
-  const startedAt = Date.now();
+  return batchItems
+    .map(item => ({
+      row_key: safeString_(item && item.row_key),
+      input_text: safeString_(item && item.input_text)
+    }))
+    .filter(item => item.row_key && item.input_text);
+}
 
-  console.log(`[GEMINI SINGLE] START key=${keyMasked} model=${model}`);
+function getGeminiApiKeys_() {
+  const props = PropertiesService.getScriptProperties();
+  const rawMulti = safeString_(props.getProperty('GEMINI_API_KEYS'));
+
+  if (rawMulti) {
+    try {
+      const parsed = JSON.parse(rawMulti);
+      if (Array.isArray(parsed)) {
+        const keys = parsed.map(value => safeString_(value)).filter(Boolean);
+        if (keys.length) return keys;
+      }
+    } catch (err) {
+      const splitKeys = rawMulti
+        .split(/[\n,]+/)
+        .map(value => safeString_(value))
+        .filter(Boolean);
+
+      if (splitKeys.length) return splitKeys;
+    }
+  }
+
+  const fallbackKey = safeString_(props.getProperty('GEMINI_API_KEY'));
+  if (fallbackKey) return [fallbackKey];
+
+  throw new Error('Missing GEMINI_API_KEYS or GEMINI_API_KEY');
+}
+
+function getGeminiApiKeyCount_() {
+  return getGeminiApiKeys_().length;
+}
+
+function maskApiKey_(key) {
+  const value = safeString_(key);
+  if (!value) return '';
+  if (value.length <= 10) return '***';
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+function getGeminiWeightedModels_() {
+  const modelWeights = Array.isArray(CONFIG.GEMINI_MODEL_WEIGHTS)
+    ? CONFIG.GEMINI_MODEL_WEIGHTS
+    : [];
+
+  const normalized = modelWeights
+    .map(item => ({
+      model: safeString_(item && item.model),
+      weight: Math.max(0, Number(item && item.weight))
+    }))
+    .filter(item => item.model && item.weight > 0);
+
+  if (!normalized.length) {
+    throw new Error('CONFIG.GEMINI_MODEL_WEIGHTS must contain at least one positive weight');
+  }
+
+  return normalized;
+}
+
+function getGeminiModelWeightTotal_() {
+  return getGeminiWeightedModels_().reduce((sum, item) => sum + item.weight, 0);
+}
+
+function getWeightedModelBySlot_(slot) {
+  const models = getGeminiWeightedModels_();
+  const totalWeight = getGeminiModelWeightTotal_();
+  const normalizedSlot = ((slot % totalWeight) + totalWeight) % totalWeight;
+
+  let cursor = 0;
+  for (let index = 0; index < models.length; index++) {
+    cursor += models[index].weight;
+    if (normalizedSlot < cursor) {
+      return {
+        model: models[index].model,
+        modelIndex: index,
+        modelSlot: normalizedSlot
+      };
+    }
+  }
+
+  return {
+    model: models[models.length - 1].model,
+    modelIndex: models.length - 1,
+    modelSlot: normalizedSlot
+  };
+}
+
+function takeNextGeminiRoute_() {
+  const lock = LockService.getScriptLock();
+
+  if (!lock.tryLock(CONFIG.ROUTE_LOCK_TIMEOUT_MS)) {
+    throw new Error('Cannot acquire Gemini route lock');
+  }
 
   try {
-    const result = callGeminiWithRetryPerModel_(model, apiKey, inputText);
-    const durationMs = Date.now() - startedAt;
+    const props = PropertiesService.getScriptProperties();
+    const keys = getGeminiApiKeys_();
+    const totalWeight = getGeminiModelWeightTotal_();
+    const state = parseRouteState_(props.getProperty(CONFIG.GEMINI_ROUTE_STATE_PROPERTY));
 
-    console.log(`[GEMINI SINGLE] SUCCESS key=${keyMasked} model=${model} duration=${durationMs}ms`);
+    const keyIndex = state.keyIndex % keys.length;
+    const modelInfo = getWeightedModelBySlot_(state.modelSlot % totalWeight);
 
-    result.__meta = {
-      apiKey,
-      model,
-      durationMs
+    const nextState = {
+      keyIndex: (keyIndex + 1) % keys.length,
+      modelSlot: (state.modelSlot + 1) % totalWeight
     };
 
-    advanceApiKeyRoundRobinPointer_();
-    advanceRoundRobinPointer_();
+    props.setProperty(CONFIG.GEMINI_ROUTE_STATE_PROPERTY, JSON.stringify(nextState));
 
-    return result;
-  } catch (err) {
-    const durationMs = Date.now() - startedAt;
-    const msg = String(err.message || '');
-
-    console.log(`[GEMINI SINGLE] FAIL key=${keyMasked} model=${model} duration=${durationMs}ms error=${msg}`);
-
-    err.__meta = {
-      apiKey,
-      model,
-      durationMs
+    return {
+      apiKey: keys[keyIndex],
+      keyIndex,
+      model: modelInfo.model,
+      modelIndex: modelInfo.modelIndex,
+      modelSlot: modelInfo.modelSlot
     };
-
-    advanceApiKeyRoundRobinPointer_();
-    advanceRoundRobinPointer_();
-
-    throw err;
+  } finally {
+    lock.releaseLock();
   }
 }
 
-function callGeminiBatchRoundRobin_(batchItems) {
-  const apiKey = getRoundRobinOrderedApiKeys_()[0];
-  const model = getRoundRobinOrderedModels_()[0];
-
-  const keyMasked = maskApiKey_(apiKey);
-  const startedAt = Date.now();
-
-  console.log(`[GEMINI BATCH] START key=${keyMasked} model=${model} size=${batchItems.length}`);
+function parseRouteState_(rawState) {
+  if (!rawState) {
+    return { keyIndex: 0, modelSlot: 0 };
+  }
 
   try {
-    const result = callGeminiBatchWithRetryPerModel_(model, apiKey, batchItems);
-    const durationMs = Date.now() - startedAt;
-
-    console.log(`[GEMINI BATCH] SUCCESS key=${keyMasked} model=${model} size=${batchItems.length} duration=${durationMs}ms`);
-
-    result.__meta = {
-      apiKey,
-      model,
-      durationMs
+    const parsed = JSON.parse(rawState);
+    return {
+      keyIndex: Math.max(0, parseInt(parsed.keyIndex || 0, 10) || 0),
+      modelSlot: Math.max(0, parseInt(parsed.modelSlot || 0, 10) || 0)
     };
-
-    advanceApiKeyRoundRobinPointer_();
-    advanceRoundRobinPointer_();
-
-    return result;
   } catch (err) {
-    const durationMs = Date.now() - startedAt;
-    const msg = String(err.message || '');
-
-    console.log(`[GEMINI BATCH] FAIL key=${keyMasked} model=${model} size=${batchItems.length} duration=${durationMs}ms error=${msg}`);
-
-    err.__meta = {
-      apiKey,
-      model,
-      durationMs
-    };
-
-    advanceApiKeyRoundRobinPointer_();
-    advanceRoundRobinPointer_();
-
-    throw err;
+    return { keyIndex: 0, modelSlot: 0 };
   }
 }
 
-function callGeminiWithRetryPerModel_(model, apiKey, inputText) {
+function resetGeminiRouteState_() {
+  PropertiesService.getScriptProperties().setProperty(
+    CONFIG.GEMINI_ROUTE_STATE_PROPERTY,
+    JSON.stringify({ keyIndex: 0, modelSlot: 0 })
+  );
+}
+
+function callGeminiBatchWithRetry_(model, apiKey, batchItems) {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS_PER_MODEL; attempt++) {
     try {
-      return callGeminiOnce_(model, apiKey, inputText);
+      return callGeminiBatchOnce_(model, apiKey, batchItems);
     } catch (err) {
-      const msg = String(err.message || '');
+      const message = safeString_(err && err.message);
 
-      console.log(`[GEMINI SINGLE] attempt=${attempt} failed model=${model} error=${msg}`);
+      console.log(
+        `[GEMINI BATCH] attempt=${attempt} model=${model} size=${batchItems.length} error=${message}`
+      );
 
-      if (!isRetryableErrorMessage_(msg) || attempt === CONFIG.MAX_RETRY_ATTEMPTS_PER_MODEL) {
+      if (!isRetryableErrorMessage_(message) || attempt >= CONFIG.MAX_RETRY_ATTEMPTS_PER_MODEL) {
         throw err;
       }
 
-      const jitter = Math.floor(Math.random() * 1000);
+      const jitter = Math.floor(Math.random() * 400);
       const delay = Math.min(
         CONFIG.BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1) + jitter,
-        12000
+        CONFIG.MAX_RETRY_DELAY_MS
       );
 
       Utilities.sleep(delay);
@@ -165,188 +261,18 @@ function callGeminiWithRetryPerModel_(model, apiKey, inputText) {
   throw new Error(`Retry loop exited unexpectedly for model ${model}`);
 }
 
-function callGeminiBatchWithRetryPerModel_(model, apiKey, batchItems) {
-  for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS_PER_MODEL; attempt++) {
-    try {
-      return callGeminiBatchOnce_(model, apiKey, batchItems);
-    } catch (err) {
-      const msg = String(err.message || '');
-
-      console.log(`[GEMINI BATCH] attempt=${attempt} failed model=${model} size=${batchItems.length} error=${msg}`);
-
-      if (!isRetryableErrorMessage_(msg) || attempt === CONFIG.MAX_RETRY_ATTEMPTS_PER_MODEL) {
-        throw err;
-      }
-
-      const jitter = Math.floor(Math.random() * 1000);
-      const delay = Math.min(
-        CONFIG.BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1) + jitter,
-        12000
-      );
-
-      Utilities.sleep(delay);
-    }
-  }
-
-  throw new Error(`Batch retry loop exited unexpectedly for model ${model}`);
-}
-
-function callGeminiOnce_(model, apiKey, inputText) {
+function callGeminiBatchOnce_(model, apiKey, batchItems) {
   const url =
     'https://generativelanguage.googleapis.com/v1beta/models/' +
     encodeURIComponent(model) +
     ':generateContent?key=' +
     encodeURIComponent(apiKey);
 
-  const prompt = [
-    'Bạn là trợ lý xây dựng dữ liệu học Hán tự và từ vựng tiếng Trung cho người Việt.',
-    '',
-    `Đầu vào: ${inputText}`,
-    '',
-    'Nhiệm vụ:',
-    '- Phân tích đầu vào là chữ đơn hay từ ghép.',
-    '- Sinh toàn bộ dữ liệu học tập có cấu trúc.',
-    '- Nếu có đa âm đọc hoặc đa nghĩa dễ gây nhầm lẫn, phải bật ambiguity_flag.',
-    '',
-    'Yêu cầu chung:',
-    '- normalized_text là bản chuẩn hóa của đầu vào.',
-    '- pinyin phải là pinyin có dấu.',
-    '- meanings_vi là mảng nghĩa tiếng Việt ngắn gọn, dễ học.',
-    '- han_viet: âm Hán Việt nếu có thể xác định hợp lý, nếu không chắc thì để rỗng.',
-    '- traditional_variant: dạng phồn thể nếu có.',
-    '',
-    'PHẦN BỘ THỦ / THÀNH PHẦN:',
-    '- main_radicals và component_breakdown[].main_radicals CHỈ ĐƯỢC chọn từ danh sách chuẩn sau, không được tự tạo cách hiển thị mới:',
-    RADICAL_LIST.join(', '),
-    '- Nếu là chữ đơn, hãy phân tích các thành phần cấu tạo quan trọng của chữ đó.',
-    '- Nếu là từ ghép nhiều chữ, hãy phân tích từng chữ trong từ.',
-    '- main_radicals là danh sách các bộ/thành phần chính liên quan toàn bộ từ/chữ.',
-    '- component_breakdown là mảng phân tích từng chữ.',
-    '- Với mỗi item trong component_breakdown:',
-    '  + character: chữ đang phân tích',
-    '  + components: các thành phần cấu tạo quan trọng',
-    '  + main_radicals: các bộ/thành phần chính của chữ đó',
-    '  + structure_type: một trong hinh_thanh, hoi_y, tuong_hinh, chi_su, gia_ta, khac, khong_ro',
-    '  + structure_note: giải thích ngắn',
-    '- radical_summary là mô tả ngắn gọn giúp người học hiểu cấu tạo của từ/chữ.',
-    '- Không bịa thông tin từ nguyên nếu không chắc.',
-    '',
-    'PHẦN CẤU TẠO CHỮ VÀ MNEMONIC:',
-    '- character_structure_type chỉ được chọn một trong các giá trị:',
-    '  hinh_thanh, hoi_y, tuong_hinh, chi_su, gia_ta, khac, khong_ro',
-    '- structure_explanation là giải thích ngắn về cấu tạo chữ/từ.',
-    '- mnemonic là mẹo nhớ ngắn gọn, dễ học cho người Việt.',
-    '- Nếu có thể, mnemonic nên tận dụng cấu tạo chữ như phần gợi nghĩa, gợi âm, hội ý, hình thanh.',
-    '- Nếu không chắc về từ nguyên, hãy tạo mnemonic thực dụng phục vụ học tập, không khẳng định sai.',
-    '',
-    'HSK / TỪ LOẠI / TAG:',
-    '- hsk_level phải là CHUỖI SỐ THUẦN hoặc rỗng.',
-    '- Chỉ được trả về một trong các giá trị sau cho hsk_level: "", "1", "2", "3", "4", "5", "6", "7", "8", "9".',
-    '- KHÔNG được trả về "HSK 1", "HSK1", "level 1" hoặc bất kỳ định dạng nào khác.',
-    '- part_of_speech chỉ được dùng các nhãn:',
-    '  danh_tu, dong_tu, tinh_tu, pho_tu, luong_tu, dai_tu, gioi_tu, tro_tu, so_tu, da_loai_tu, unknown',
-    '- topic_tags CHỈ ĐƯỢC chọn từ danh sách sau, không tự tạo tag mới:',
-    ALLOWED_TOPIC_TAGS.join(', '),
-    '- Chỉ chọn tối đa 5 tag phù hợp nhất.',
-    '',
-    'VÍ DỤ:',
-    '- examples là mảng string.',
-    '- Mỗi item phải đúng format: CN=...|PY=...|VI=...',
-    '- Ví dụ phải bám sát nghĩa chính và loại từ đã chọn.',
-    '- Nếu có nhiều nghĩa chính hoặc nhiều loại từ quan trọng, hãy cố gắng cho ít nhất 1 ví dụ cho mỗi nghĩa hoặc mỗi loại từ quan trọng khi hợp lý.',
-    '- Tổng số examples PHẢI ít nhất là 2.',
-    '- Nếu mục chỉ có một nghĩa chính, vẫn phải cho ít nhất 2 ví dụ khác nhau.',
-    '- Ví dụ phải ngắn, tự nhiên, dễ hiểu, không quá văn vẻ.',
-    '',
-    'TƯƠNG TỰ / MƠ HỒ:',
-    '- similar_chars là các chữ/từ dễ nhầm.',
-    '- source_confidence chỉ được là high, medium hoặc low.',
-    '- review_status chỉ được là pending hoặc needs_review.',
-    '- ambiguity_flag chỉ được là true hoặc false.',
-    '- ambiguity_note giải thích ngắn khi ambiguity_flag=true.',
-    '- reading_candidates là mảng string, mỗi item format: PINYIN=...|MEANINGS=...',
-    '',
-    'Ràng buộc quan trọng:',
-    '- Nếu đầu vào có nhiều âm đọc hoặc nhiều nghĩa dễ gây nhầm lẫn, ưu tiên nghĩa phổ biến nhất cho bản ghi chính, nhưng phải bật ambiguity_flag=true.',
-    '- Nếu ambiguity_flag=true thì review_status nên là needs_review.',
-    '- Không markdown.',
-    '- Chỉ trả về JSON hợp lệ.'
-  ].join('\n');
-
   const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
+    contents: [{ parts: [{ text: buildGeminiBatchPrompt_(batchItems) }] }],
     generationConfig: {
       responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          normalized_text: { type: 'STRING' },
-          pinyin: { type: 'STRING' },
-          meanings_vi: { type: 'ARRAY', items: { type: 'STRING' } },
-          han_viet: { type: 'STRING' },
-          traditional_variant: { type: 'STRING' },
-          main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
-          component_breakdown: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                character: { type: 'STRING' },
-                components: { type: 'ARRAY', items: { type: 'STRING' } },
-                main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
-                structure_type: { type: 'STRING' },
-                structure_note: { type: 'STRING' }
-              },
-              required: [
-                'character',
-                'components',
-                'main_radicals',
-                'structure_type',
-                'structure_note'
-              ]
-            }
-          },
-          radical_summary: { type: 'STRING' },
-          hsk_level: { type: 'STRING' },
-          part_of_speech: { type: 'ARRAY', items: { type: 'STRING' } },
-          topic_tags: { type: 'ARRAY', items: { type: 'STRING' } },
-          examples: { type: 'ARRAY', items: { type: 'STRING' }, minItems: 2 },
-          similar_chars: { type: 'ARRAY', items: { type: 'STRING' } },
-          character_structure_type: { type: 'STRING' },
-          structure_explanation: { type: 'STRING' },
-          mnemonic: { type: 'STRING' },
-          notes: { type: 'STRING' },
-          source_confidence: { type: 'STRING' },
-          ambiguity_flag: { type: 'BOOLEAN' },
-          ambiguity_note: { type: 'STRING' },
-          reading_candidates: { type: 'ARRAY', items: { type: 'STRING' } },
-          review_status: { type: 'STRING' }
-        },
-        required: [
-          'normalized_text',
-          'pinyin',
-          'meanings_vi',
-          'han_viet',
-          'traditional_variant',
-          'main_radicals',
-          'component_breakdown',
-          'radical_summary',
-          'hsk_level',
-          'part_of_speech',
-          'topic_tags',
-          'examples',
-          'similar_chars',
-          'character_structure_type',
-          'structure_explanation',
-          'mnemonic',
-          'notes',
-          'source_confidence',
-          'ambiguity_flag',
-          'ambiguity_note',
-          'reading_candidates',
-          'review_status'
-        ]
-      }
+      responseSchema: buildGeminiBatchResponseSchema_()
     }
   };
 
@@ -361,33 +287,29 @@ function callGeminiOnce_(model, apiKey, inputText) {
   const body = response.getContentText();
 
   if (statusCode < 200 || statusCode >= 300) {
-    throw new Error(`Gemini API error ${statusCode}: ${body}`);
+    throw new Error(`Gemini batch API error ${statusCode}: ${body}`);
   }
 
   const parsed = JSON.parse(body);
-  const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = parsed &&
+    parsed.candidates &&
+    parsed.candidates[0] &&
+    parsed.candidates[0].content &&
+    parsed.candidates[0].content.parts &&
+    parsed.candidates[0].content.parts[0] &&
+    parsed.candidates[0].content.parts[0].text;
+
   if (!text) {
-    throw new Error('Gemini returned empty content');
+    throw new Error('Gemini batch returned empty content');
   }
 
   return JSON.parse(text);
 }
 
-function callGeminiBatchOnce_(model, apiKey, batchItems) {
-  const url =
-    'https://generativelanguage.googleapis.com/v1beta/models/' +
-    encodeURIComponent(model) +
-    ':generateContent?key=' +
-    encodeURIComponent(apiKey);
+function buildGeminiBatchPrompt_(batchItems) {
+  const inputJson = JSON.stringify(batchItems);
 
-  const inputJson = JSON.stringify(
-    batchItems.map(item => ({
-      row_key: String(item.row_key),
-      input_text: String(item.input_text || '').trim()
-    }))
-  );
-
-  const prompt = [
+  return [
     'Bạn là trợ lý xây dựng dữ liệu học Hán tự và từ vựng tiếng Trung cho người Việt.',
     '',
     'Bạn sẽ nhận một DANH SÁCH items.',
@@ -413,28 +335,18 @@ function callGeminiBatchOnce_(model, apiKey, batchItems) {
     '- main_radicals là danh sách các bộ/thành phần chính liên quan đến toàn bộ mục đang phân tích.',
     '- Nếu là chữ đơn, hãy phân tích các thành phần cấu tạo quan trọng của chữ đó.',
     '- Nếu là từ ghép nhiều chữ, hãy phân tích từng chữ vào component_breakdown.',
-    '- component_breakdown là mảng phân tích từng chữ, với mỗi item gồm:',
-    '  + character',
-    '  + components',
-    '  + main_radicals',
-    '  + structure_type',
-    '  + structure_note',
+    '- component_breakdown là mảng phân tích từng chữ, với mỗi item gồm character, components, main_radicals, structure_type, structure_note.',
     '- radical_summary là mô tả ngắn giúp người học hiểu cấu tạo của mục đó.',
     '- Không khẳng định chắc chắn các phân tích từ nguyên nếu không đủ cơ sở.',
     '',
     'PHẦN CẤU TẠO CHỮ VÀ MNEMONIC:',
-    '- character_structure_type chỉ được là:',
-    '  hinh_thanh, hoi_y, tuong_hinh, chi_su, gia_ta, khac, khong_ro',
+    '- character_structure_type chỉ được là: hinh_thanh, hoi_y, tuong_hinh, chi_su, gia_ta, khac, khong_ro.',
     '- structure_explanation là giải thích ngắn về cấu tạo tổng thể.',
     '- mnemonic là mẹo nhớ ngắn gọn, thực dụng cho người Việt.',
-    '- Nếu có thể, mnemonic nên tận dụng cấu tạo chữ như phần gợi nghĩa, gợi âm, hội ý, hình thanh.',
     '',
     'HSK / TỪ LOẠI / TAG:',
-    '- hsk_level phải là CHUỖI SỐ THUẦN hoặc rỗng.',
-    '- Chỉ được trả về một trong các giá trị sau cho hsk_level: "", "1", "2", "3", "4", "5", "6", "7", "8", "9".',
-    '- KHÔNG được trả về "HSK 1", "HSK1", "level 1" hoặc định dạng khác.',
-    '- part_of_speech chỉ được dùng các nhãn:',
-    '  danh_tu, dong_tu, tinh_tu, pho_tu, luong_tu, dai_tu, gioi_tu, tro_tu, so_tu, da_loai_tu, unknown',
+    '- hsk_level phải là chuỗi số thuần hoặc rỗng, chỉ được là "", "1"..."9".',
+    '- part_of_speech chỉ được dùng các nhãn: danh_tu, dong_tu, tinh_tu, pho_tu, luong_tu, dai_tu, gioi_tu, tro_tu, so_tu, da_loai_tu, unknown.',
     '- topic_tags CHỈ được chọn từ danh sách sau:',
     ALLOWED_TOPIC_TAGS.join(', '),
     '- Chỉ chọn tối đa 5 tag phù hợp nhất.',
@@ -442,27 +354,22 @@ function callGeminiBatchOnce_(model, apiKey, batchItems) {
     'VÍ DỤ:',
     '- examples là mảng string.',
     '- Mỗi item trong examples phải có đúng format: CN=...|PY=...|VI=...',
-    '- Ví dụ phải bám sát nghĩa chính và loại từ đã chọn.',
-    '- Nếu có nhiều nghĩa chính hoặc nhiều loại từ quan trọng, hãy cố gắng cho ít nhất 1 ví dụ cho mỗi nghĩa hoặc mỗi loại từ quan trọng khi hợp lý.',
     '- Tổng số examples cho MỖI item PHẢI ít nhất là 2.',
-    '- Nếu item chỉ có một nghĩa chính, vẫn phải cho ít nhất 2 ví dụ khác nhau.',
     '- Ví dụ phải ngắn, tự nhiên, dễ hiểu.',
     '',
     'CHỮ/TỪ DỄ NHẦM:',
     '- similar_chars là các chữ/từ dễ nhầm về hình thức hoặc nghĩa.',
     '',
     'TRƯỜNG HỢP ĐA ÂM / ĐA NGHĨA:',
-    '- Nếu item có nhiều âm đọc hoặc nhiều nghĩa dễ gây nhầm lẫn:',
-    '  + chọn một nghĩa/âm đọc phổ biến nhất cho bản ghi chính',
-    '  + đặt ambiguity_flag = true',
-    '  + ghi ambiguity_note',
-    '  + điền reading_candidates là mảng string format: PINYIN=...|MEANINGS=...',
-    '- Nếu không mơ hồ đáng kể, ambiguity_flag = false, ambiguity_note = "", reading_candidates = []',
+    '- Nếu item có nhiều âm đọc hoặc nhiều nghĩa dễ gây nhầm lẫn, chọn một nghĩa/âm đọc phổ biến nhất cho bản ghi chính nhưng phải đặt ambiguity_flag = true.',
+    '- ambiguity_note giải thích ngắn.',
+    '- reading_candidates là mảng string format: PINYIN=...|MEANINGS=...',
+    '- Nếu không mơ hồ đáng kể, ambiguity_flag = false, ambiguity_note = "", reading_candidates = [].',
     '',
     'ĐỘ TIN CẬY VÀ REVIEW:',
-    '- source_confidence chỉ được là high, medium, hoặc low',
-    '- review_status chỉ được là pending hoặc needs_review',
-    '- Nếu ambiguity_flag = true thì review_status nên là needs_review',
+    '- source_confidence chỉ được là high, medium, hoặc low.',
+    '- review_status chỉ được là pending hoặc needs_review.',
+    '- Nếu ambiguity_flag = true thì review_status nên là needs_review.',
     '',
     'RÀNG BUỘC QUAN TRỌNG:',
     '- Mỗi item output phải giữ nguyên row_key từ input.',
@@ -472,156 +379,90 @@ function callGeminiBatchOnce_(model, apiKey, batchItems) {
     '- Chỉ trả về JSON hợp lệ.',
     '',
     'DANH SÁCH INPUT ITEMS:',
-    inputJson,
-    '',
-    'OUTPUT PHẢI CÓ ĐÚNG CẤU TRÚC SAU:',
-    '{',
-    '  "items": [',
-    '    {',
-    '      "row_key": "string",',
-    '      "normalized_text": "string",',
-    '      "pinyin": "string",',
-    '      "meanings_vi": ["string"],',
-    '      "han_viet": "string",',
-    '      "traditional_variant": "string",',
-    '      "main_radicals": ["string"],',
-    '      "component_breakdown": [',
-    '        {',
-    '          "character": "string",',
-    '          "components": ["string"],',
-    '          "main_radicals": ["string"],',
-    '          "structure_type": "string",',
-    '          "structure_note": "string"',
-    '        }',
-    '      ],',
-    '      "radical_summary": "string",',
-    '      "hsk_level": "string",',
-    '      "part_of_speech": ["string"],',
-    '      "topic_tags": ["string"],',
-    '      "examples": ["CN=...|PY=...|VI=..."],',
-    '      "similar_chars": ["string"],',
-    '      "character_structure_type": "string",',
-    '      "structure_explanation": "string",',
-    '      "mnemonic": "string",',
-    '      "notes": "string",',
-    '      "source_confidence": "high",',
-    '      "ambiguity_flag": true,',
-    '      "ambiguity_note": "string",',
-    '      "reading_candidates": ["PINYIN=...|MEANINGS=..."],',
-    '      "review_status": "pending"',
-    '    }',
-    '  ]',
-    '}'
+    inputJson
   ].join('\n');
+}
 
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          items: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                row_key: { type: 'STRING' },
-                normalized_text: { type: 'STRING' },
-                pinyin: { type: 'STRING' },
-                meanings_vi: { type: 'ARRAY', items: { type: 'STRING' } },
-                han_viet: { type: 'STRING' },
-                traditional_variant: { type: 'STRING' },
-                main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
-                component_breakdown: {
-                  type: 'ARRAY',
-                  items: {
-                    type: 'OBJECT',
-                    properties: {
-                      character: { type: 'STRING' },
-                      components: { type: 'ARRAY', items: { type: 'STRING' } },
-                      main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
-                      structure_type: { type: 'STRING' },
-                      structure_note: { type: 'STRING' }
-                    },
-                    required: [
-                      'character',
-                      'components',
-                      'main_radicals',
-                      'structure_type',
-                      'structure_note'
-                    ]
-                  }
+function buildGeminiBatchResponseSchema_() {
+  return {
+    type: 'OBJECT',
+    properties: {
+      items: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            row_key: { type: 'STRING' },
+            normalized_text: { type: 'STRING' },
+            pinyin: { type: 'STRING' },
+            meanings_vi: { type: 'ARRAY', items: { type: 'STRING' } },
+            han_viet: { type: 'STRING' },
+            traditional_variant: { type: 'STRING' },
+            main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
+            component_breakdown: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  character: { type: 'STRING' },
+                  components: { type: 'ARRAY', items: { type: 'STRING' } },
+                  main_radicals: { type: 'ARRAY', items: { type: 'STRING' } },
+                  structure_type: { type: 'STRING' },
+                  structure_note: { type: 'STRING' }
                 },
-                radical_summary: { type: 'STRING' },
-                hsk_level: { type: 'STRING' },
-                part_of_speech: { type: 'ARRAY', items: { type: 'STRING' } },
-                topic_tags: { type: 'ARRAY', items: { type: 'STRING' } },
-                examples: { type: 'ARRAY', items: { type: 'STRING' }, minItems: 2 },
-                similar_chars: { type: 'ARRAY', items: { type: 'STRING' } },
-                character_structure_type: { type: 'STRING' },
-                structure_explanation: { type: 'STRING' },
-                mnemonic: { type: 'STRING' },
-                notes: { type: 'STRING' },
-                source_confidence: { type: 'STRING' },
-                ambiguity_flag: { type: 'BOOLEAN' },
-                ambiguity_note: { type: 'STRING' },
-                reading_candidates: { type: 'ARRAY', items: { type: 'STRING' } },
-                review_status: { type: 'STRING' }
-              },
-              required: [
-                'row_key',
-                'normalized_text',
-                'pinyin',
-                'meanings_vi',
-                'han_viet',
-                'traditional_variant',
-                'main_radicals',
-                'component_breakdown',
-                'radical_summary',
-                'hsk_level',
-                'part_of_speech',
-                'topic_tags',
-                'examples',
-                'similar_chars',
-                'character_structure_type',
-                'structure_explanation',
-                'mnemonic',
-                'notes',
-                'source_confidence',
-                'ambiguity_flag',
-                'ambiguity_note',
-                'reading_candidates',
-                'review_status'
-              ]
-            }
-          }
-        },
-        required: ['items']
+                required: [
+                  'character',
+                  'components',
+                  'main_radicals',
+                  'structure_type',
+                  'structure_note'
+                ]
+              }
+            },
+            radical_summary: { type: 'STRING' },
+            hsk_level: { type: 'STRING' },
+            part_of_speech: { type: 'ARRAY', items: { type: 'STRING' } },
+            topic_tags: { type: 'ARRAY', items: { type: 'STRING' } },
+            examples: { type: 'ARRAY', items: { type: 'STRING' }, minItems: 2 },
+            similar_chars: { type: 'ARRAY', items: { type: 'STRING' } },
+            character_structure_type: { type: 'STRING' },
+            structure_explanation: { type: 'STRING' },
+            mnemonic: { type: 'STRING' },
+            notes: { type: 'STRING' },
+            source_confidence: { type: 'STRING' },
+            ambiguity_flag: { type: 'BOOLEAN' },
+            ambiguity_note: { type: 'STRING' },
+            reading_candidates: { type: 'ARRAY', items: { type: 'STRING' } },
+            review_status: { type: 'STRING' }
+          },
+          required: [
+            'row_key',
+            'normalized_text',
+            'pinyin',
+            'meanings_vi',
+            'han_viet',
+            'traditional_variant',
+            'main_radicals',
+            'component_breakdown',
+            'radical_summary',
+            'hsk_level',
+            'part_of_speech',
+            'topic_tags',
+            'examples',
+            'similar_chars',
+            'character_structure_type',
+            'structure_explanation',
+            'mnemonic',
+            'notes',
+            'source_confidence',
+            'ambiguity_flag',
+            'ambiguity_note',
+            'reading_candidates',
+            'review_status'
+          ]
+        }
       }
-    }
+    },
+    required: ['items']
   };
-
-  const response = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
-
-  const statusCode = response.getResponseCode();
-  const body = response.getContentText();
-
-  if (statusCode < 200 || statusCode >= 300) {
-    throw new Error(`Gemini batch API error ${statusCode}: ${body}`);
-  }
-
-  const parsed = JSON.parse(body);
-  const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    throw new Error('Gemini batch returned empty content');
-  }
-
-  return JSON.parse(text);
 }

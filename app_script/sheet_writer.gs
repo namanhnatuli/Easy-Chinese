@@ -1,78 +1,126 @@
-function updateTimestamp_(sheet, row) {
-  sheet.getRange(row, CONFIG.COL_UPDATED_AT).setValue(now_());
-}
-
 function markRowPending_(sheet, row, meta) {
-  sheet.getRange(row, CONFIG.COL_AI_STATUS).setValue('pending');
-  writeExecutionMeta_(sheet, row, meta);
-  updateTimestamp_(sheet, row);
-}
+  const timestamp = now_();
+  const metaValues = buildExecutionMetaValues_(meta);
 
-function markRowProcessing_(sheet, row, workerIndex) {
-  sheet.getRange(row, CONFIG.COL_AI_STATUS).setValue('processing');
-  sheet.getRange(row, CONFIG.COL_LAST_MODEL).setValue(`worker_${workerIndex}`);
-  updateTimestamp_(sheet, row);
+  sheet
+    .getRange(row, CONFIG.COL_REVIEW_STATUS, 1, 6)
+    .setValues([['pending', 'pending', timestamp].concat(metaValues)]);
 }
 
 function writeAiResult_(sheet, row, data, meta) {
-  const topicTags = normalizeTopicTags_(data.topic_tags);
-  const partOfSpeech = normalizePartOfSpeech_(data.part_of_speech);
-  const structureType = normalizeStructureType_(data.character_structure_type);
-  const sourceConfidence = normalizeSourceConfidence_(data.source_confidence);
-  const reviewStatus = normalizeReviewStatus_(data.review_status);
-  const mainRadicals = normalizeRadicalList_(data.main_radicals);
-  const componentBreakdown = normalizeComponentBreakdown_(data.component_breakdown);
+  const timestamp = now_();
+  const normalized = normalizeAiData_(data);
+  const metaValues = buildExecutionMetaValues_(meta);
 
-  sheet.getRange(row, CONFIG.COL_NORMALIZED_TEXT, 1, 23).setValues([[
-    safeString_(data.normalized_text),
-    safeString_(data.pinyin),
-    joinArray_(data.meanings_vi),
-    safeString_(data.han_viet),
-    safeString_(data.traditional_variant),
+  const rowValues = [
+    normalized.normalized_text,
+    normalized.pinyin,
+    normalized.meanings_vi,
+    normalized.han_viet,
+    normalized.traditional_variant,
+    normalized.main_radicals,
+    normalized.component_breakdown_json,
+    normalized.radical_summary,
+    normalized.hsk_level,
+    normalized.part_of_speech,
+    normalized.topic_tags,
+    normalized.examples,
+    normalized.similar_chars,
+    normalized.character_structure_type,
+    normalized.structure_explanation,
+    normalized.mnemonic,
+    normalized.notes,
+    normalized.source_confidence,
+    normalized.ambiguity_flag,
+    normalized.ambiguity_note,
+    normalized.reading_candidates,
+    normalized.review_status,
+    'done',
+    timestamp
+  ].concat(metaValues);
 
-    joinArray_(mainRadicals),
-    safeJsonString_(componentBreakdown),
-    safeString_(data.radical_summary),
-
-    normalizeHskLevel_(data.hsk_level),
-    joinArray_(partOfSpeech),
-    joinArray_(topicTags),
-    joinExamples_(data.examples),
-    joinArray_(data.similar_chars),
-
-    structureType,
-    safeString_(data.structure_explanation),
-    safeString_(data.mnemonic),
-    safeString_(data.notes),
-
-    sourceConfidence,
-    normalizeBooleanString_(data.ambiguity_flag),
-    safeString_(data.ambiguity_note),
-    joinArray_(data.reading_candidates, ' || '),
-    reviewStatus,
-    'done'
-  ]]);
-
-  writeExecutionMeta_(sheet, row, meta);
-  updateTimestamp_(sheet, row);
+  sheet
+    .getRange(row, CONFIG.COL_NORMALIZED_TEXT, 1, rowValues.length)
+    .setValues([rowValues]);
 }
 
 function writeAiRetryLater_(sheet, row, meta) {
-  sheet.getRange(row, CONFIG.COL_AI_STATUS).setValue('retry_later');
-  writeExecutionMeta_(sheet, row, meta);
-  updateTimestamp_(sheet, row);
+  const timestamp = now_();
+  const metaValues = buildExecutionMetaValues_(meta);
+
+  sheet
+    .getRange(row, CONFIG.COL_AI_STATUS, 1, 5)
+    .setValues([['retry_later', timestamp].concat(metaValues)]);
 }
 
 function writeAiError_(sheet, row, message, meta) {
-  sheet.getRange(row, CONFIG.COL_AI_STATUS)
-    .setValue(`error: ${String(message || '').slice(0, 200)}`);
+  const timestamp = now_();
+  const metaValues = buildExecutionMetaValues_(meta);
 
-  writeExecutionMeta_(sheet, row, meta);
-  updateTimestamp_(sheet, row);
+  sheet
+    .getRange(row, CONFIG.COL_AI_STATUS, 1, 5)
+    .setValues([[buildErrorStatus_(message), timestamp].concat(metaValues)]);
 }
 
 function setReviewStatusForRow_(row, status) {
-  const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.HANZI_SHEET);
-  sheet.getRange(row, CONFIG.COL_REVIEW_STATUS).setValue(status);
-  updateTimestamp_(sheet, row);
+  const sheet = getHanziSheet_();
+  const normalizedStatus = normalizeReviewStatus_(status);
+  sheet
+    .getRange(row, CONFIG.COL_REVIEW_STATUS, 1, 3)
+    .setValues([[normalizedStatus, safeString_(sheet.getRange(row, CONFIG.COL_AI_STATUS).getValue()), now_()]]);
+}
+
+function normalizeAiData_(data) {
+  const normalizedText = safeString_(data && data.normalized_text);
+  const meanings = normalizeStringArray_(data && data.meanings_vi, ' | ');
+  const mainRadicals = normalizeRadicalList_(data && data.main_radicals);
+  const componentBreakdown = normalizeComponentBreakdown_(data && data.component_breakdown);
+  const topicTags = normalizeTopicTags_(data && data.topic_tags);
+  const partOfSpeech = normalizePartOfSpeech_(data && data.part_of_speech);
+  const similarChars = normalizeStringArray_(data && data.similar_chars, ' | ');
+  const readingCandidates = normalizeReadingCandidates_(data && data.reading_candidates);
+  const sourceConfidence = normalizeSourceConfidence_(data && data.source_confidence);
+  const ambiguityFlag = normalizeBooleanString_(data && data.ambiguity_flag);
+  const reviewStatus = normalizeReviewStatus_(data && data.review_status);
+  const finalReviewStatus =
+    ambiguityFlag === 'true' || sourceConfidence === 'low'
+      ? 'needs_review'
+      : reviewStatus;
+
+  return {
+    normalized_text: normalizedText,
+    pinyin: safeString_(data && data.pinyin),
+    meanings_vi: meanings,
+    han_viet: safeString_(data && data.han_viet),
+    traditional_variant: safeString_(data && data.traditional_variant),
+    main_radicals: joinArray_(mainRadicals),
+    component_breakdown_json: safeJsonString_(componentBreakdown),
+    radical_summary: safeString_(data && data.radical_summary),
+    hsk_level: normalizeHskLevel_(data && data.hsk_level),
+    part_of_speech: joinArray_(partOfSpeech),
+    topic_tags: joinArray_(topicTags),
+    examples: normalizeExamplesOutput_(data && data.examples),
+    similar_chars: similarChars,
+    character_structure_type: normalizeStructureType_(data && data.character_structure_type),
+    structure_explanation: safeString_(data && data.structure_explanation),
+    mnemonic: safeString_(data && data.mnemonic),
+    notes: safeString_(data && data.notes),
+    source_confidence: sourceConfidence,
+    ambiguity_flag: ambiguityFlag,
+    ambiguity_note: safeString_(data && data.ambiguity_note),
+    reading_candidates: readingCandidates,
+    review_status: finalReviewStatus
+  };
+}
+
+function buildExecutionMetaValues_(meta) {
+  return [
+    meta && meta.apiKey ? maskApiKey_(meta.apiKey) : '',
+    safeString_(meta && meta.model),
+    safeNumberOrBlank_(meta && meta.durationMs)
+  ];
+}
+
+function buildErrorStatus_(message) {
+  return `error: ${safeString_(message).slice(0, 200)}`;
 }

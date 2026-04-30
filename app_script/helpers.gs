@@ -3,16 +3,26 @@ function now_() {
 }
 
 function safeString_(value) {
-  return String(value || '').trim();
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
 }
 
 function safeNumberOrBlank_(value) {
   if (value === null || value === undefined || value === '') return '';
-  return value;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : '';
 }
 
 function normalizeInputKey_(text) {
   return String(text || '').trim().toLowerCase();
+}
+
+function getHanziSheet_() {
+  const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.HANZI_SHEET);
+  if (!sheet) {
+    throw new Error(`Missing sheet: ${CONFIG.HANZI_SHEET}`);
+  }
+  return sheet;
 }
 
 function joinArray_(value, separator) {
@@ -25,6 +35,16 @@ function joinArray_(value, separator) {
 
 function joinExamples_(value) {
   return joinArray_(value, ' || ');
+}
+
+function normalizeStringArray_(value, separator) {
+  if (!Array.isArray(value)) return '';
+
+  return value
+    .map(item => safeString_(item))
+    .filter(Boolean)
+    .filter((item, index, arr) => arr.indexOf(item) === index)
+    .join(separator || ' | ');
 }
 
 function safeJsonString_(value) {
@@ -79,6 +99,50 @@ function formatExamples_(examples) {
     })
     .filter(Boolean)
     .join(' || ');
+}
+
+function normalizeExamplesOutput_(examples) {
+  if (!Array.isArray(examples)) return '';
+
+  const normalized = examples
+    .map(example => {
+      const text = safeString_(example);
+      if (text.startsWith('CN=') && text.includes('|PY=') && text.includes('|VI=')) {
+        return text;
+      }
+
+      const parsed = parseExamples_(text);
+      if (!parsed.length) return '';
+      return formatExamples_([parsed[0]]);
+    })
+    .filter(Boolean)
+    .map(text => text.replace(/\s*\|\|\s*/g, ' || '));
+
+  return [...new Set(normalized)].join(' || ');
+}
+
+function normalizeReadingCandidates_(values) {
+  if (!Array.isArray(values)) return '';
+
+  const normalized = values
+    .map(value => safeString_(value))
+    .filter(Boolean)
+    .map(value => {
+      const parts = value.split('|').map(part => safeString_(part));
+      let pinyin = '';
+      let meanings = '';
+
+      parts.forEach(part => {
+        if (part.indexOf('PINYIN=') === 0) pinyin = safeString_(part.slice(7));
+        if (part.indexOf('MEANINGS=') === 0) meanings = safeString_(part.slice(9));
+      });
+
+      if (!pinyin && !meanings) return '';
+      return `PINYIN=${pinyin}|MEANINGS=${meanings}`;
+    })
+    .filter(Boolean);
+
+  return [...new Set(normalized)].join(' || ');
 }
 
 function normalizeTopicTags_(tags) {
@@ -281,4 +345,52 @@ function touchRowUpdatedAt_(sheet, row) {
 function shouldProcessStatus_(aiStatus) {
   const status = safeString_(aiStatus);
   return status === 'pending' || status === 'retry_later';
+}
+
+function validateConfig_() {
+  if (CONFIG.COL_INPUT_TEXT !== 1) {
+    throw new Error('CONFIG.COL_INPUT_TEXT must start at column 1');
+  }
+
+  if (CONFIG.COL_LAST_DURATION_MS !== CONFIG.HEADER_WIDTH) {
+    throw new Error('CONFIG.HEADER_WIDTH must match the last configured column');
+  }
+
+  if (HANZI_HEADERS.length !== CONFIG.HEADER_WIDTH) {
+    throw new Error('HANZI_HEADERS length does not match CONFIG.HEADER_WIDTH');
+  }
+
+  if (CONFIG.AI_MICRO_BATCH_SIZE < 1) {
+    throw new Error('CONFIG.AI_MICRO_BATCH_SIZE must be >= 1');
+  }
+
+  if (CONFIG.WORKER_COUNT < 1) {
+    throw new Error('CONFIG.WORKER_COUNT must be >= 1');
+  }
+
+  getGeminiApiKeys_();
+  getGeminiWeightedModels_();
+}
+
+function validateHeader_() {
+  const sheet = getHanziSheet_();
+  const actualHeaders = sheet
+    .getRange(CONFIG.HEADER_ROW, 1, 1, CONFIG.HEADER_WIDTH)
+    .getValues()[0]
+    .map(value => safeString_(value));
+
+  const mismatches = [];
+  for (let index = 0; index < HANZI_HEADERS.length; index++) {
+    if (actualHeaders[index] !== HANZI_HEADERS[index]) {
+      mismatches.push(
+        `col ${index + 1}: expected "${HANZI_HEADERS[index]}", got "${actualHeaders[index]}"`
+      );
+    }
+  }
+
+  if (mismatches.length) {
+    throw new Error(`Hanzi header mismatch:\n${mismatches.join('\n')}`);
+  }
+
+  return true;
 }

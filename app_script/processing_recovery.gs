@@ -1,47 +1,53 @@
 function recoverStaleProcessingRows() {
-  const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.HANZI_SHEET);
-  const lastRow = sheet.getLastRow();
+  validateConfig_();
+  validateHeader_();
 
-  if (lastRow <= CONFIG.HEADER_ROW) return;
-
-  const nowMs = Date.now();
-  const maxAgeMs = CONFIG.STALE_PROCESSING_MINUTES * 60 * 1000;
-
-  let recovered = 0;
-
-  for (let row = CONFIG.HEADER_ROW + 1; row <= lastRow; row++) {
-    const status = safeString_(sheet.getRange(row, CONFIG.COL_AI_STATUS).getValue());
-    if (status !== 'processing') continue;
-
-    const updatedAt = sheet.getRange(row, CONFIG.COL_UPDATED_AT).getValue();
-    const updatedMs = updatedAt instanceof Date ? updatedAt.getTime() : 0;
-
-    if (!updatedMs || nowMs - updatedMs > maxAgeMs) {
-      sheet.getRange(row, CONFIG.COL_AI_STATUS).setValue('retry_later');
-      updateTimestamp_(sheet, row);
-      recovered++;
-      console.log(`[RECOVER] row ${row} processing -> retry_later`);
-    }
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(CONFIG.CLAIM_LOCK_TIMEOUT_MS)) {
+    console.log('[RECOVER] skipped: lock busy');
+    return;
   }
 
-  console.log(`[RECOVER] done recovered=${recovered}`);
-}
-
-function createRecoveryTrigger() {
-  deleteRecoveryTriggers_();
-
-  ScriptApp.newTrigger('recoverStaleProcessingRows')
-    .timeBased()
-    .everyMinutes(15)
-    .create();
-}
-
-function deleteRecoveryTriggers_() {
-  const triggers = ScriptApp.getProjectTriggers();
-
-  triggers.forEach(trigger => {
-    if (trigger.getHandlerFunction() === 'recoverStaleProcessingRows') {
-      ScriptApp.deleteTrigger(trigger);
+  try {
+    const sheet = getHanziSheet_();
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= CONFIG.HEADER_ROW) {
+      console.log('[RECOVER] skipped: no data rows');
+      return;
     }
-  });
+
+    const rowCount = lastRow - CONFIG.HEADER_ROW;
+    const statuses = sheet
+      .getRange(CONFIG.HEADER_ROW + 1, CONFIG.COL_AI_STATUS, rowCount, 1)
+      .getValues();
+    const updatedAts = sheet
+      .getRange(CONFIG.HEADER_ROW + 1, CONFIG.COL_UPDATED_AT, rowCount, 1)
+      .getValues();
+
+    const staleRows = [];
+    const thresholdMs = CONFIG.STALE_PROCESSING_MINUTES * 60 * 1000;
+    const nowMs = Date.now();
+
+    for (let index = 0; index < rowCount; index++) {
+      const status = safeString_(statuses[index][0]);
+      if (status !== 'processing') continue;
+
+      const updatedAt = updatedAts[index][0];
+      const updatedMs = updatedAt instanceof Date ? updatedAt.getTime() : 0;
+      if (!updatedMs || nowMs - updatedMs > thresholdMs) {
+        staleRows.push(CONFIG.HEADER_ROW + 1 + index);
+      }
+    }
+
+    staleRows.forEach(row => {
+      sheet
+        .getRange(row, CONFIG.COL_AI_STATUS, 1, 2)
+        .setValues([['retry_later', now_()]]);
+      console.log(`[RECOVER] row=${row} processing -> retry_later`);
+    });
+
+    console.log(`[RECOVER] done recovered=${staleRows.length}`);
+  } finally {
+    lock.releaseLock();
+  }
 }
