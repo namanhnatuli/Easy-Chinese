@@ -768,6 +768,11 @@
       "noPriorReview": "尚无复习记录"
     }
   },
+  "tts": {
+    "playPronunciation": "播放发音",
+    "loadingAudio": "正在加载音频",
+    "cannotPlayAudio": "无法播放发音"
+  },
   "practice": {
     "eyebrow": "练习",
     "anonymousBadge": "支持匿名学习",
@@ -828,7 +833,7 @@
       "eyebrow": "阅读练习",
       "title": "选择阅读重点",
       "description": "在同一个安静的学习界面中切换词汇阅读和句子阅读。",
-      "wordsSessionDescription": "阅读已发布词汇，并按需显示拼音、释义和浏览器朗读。",
+      "wordsSessionDescription": "阅读已发布词汇，并按需显示拼音、释义和已缓存的云端 TTS 发音。",
       "sentencesSessionDescription": "阅读例句，在需要时打开辅助信息，并把困难内容标记到后续练习中。",
       "playAudio": "播放发音",
       "showPinyin": "显示拼音",
@@ -847,10 +852,10 @@
       "shortcutMeaning": "`M` 切换释义",
       "shortcutAudio": "`P` 播放发音",
       "shortcutsTitle": "键盘快捷键",
-      "audioUnavailable": "当前浏览器不支持音频朗读。",
+      "audioUnavailable": "无法播放发音。",
       "saveFailed": "无法保存阅读练习进度。",
       "emptyDescription": "请先发布词汇或例句，阅读练习才会显示内容。",
-      "ttsBadge": "浏览器 TTS",
+      "ttsBadge": "缓存 TTS",
       "pronunciationUnsupported": "当前浏览器暂不支持语音识别。",
       "pronunciationTitle": "发音反馈",
       "pronunciationDescription": "请朗读当前内容，并将识别文本与目标汉字进行对比。",

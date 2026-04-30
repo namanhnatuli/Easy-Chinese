@@ -44,6 +44,11 @@ export default async function AdminPage() {
       title: t("admin.overview.sections.contentSyncTitle"),
       description: t("admin.overview.sections.contentSyncDescription"),
     },
+    {
+      href: link("/admin/tts-cache"),
+      title: "TTS cache",
+      description: "Review cached pronunciation audio, pre-generate assets, and inspect old entries.",
+    },
   ];
 
   return (

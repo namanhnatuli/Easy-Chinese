@@ -768,6 +768,11 @@
       "noPriorReview": "Chưa từng ôn"
     }
   },
+  "tts": {
+    "playPronunciation": "Phát âm",
+    "loadingAudio": "Đang tải âm thanh",
+    "cannotPlayAudio": "Không thể phát âm"
+  },
   "practice": {
     "eyebrow": "Luyện tập",
     "anonymousBadge": "Hỗ trợ ẩn danh",
@@ -828,7 +833,7 @@
       "eyebrow": "Luyện đọc",
       "title": "Chọn trọng tâm đọc",
       "description": "Chuyển giữa luyện từ và luyện câu trong cùng một bề mặt học tập yên tĩnh.",
-      "wordsSessionDescription": "Đọc từ vựng đã xuất bản với pinyin, nghĩa và phát âm bằng TTS của trình duyệt.",
+      "wordsSessionDescription": "Đọc từ vựng đã xuất bản với pinyin, nghĩa và phát âm bằng TTS đám mây đã lưu đệm.",
       "sentencesSessionDescription": "Đọc câu ví dụ, mở hỗ trợ khi cần và đánh dấu nội dung khó để quay lại sau.",
       "playAudio": "Phát âm thanh",
       "showPinyin": "Hiện pinyin",
@@ -847,10 +852,10 @@
       "shortcutMeaning": "`M` bật/tắt nghĩa",
       "shortcutAudio": "`P` phát âm",
       "shortcutsTitle": "Phím tắt",
-      "audioUnavailable": "Trình duyệt này không hỗ trợ phát âm thanh.",
+      "audioUnavailable": "Không thể phát âm.",
       "saveFailed": "Không thể lưu tiến độ luyện đọc.",
       "emptyDescription": "Hãy xuất bản từ hoặc câu ví dụ trước để có nội dung luyện đọc.",
-      "ttsBadge": "TTS trình duyệt",
+      "ttsBadge": "TTS đã lưu đệm",
       "pronunciationUnsupported": "Trình duyệt này chưa hỗ trợ nhận diện giọng nói.",
       "pronunciationTitle": "Phản hồi phát âm",
       "pronunciationDescription": "Đọc to nội dung và so sánh bản chép lại với Hanzi mục tiêu.",

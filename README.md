@@ -61,6 +61,26 @@ NEXT_PUBLIC_APP_NAME=Chinese Learning App
 NEXT_PUBLIC_DEFAULT_LOCALE=en
 ```
 
+TTS setup:
+
+```env
+TTS_PROVIDER=azure
+TTS_DEFAULT_LANGUAGE=zh-CN
+TTS_DEFAULT_VOICE=zh-CN-XiaoxiaoNeural
+TTS_DEFAULT_SPEAKING_RATE=0.82
+TTS_DEFAULT_PITCH=0
+TTS_STORAGE_BUCKET=tts-audio
+TTS_STORAGE_ACCESS=public
+TTS_MAX_CHARACTERS_PER_REQUEST=280
+TTS_ALLOWED_LANGUAGE_CODES=zh-CN
+TTS_ALLOWED_AZURE_VOICES=zh-CN-XiaoxiaoNeural,zh-CN-YunxiNeural
+TTS_ALLOWED_GOOGLE_VOICES=cmn-CN-Standard-A,cmn-CN-Standard-B,cmn-CN-Wavenet-A
+TTS_ANONYMOUS_REQUEST_LIMIT_PER_MINUTE=30
+AZURE_SPEECH_KEY=
+AZURE_SPEECH_REGION=
+GOOGLE_TTS_API_KEY=
+```
+
 Environment values are validated at runtime for the core Supabase/public app settings. Invalid or missing required values now fail early instead of producing silent auth or data errors.
 
 For local Supabase Google OAuth, also set:
@@ -88,6 +108,37 @@ Notes:
 - the service account must have access to the target spreadsheet
 - credentials are used only on the server through the Google OAuth JWT bearer flow
 - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` may use literal newlines or `\n` escapes
+
+## TTS cache and cost control
+Pronunciation audio now uses server-side cloud TTS with Supabase Storage caching instead of browser speech synthesis.
+
+How the cache works:
+1. The client calls `POST /api/tts`.
+2. The server normalizes the text and builds a deterministic cache key.
+3. If `tts_audio_cache` already has that key, the existing Storage URL is returned.
+4. If not, the configured provider generates audio, the app uploads it to Supabase Storage, stores cache metadata, and returns the URL.
+
+Supabase setup:
+- create or keep the `tts-audio` bucket
+- prefer `public` bucket mode for non-sensitive reusable study audio
+- use `private` only if you need signed URLs and shorter-lived access
+- apply migrations `0003_tts_audio_cache.sql` and `0004_tts_cache_access_count.sql`
+
+Provider notes:
+- Azure Speech Neural TTS is the preferred first provider for Chinese because of its monthly free-tier allowance
+- Google TTS remains supported as an alternate provider
+- provider credentials must stay server-side only
+
+Cost guardrails:
+- `TTS_MAX_CHARACTERS_PER_REQUEST` blocks overly long requests
+- `TTS_ALLOWED_LANGUAGE_CODES` limits which languages can generate audio
+- `TTS_ALLOWED_*_VOICES` restricts voice choices to approved values
+- `TTS_ANONYMOUS_REQUEST_LIMIT_PER_MINUTE` is an app-level anonymous throttle placeholder
+- admins can pre-generate lesson, word, or example audio from `/admin/tts-cache` to improve cache hit rates before users request them
+
+Admin visibility:
+- `/admin/tts-cache` shows total cached files, characters generated, provider/voice breakdown, recent entries, hit estimates, and storage estimates
+- the same page includes a stale-entry view for old unused cache records; it does not delete automatically
 
 ## Admin bootstrap
 The app does not have a public admin signup flow and does not auto-promote the first user.

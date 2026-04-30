@@ -11,6 +11,8 @@ export type PracticeProgressStatus = "new" | "practicing" | "completed" | "diffi
 export type PracticeEventType = "reading_word" | "reading_sentence" | "writing_character";
 export type PracticeEventResult = "completed" | "difficult" | "skipped";
 export type MemoryReviewResult = "correct" | "difficult" | "skipped";
+export type TtsProvider = "azure" | "google";
+export type TtsStorageAccess = "public" | "private";
 
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
 export type PreferredTheme = "light" | "dark" | "system";
@@ -188,6 +190,24 @@ export interface WordExample extends TimestampedEntity {
   pinyin: string | null;
   vietnameseMeaning: string;
   sortOrder: number;
+}
+
+export interface TtsAudioCache extends TimestampedEntity {
+  id: string;
+  cacheKey: string;
+  provider: TtsProvider;
+  voice: string;
+  languageCode: string;
+  textHash: string;
+  textPreview: string;
+  storageBucket: string;
+  storagePath: string;
+  mimeType: string;
+  sizeBytes: number;
+  characterCount: number;
+  accessCount: number;
+  createdBy: string | null;
+  lastAccessedAt: string | null;
 }
 
 export interface UserReadingProgress extends TimestampedEntity {

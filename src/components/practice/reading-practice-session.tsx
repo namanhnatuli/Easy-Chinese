@@ -1,23 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Eye, EyeOff, Languages, LogIn, SkipForward, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
 import { PronunciationFeedback } from "@/components/practice/pronunciation-feedback";
-import {
-  cancelSpeechSynthesis,
-  PronunciationButton,
-  speakText,
-} from "@/components/shared/pronunciation-button";
+import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
 import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import { useI18n } from "@/i18n/client";
 import type { ReadingPracticeItem } from "@/features/practice/types";
+import { prefetchTtsAudio } from "@/features/tts/use-tts-audio";
 import type { SchedulerGrade } from "@/types/domain";
 
 function getReadingPayload(item: ReadingPracticeItem, grade: SchedulerGrade) {
@@ -69,6 +66,7 @@ export function ReadingPracticeSession({
   const [goodCount, setGoodCount] = useState(0);
   const [easyCount, setEasyCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const pronunciationButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const currentItem = items[index] ?? null;
   const isFinished = !currentItem;
@@ -82,22 +80,6 @@ export function ReadingPracticeSession({
   const dueHints = currentItem
     ? predictDueHintsForGrades(getItemMemory(currentItem), new Date(), schedulerSettings)
     : null;
-
-  function playAudio() {
-    if (!currentItem) {
-      return;
-    }
-
-    const didSpeak = speakText({
-      text: getSpeechText(currentItem),
-      lang: "zh-CN",
-      rate: 0.82,
-    });
-
-    if (!didSpeak) {
-      toast.error(t("practice.reading.audioUnavailable"));
-    }
-  }
 
   async function handleGrade(grade: SchedulerGrade) {
     if (!currentItem) {
@@ -161,7 +143,7 @@ export function ReadingPracticeSession({
         void handleGrade("easy");
       } else if (event.key.toLowerCase() === "p") {
         event.preventDefault();
-        playAudio();
+        pronunciationButtonRef.current?.click();
       } else if (event.key.toLowerCase() === "h") {
         event.preventDefault();
         setShowPinyin((value) => !value);
@@ -174,9 +156,22 @@ export function ReadingPracticeSession({
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      cancelSpeechSynthesis();
     };
-  }, [currentItem, t]);
+  }, [currentItem]);
+
+  useEffect(() => {
+    const nextItem = items[index + 1];
+
+    if (!nextItem) {
+      return;
+    }
+
+    void prefetchTtsAudio({
+      text: getSpeechText(nextItem),
+      languageCode: "zh-CN",
+      speakingRate: 0.82,
+    });
+  }, [index, items]);
 
   if (items.length === 0) {
     return (
@@ -268,11 +263,11 @@ export function ReadingPracticeSession({
           <div className="rounded-[1.75rem] border bg-muted/30 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
               <PronunciationButton
+                ref={pronunciationButtonRef}
                 text={getSpeechText(currentItem)}
                 lang="zh-CN"
                 rate={0.82}
                 variant="secondary"
-                onUnsupported={() => toast.error(t("practice.reading.audioUnavailable"))}
               >
                 <Volume2 className="size-4" />
                 {t("practice.reading.playAudio")}

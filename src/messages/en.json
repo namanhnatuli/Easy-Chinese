@@ -768,6 +768,11 @@
       "noPriorReview": "No prior review"
     }
   },
+  "tts": {
+    "playPronunciation": "Play pronunciation",
+    "loadingAudio": "Loading audio",
+    "cannotPlayAudio": "Cannot play audio"
+  },
   "practice": {
     "eyebrow": "Practice",
     "anonymousBadge": "Anonymous-friendly",
@@ -847,10 +852,10 @@
       "shortcutMeaning": "`M` toggle meaning",
       "shortcutAudio": "`P` play pronunciation",
       "shortcutsTitle": "Keyboard shortcuts",
-      "audioUnavailable": "Audio playback is not available in this browser.",
+      "audioUnavailable": "Cannot play audio.",
       "saveFailed": "Reading practice progress could not be saved.",
       "emptyDescription": "Publish words or example sentences first to populate reading practice.",
-      "ttsBadge": "Browser TTS",
+      "ttsBadge": "Cached TTS",
       "pronunciationUnsupported": "Speech recognition is not available in this browser yet.",
       "pronunciationTitle": "Pronunciation feedback",
       "pronunciationDescription": "Read the prompt aloud and compare your transcript with the expected Hanzi.",

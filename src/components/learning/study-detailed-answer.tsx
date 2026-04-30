@@ -38,6 +38,7 @@ export function StudyDetailedAnswer({
               className="h-8 w-8 rounded-full"
               label="Phát âm"
               hideIcon
+              showErrorMessage={false}
             >
               <span className="sr-only">Phát âm</span>
               <Volume2 className="h-4 w-4" aria-hidden="true" />
@@ -89,6 +90,15 @@ export function StudyDetailedAnswer({
                 <p className="text-hanzi text-base text-foreground">
                   {ex.chineseText}
                 </p>
+                <div className="mt-2">
+                  <PronunciationButton
+                    text={ex.chineseText}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    label="Nghe ví dụ"
+                  />
+                </div>
                 <p className="text-pinyin text-muted-foreground">{ex.pinyin}</p>
                 <p className="text-meaning mt-1 text-muted-foreground">
                   {ex.vietnameseMeaning}

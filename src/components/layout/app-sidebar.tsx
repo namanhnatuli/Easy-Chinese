@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, FileText, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings, Shield, Sparkles, Upload } from "lucide-react";
+import { BookOpen, FileText, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings, Shield, Sparkles, Upload, Volume2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -114,6 +114,7 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
     { href: "/admin/words", label: t("navigation.words.label"), description: t("navigation.words.description"), icon: LibraryBig },
     { href: "/admin/import", label: t("navigation.import.label"), description: t("navigation.import.description"), icon: Upload },
     { href: "/admin/content-sync", label: t("navigation.contentSync.label"), description: t("navigation.contentSync.description"), icon: Sparkles },
+    { href: "/admin/tts-cache", label: "TTS cache", description: "Audio cache metrics and tools", icon: Volume2 },
     { href: "/admin/grammar", label: t("navigation.manageGrammar.label"), description: t("navigation.manageGrammar.description"), icon: BookOpen },
     { href: "/admin/lessons", label: t("navigation.manageLessons.label"), description: t("navigation.manageLessons.description"), icon: LayoutDashboard },
     { href: "/admin/lesson-generator", label: t("navigation.lessonGenerator.label"), description: t("navigation.lessonGenerator.description"), icon: Sparkles },
