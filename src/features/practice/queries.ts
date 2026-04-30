@@ -1,4 +1,5 @@
 import { selectReadingPracticeItems, selectWritingPracticeItems, splitWordIntoHanziCharacters } from "@/features/practice/helpers";
+import { DEFAULT_LEARNING_SCHEDULER_SETTINGS } from "@/features/memory/spaced-repetition";
 import type {
   PracticeDashboardSummary,
   ReadingPracticeSentenceItem,
@@ -199,7 +200,10 @@ export async function listReadingWordPracticeItems({
         : null,
       memory: memory
         ? {
-            schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+            schedulerType:
+              memory.scheduler_type === "sm2"
+                ? "sm2"
+                : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
             state: memory.state,
             easeFactor: Number(memory.ease_factor),
             intervalDays: memory.interval_days,
@@ -291,7 +295,10 @@ export async function listReadingSentencePracticeItems({
         : null,
       memory: memory
         ? {
-            schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+            schedulerType:
+              memory.scheduler_type === "sm2"
+                ? "sm2"
+                : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
             state: memory.state,
             easeFactor: Number(memory.ease_factor),
             intervalDays: memory.interval_days,
@@ -471,7 +478,10 @@ export async function getWritingPracticeWordDetail({
     hskLevel: word.hsk_level,
     memory: memory
       ? {
-          schedulerType: memory.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+          schedulerType:
+            memory.scheduler_type === "sm2"
+              ? "sm2"
+              : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
           state: memory.state,
           easeFactor: Number(memory.ease_factor),
           intervalDays: memory.interval_days,

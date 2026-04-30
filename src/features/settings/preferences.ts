@@ -2,7 +2,12 @@ import type { Profile, PreferredFont, PreferredTheme } from "@/types/domain";
 
 import type { SupportedLanguage, UserSettingsInput } from "@/features/settings/types";
 import { localeLabels } from "@/i18n/config";
-import { DEFAULT_LEARNING_SCHEDULER_SETTINGS, clampDesiredRetention, clampMaximumIntervalDays } from "@/features/memory/spaced-repetition";
+import {
+  DEFAULT_LEARNING_SCHEDULER_SETTINGS,
+  clampDesiredRetention,
+  clampMaximumIntervalDays,
+  getDefaultDailyGoal,
+} from "@/features/memory/spaced-repetition";
 
 export function normalizeLanguage(value: string | null | undefined): SupportedLanguage {
   return value === "vi" || value === "zh" ? value : "en";
@@ -24,12 +29,15 @@ export function normalizeFontPreference(
 
 export function getInitialUserSettings(
   profile: Profile,
-  learningSettings?: Partial<Pick<UserSettingsInput, "schedulerType" | "desiredRetention" | "maximumIntervalDays">> | null,
+  learningSettings?: Partial<
+    Pick<UserSettingsInput, "dailyGoal" | "schedulerType" | "desiredRetention" | "maximumIntervalDays">
+  > | null,
 ): UserSettingsInput {
   return {
     language: normalizeLanguage(profile.preferredLanguage),
     theme: normalizeThemePreference(profile.preferredTheme),
     font: normalizeFontPreference(profile.preferredFont),
+    dailyGoal: Math.max(1, Math.min(Math.round(learningSettings?.dailyGoal ?? getDefaultDailyGoal()), 200)),
     schedulerType: learningSettings?.schedulerType === "fsrs" ? "fsrs" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
     desiredRetention: clampDesiredRetention(learningSettings?.desiredRetention ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.desiredRetention),
     maximumIntervalDays: clampMaximumIntervalDays(

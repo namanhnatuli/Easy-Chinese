@@ -1,4 +1,5 @@
 import { SettingsForm } from "@/components/settings/settings-form";
+import { DEFAULT_LEARNING_SCHEDULER_SETTINGS } from "@/features/memory/spaced-repetition";
 import { requirePermission } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,7 +14,7 @@ export default async function SettingsPage() {
   const supabase = await createSupabaseServerClient();
   const { data: learningStats, error } = await supabase
     .from("user_learning_stats")
-    .select("scheduler_type, desired_retention, maximum_interval_days")
+    .select("daily_goal, scheduler_type, desired_retention, maximum_interval_days")
     .eq("user_id", profile.id)
     .maybeSingle();
 
@@ -24,10 +25,14 @@ export default async function SettingsPage() {
   return (
     <SettingsForm
       profile={profile}
-      learningSettings={
-        learningStats
+        learningSettings={
+          learningStats
           ? {
-              schedulerType: learningStats.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+              dailyGoal: learningStats.daily_goal ?? 10,
+              schedulerType:
+                learningStats.scheduler_type === "sm2"
+                  ? "sm2"
+                  : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
               desiredRetention: Number(learningStats.desired_retention ?? 0.9),
               maximumIntervalDays: learningStats.maximum_interval_days ?? 36500,
             }

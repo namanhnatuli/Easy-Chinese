@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       theme: payload.theme,
       font: payload.font,
       language: payload.language,
+      dailyGoal: payload.dailyGoal,
       schedulerType: payload.schedulerType,
       desiredRetention: payload.desiredRetention,
       maximumIntervalDays: payload.maximumIntervalDays,

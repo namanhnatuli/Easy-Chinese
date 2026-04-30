@@ -7,6 +7,7 @@ import type {
   SuggestedLessonItem,
 } from "@/features/progress/types";
 import {
+  DEFAULT_LEARNING_SCHEDULER_SETTINGS,
   getDefaultDailyGoal,
   getVisibleStreakCount,
   normalizeLearningSchedulerSettings,
@@ -171,7 +172,10 @@ export async function listPersonalizedReviewQueue(
               ? "new"
               : "learning",
         memoryState: memory?.state ?? "new",
-        schedulerType: memory?.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+        schedulerType:
+          memory?.scheduler_type === "sm2"
+            ? "sm2"
+            : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
         dueAt: memory?.due_at ?? null,
         lastReviewedAt: memory?.last_reviewed_at ?? null,
         intervalDays,
@@ -220,7 +224,7 @@ export async function getUserLearningSchedulerSettings(userId: string): Promise<
   }
 
   return normalizeLearningSchedulerSettings({
-    schedulerType: data?.scheduler_type,
+    schedulerType: data?.scheduler_type === "sm2" ? "sm2" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
     desiredRetention: data?.desired_retention === undefined || data?.desired_retention === null ? undefined : Number(data.desired_retention),
     maximumIntervalDays: data?.maximum_interval_days ?? undefined,
   });

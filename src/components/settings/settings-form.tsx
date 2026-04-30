@@ -10,6 +10,7 @@ import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -34,7 +35,9 @@ export function SettingsForm({
   learningSettings,
 }: {
   profile: Profile;
-  learningSettings?: Partial<Pick<UserSettingsInput, "schedulerType" | "desiredRetention" | "maximumIntervalDays">> | null;
+  learningSettings?: Partial<
+    Pick<UserSettingsInput, "dailyGoal" | "schedulerType" | "desiredRetention" | "maximumIntervalDays">
+  > | null;
 }) {
   const { t, link } = useI18n();
   const [isSaving, startSaving] = useTransition();
@@ -46,6 +49,7 @@ export function SettingsForm({
     values.language !== savedValues.language ||
     values.theme !== savedValues.theme ||
     values.font !== savedValues.font ||
+    values.dailyGoal !== savedValues.dailyGoal ||
     values.schedulerType !== savedValues.schedulerType ||
     values.desiredRetention !== savedValues.desiredRetention ||
     values.maximumIntervalDays !== savedValues.maximumIntervalDays;
@@ -215,6 +219,42 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="daily-goal">{t("settings.dailyGoal")}</Label>
+                  <span className="text-sm font-medium text-foreground">{values.dailyGoal}</span>
+                </div>
+                <Input
+                  id="daily-goal"
+                  type="number"
+                  min={1}
+                  max={200}
+                  step={1}
+                  value={values.dailyGoal}
+                  onChange={(event) => {
+                    const nextValue = Number(event.target.value);
+                    updateField(
+                      "dailyGoal",
+                      Number.isFinite(nextValue) ? Math.max(1, Math.min(Math.round(nextValue), 200)) : 1,
+                    );
+                  }}
+                  aria-describedby="daily-goal-help"
+                />
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value={Math.min(values.dailyGoal, 50)}
+                  onChange={(event) => updateField("dailyGoal", Number(event.target.value))}
+                  className="w-full accent-primary"
+                  aria-label={t("settings.dailyGoal")}
+                />
+                <p id="daily-goal-help" className="text-sm text-muted-foreground">
+                  {t("settings.dailyGoalHelp")}
+                </p>
+              </div>
+
+              <div className="space-y-3">
                 <Label htmlFor="scheduler-type">{t("settings.schedulerLabel")}</Label>
                 <Select
                   value={values.schedulerType}
@@ -290,6 +330,7 @@ export function SettingsForm({
                 <Badge variant="secondary">{getLanguageLabel(values.language)}</Badge>
                 <Badge variant="secondary">{getThemeLabel(values.theme)}</Badge>
                 <Badge variant="secondary">{getFontLabel(values.font)}</Badge>
+                <Badge variant="secondary">{t("settings.dailyGoalBadge", { value: values.dailyGoal })}</Badge>
                 <Badge variant="secondary">{getSchedulerLabel(values.schedulerType)}</Badge>
                 <Badge variant="secondary">{t("settings.retentionBadge", { value: values.desiredRetention.toFixed(2) })}</Badge>
               </div>
@@ -323,6 +364,10 @@ export function SettingsForm({
               <p>
                 {t("settings.email", { value: profile.email ?? t("settings.unavailable") })}{" "}
                 <span className="font-medium text-foreground">{profile.email ?? t("settings.unavailable")}</span>
+              </p>
+              <p>
+                {t("settings.dailyGoalCurrent", { value: values.dailyGoal })}{" "}
+                <span className="font-medium text-foreground">{values.dailyGoal}</span>
               </p>
               <p>
                 {t("settings.schedulerCurrent", { value: getSchedulerLabel(values.schedulerType) })}{" "}

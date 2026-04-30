@@ -47,6 +47,7 @@ export async function updateUserSettings({
   const { error: learningStatsError } = await supabase.from("user_learning_stats").upsert(
     {
       user_id: userId,
+      daily_goal: parsed.dailyGoal,
       scheduler_type: schedulerSettings.schedulerType,
       desired_retention: schedulerSettings.desiredRetention,
       maximum_interval_days: schedulerSettings.maximumIntervalDays,

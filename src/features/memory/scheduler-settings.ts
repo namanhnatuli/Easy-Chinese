@@ -30,7 +30,7 @@ export const DEFAULT_FSRS_CONFIG: FsrsSchedulerConfig = {
 };
 
 export const DEFAULT_LEARNING_SCHEDULER_SETTINGS: LearningSchedulerSettings = {
-  schedulerType: "sm2",
+  schedulerType: "fsrs",
   desiredRetention: DEFAULT_FSRS_CONFIG.desiredRetention,
   maximumIntervalDays: DEFAULT_FSRS_CONFIG.maximumIntervalDays,
 };
@@ -52,7 +52,7 @@ export function normalizeLearningSchedulerSettings(
   value: Partial<LearningSchedulerSettings> | null | undefined,
 ): LearningSchedulerSettings {
   return {
-    schedulerType: value?.schedulerType === "fsrs" ? "fsrs" : "sm2",
+    schedulerType: value?.schedulerType === "sm2" ? "sm2" : "fsrs",
     desiredRetention: clampDesiredRetention(value?.desiredRetention ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.desiredRetention),
     maximumIntervalDays: clampMaximumIntervalDays(value?.maximumIntervalDays ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.maximumIntervalDays),
   };

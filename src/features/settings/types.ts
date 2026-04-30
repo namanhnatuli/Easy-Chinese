@@ -8,6 +8,7 @@ export interface UserSettingsInput {
   language: SupportedLanguage;
   theme: PreferredTheme;
   font: PreferredFont;
+  dailyGoal: number;
   schedulerType: SchedulerType;
   desiredRetention: number;
   maximumIntervalDays: number;

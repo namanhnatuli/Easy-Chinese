@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   buildLearningStatsPatch,
+  DEFAULT_LEARNING_SCHEDULER_SETTINGS,
   buildWordMemoryPatch,
   getDefaultDailyGoal,
   mapMemoryGradeToReviewResult,
@@ -37,7 +38,8 @@ async function readExistingWordMemory(
   }
 
   return {
-    schedulerType: data.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+    schedulerType:
+      data.scheduler_type === "sm2" ? "sm2" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
     state: data.state,
     easeFactor: Number(data.ease_factor),
     intervalDays: data.interval_days,
@@ -77,7 +79,8 @@ async function readExistingLearningStats(
     streakCount: data.streak_count,
     lastActiveDate: data.last_active_date,
     dailyGoal: data.daily_goal,
-    schedulerType: data.scheduler_type === "fsrs" ? "fsrs" : "sm2",
+    schedulerType:
+      data.scheduler_type === "sm2" ? "sm2" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
     desiredRetention: Number(data.desired_retention ?? 0.9),
     maximumIntervalDays: data.maximum_interval_days ?? 36500,
   };
@@ -251,9 +254,9 @@ export async function persistLearningStats({
       streakCount: 0,
       lastActiveDate: null,
       dailyGoal: getDefaultDailyGoal(),
-      schedulerType: "sm2",
-      desiredRetention: 0.9,
-      maximumIntervalDays: 36500,
+      schedulerType: DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
+      desiredRetention: DEFAULT_LEARNING_SCHEDULER_SETTINGS.desiredRetention,
+      maximumIntervalDays: DEFAULT_LEARNING_SCHEDULER_SETTINGS.maximumIntervalDays,
     },
     completedToday,
     now,

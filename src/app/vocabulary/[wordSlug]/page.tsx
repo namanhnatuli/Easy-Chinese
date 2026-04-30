@@ -123,7 +123,7 @@ export default async function VocabularyDetailPage({
             </div>
 
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 justify-between">
                 <p className="text-pinyin">{word.pinyin}</p>
                 <PronunciationButton
                   text={word.simplified}
