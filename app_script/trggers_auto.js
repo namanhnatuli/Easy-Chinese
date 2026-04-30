@@ -41,3 +41,33 @@ function resetAutoPendingTriggerToFiveMinutes() {
     .everyMinutes(5)
     .create();
 }
+
+function createWorkerTriggers() {
+  deleteWorkerTriggers_();
+
+  const keyCount = getGeminiApiKeyCount_();
+  const workerCount = Math.min(CONFIG.WORKER_COUNT, keyCount);
+
+  console.log(`[TRIGGER] create workers = ${workerCount}`);
+
+  for (let i = 0; i < workerCount; i++) {
+    const fnName = `autoProcessPendingRowsWorker${i}`;
+
+    ScriptApp.newTrigger(fnName)
+      .timeBased()
+      .everyMinutes(CONFIG.WORKER_TRIGGER_INTERVAL_MIN)
+      .create();
+  }
+}
+
+function deleteWorkerTriggers_() {
+  const triggers = ScriptApp.getProjectTriggers();
+
+  triggers.forEach(trigger => {
+    const fn = trigger.getHandlerFunction();
+
+    if (fn.startsWith('autoProcessPendingRowsWorker')) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+}

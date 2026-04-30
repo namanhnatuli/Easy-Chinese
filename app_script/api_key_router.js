@@ -1,3 +1,13 @@
+function getGeminiApiKeyByIndex_(index) {
+  const keys = getGeminiApiKeys_();
+  if (!keys.length) throw new Error('No Gemini API keys configured');
+  return keys[index % keys.length];
+}
+
+function getGeminiApiKeyCount_() {
+  return getGeminiApiKeys_().length;
+}
+
 function getGeminiApiKeys_() {
   const props = PropertiesService.getScriptProperties();
 
