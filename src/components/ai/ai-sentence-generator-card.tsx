@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 
+import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,7 +85,17 @@ export function AiSentenceGeneratorCard({
         {sentences.map((sentence, index) => (
           <div key={`${sentence.chinese}-${index}`} className="rounded-[1.5rem] bg-muted/50 p-4">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-lg font-semibold text-foreground">{sentence.chinese}</p>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-foreground">{sentence.chinese}</p>
+                <PronunciationButton
+                  text={sentence.chinese}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  label={t("tts.playPronunciation")}
+                  showErrorMessage={false}
+                />
+              </div>
               <Badge variant="secondary">{t("ai.sentences.aiBadge")}</Badge>
             </div>
             <p className="mt-2 text-pinyin">{sentence.pinyin}</p>

@@ -64,11 +64,10 @@ export function buildFallbackSentences(context: WordAiContext, count: number): A
     vietnameseMeaning: example.vietnameseMeaning,
   }));
 
-  if (existing.length >= count) {
-    return existing;
+  if (existing.length > 0) {
+    return existing.slice(0, count);
   }
 
-  const generated: AiExampleSentence[] = [];
   const templates = [
     {
       chinese: `我想认真${context.hanzi}。`,
@@ -87,13 +86,5 @@ export function buildFallbackSentences(context: WordAiContext, count: number): A
     },
   ];
 
-  for (const template of templates) {
-    if (existing.length + generated.length >= count) {
-      break;
-    }
-
-    generated.push(template);
-  }
-
-  return [...existing, ...generated].slice(0, count);
+  return templates.slice(0, count);
 }

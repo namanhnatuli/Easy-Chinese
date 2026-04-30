@@ -61,6 +61,22 @@ NEXT_PUBLIC_APP_NAME=Chinese Learning App
 NEXT_PUBLIC_DEFAULT_LOCALE=en
 ```
 
+Gemini AI setup:
+
+```env
+GEMINI_API_KEYS=["key1","key2","key3"]
+GEMINI_MODEL_WEIGHTS=[{"model":"gemini-3.1-flash-lite-preview","weight":5},{"model":"gemini-2.5-flash","weight":2},{"model":"gemini-2.5-flash-lite","weight":1},{"model":"gemini-3-flash-preview","weight":1}]
+GEMINI_MAX_RETRIES=3
+GEMINI_TIMEOUT_MS=30000
+GEMINI_DEFAULT_TEMPERATURE=0.4
+GEMINI_DEFAULT_MAX_OUTPUT_TOKENS=2048
+
+# Deprecated after Gemini migration
+OPENAI_API_KEY=
+OPENAI_MODEL=
+OPENAI_BASE_URL=
+```
+
 TTS setup:
 
 ```env
@@ -79,6 +95,14 @@ GOOGLE_TTS_API_KEY=
 `TTS_PROVIDER` and provider-specific voice allowlists are no longer controlled by env. Authenticated users now choose their preferred TTS provider and voice in the Settings page, while anonymous requests fall back to the first provider that is actually configured on the server.
 
 Environment values are validated at runtime for the core Supabase/public app settings. Invalid or missing required values now fail early instead of producing silent auth or data errors.
+
+AI calls are now centralized in a server-only Gemini provider layer with:
+- round-robin API key rotation
+- weighted model selection
+- retry across the next key/model on retryable failures
+- feature-level logging without exposing keys or sensitive prompt data
+
+The app no longer calls OpenAI directly.
 
 For local Supabase Google OAuth, also set:
 
