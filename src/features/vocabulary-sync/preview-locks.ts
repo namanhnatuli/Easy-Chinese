@@ -7,22 +7,22 @@ export function shouldSkipRestagingForExistingOpenRow(
   return existingOpenRows.has(sourceRowKey);
 }
 
-export function wasRowUpdatedAfterLastCompletedBatch(
-  sourceUpdatedAt: string | null,
-  lastCompletedBatchRunAt: string | null,
+export function isRowStaleComparedToExisting(
+  currentSourceUpdatedAt: string | null | undefined,
+  existingSourceUpdatedAt: string | null | undefined,
 ) {
-  if (!sourceUpdatedAt || !lastCompletedBatchRunAt) {
-    return true;
+  if (!currentSourceUpdatedAt || !existingSourceUpdatedAt) {
+    return false;
   }
 
-  const sourceUpdatedAtValue = Date.parse(sourceUpdatedAt);
-  const lastCompletedBatchRunAtValue = Date.parse(lastCompletedBatchRunAt);
+  const currentValue = Date.parse(currentSourceUpdatedAt);
+  const existingValue = Date.parse(existingSourceUpdatedAt);
 
-  if (Number.isNaN(sourceUpdatedAtValue) || Number.isNaN(lastCompletedBatchRunAtValue)) {
-    return true;
+  if (Number.isNaN(currentValue) || Number.isNaN(existingValue)) {
+    return false;
   }
 
-  return sourceUpdatedAtValue > lastCompletedBatchRunAtValue;
+  return currentValue <= existingValue;
 }
 
 export type ExistingSyncRowAction = "create" | "update" | "skip_closed";

@@ -25,7 +25,7 @@ import {
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
 import {
   resolveExistingSyncRowAction,
-  wasRowUpdatedAfterLastCompletedBatch,
+  isRowStaleComparedToExisting,
 } from "@/features/vocabulary-sync/preview-locks";
 import type { VocabSyncRow, WordReviewStatus } from "@/features/vocabulary-sync/types";
 import { z } from "zod";
@@ -144,22 +144,25 @@ export async function startVocabSyncPreview(input: z.infer<typeof vocabSyncPrevi
       };
     });
 
-    const staleByLastBatchRows = classifiedRows.filter(
-      ({ parsed }) =>
-        !wasRowUpdatedAfterLastCompletedBatch(
-          parsed.normalizedPayload.sourceUpdatedAt,
-          lastCompletedBatchRunAt,
-        ),
-    );
+    const staleByLastBatchRows = classifiedRows.filter(({ parsed }) => {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+      return isRowStaleComparedToExisting(
+        parsed.normalizedPayload.sourceUpdatedAt,
+        existingRow?.sourceUpdatedAt,
+      );
+    });
 
-    const rowsNewerThanLastBatch = classifiedRows.filter(
-      ({ parsed }) => {
-        return wasRowUpdatedAfterLastCompletedBatch(
-          parsed.normalizedPayload.sourceUpdatedAt,
-          lastCompletedBatchRunAt,
-        );
-      },
-    );
+    const rowsNewerThanLastBatch = classifiedRows.filter(({ parsed }) => {
+      const existingRow = parsed.sourceRowKey
+        ? existingRowsBySourceRowKey.get(parsed.sourceRowKey)
+        : null;
+      return !isRowStaleComparedToExisting(
+        parsed.normalizedPayload.sourceUpdatedAt,
+        existingRow?.sourceUpdatedAt,
+      );
+    });
 
     const rowsToUpdate = rowsNewerThanLastBatch.filter(({ parsed }) => {
       const existingRow = parsed.sourceRowKey
