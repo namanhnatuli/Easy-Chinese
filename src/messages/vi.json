@@ -1459,6 +1459,67 @@
       "skipped": "Đã bỏ qua: {count}",
       "issues": "Vấn đề: {count}",
       "noImportYet": "Chưa có lần nhập liệu nào trong phiên này."
+    },
+    "ttsCache": {
+      "eyebrow": "Quản trị Cache",
+      "title": "TTS Cache",
+      "description": "Xem lại âm thanh phát âm đã cache, tạo trước các mục mới qua cùng luồng ưu tiên cache và kiểm tra các mục cũ trước khi dọn dẹp.",
+      "stats": {
+        "cachedFiles": "Số file đã cache",
+        "charactersGenerated": "Số ký tự đã tạo",
+        "estimatedHits": "Số lượt hit ước tính",
+        "missesTracked": "Miss được tính là dòng đã tạo: {count}",
+        "storageEstimate": "Ước tính dung lượng"
+      },
+      "pregenerate": {
+        "title": "Tạo trước cache",
+        "lessonLabel": "Chọn bài học",
+        "lessonPlaceholder": "Không có bài học nào được chọn",
+        "wordsLabel": "Chọn từ vựng",
+        "wordsPlaceholder": "Mỗi dòng một ID từ, slug hoặc chữ Hán",
+        "examplesLabel": "Chọn ví dụ",
+        "examplesPlaceholder": "Mỗi dòng một ID ví dụ hoặc câu tiếng Trung",
+        "hint": "Chạy cùng một dịch vụ ưu tiên cache được dùng bởi `/api/tts` và dừng nếu có hơn 100 mục duy nhất được gửi.",
+        "submit": "Tạo trước"
+      },
+      "usage": {
+        "title": "Sử dụng theo nhà cung cấp và giọng đọc",
+        "providers": "Nhà cung cấp",
+        "filesCount": "{count} file",
+        "statsLine": "{characters} ký tự · {hits} lượt hit",
+        "topVoices": "Giọng đọc phổ biến nhất",
+        "voiceStatsLine": "{characters} ký tự · {hits} lượt hit · {size}"
+      },
+      "recent": {
+        "title": "Mục cache truy cập gần đây",
+        "emptyTitle": "Chưa có âm thanh cache",
+        "emptyDescription": "Hãy tạo âm thanh phát âm từ các trang học hoặc công cụ tạo trước.",
+        "table": {
+          "preview": "Xem trước",
+          "provider": "Nhà cung cấp",
+          "voice": "Giọng đọc",
+          "chars": "Ký tự",
+          "hits": "Lượt hit",
+          "size": "Dung lượng",
+          "lastAccessed": "Lượt truy cập cuối"
+        }
+      },
+      "stale": {
+        "title": "Ứng viên cũ không dùng",
+        "daysLabel": "Không dùng trong số ngày",
+        "limitLabel": "Giới hạn ứng viên",
+        "refresh": "Làm mới",
+        "emptyTitle": "Không có ứng viên cũ",
+        "emptyDescription": "Không có mục nào nằm ngoài cửa sổ truy cập cuối đã chọn.",
+        "entryStats": "{voice} · {hits} lượt hit · truy cập cuối {date}",
+        "neverAccessed": "chưa từng"
+      },
+      "statusMessages": {
+        "success": "{label}: đã tạo trước {items} mục ({hits} hit, {misses} miss).",
+        "empty": "Không có bài học, từ vựng hoặc ví dụ nào được cung cấp.",
+        "tooMany": "Batch tạo trước quá lớn ({count} mục). Hãy giảm bớt lựa chọn và thử lại.",
+        "error": "Tạo trước thất bại. Kiểm tra logs server để biết chi tiết lỗi từ provider."
+      }
     }
   }
 }

@@ -1459,6 +1459,67 @@
       "skipped": "Skipped: {count}",
       "issues": "Issues: {count}",
       "noImportYet": "No import has been run yet in this session."
+    },
+    "ttsCache": {
+      "eyebrow": "Cache Management",
+      "title": "TTS Cache",
+      "description": "Review cached pronunciation audio, pre-generate new items through the same cache-first flow, and inspect old entries before any cleanup work.",
+      "stats": {
+        "cachedFiles": "Cached files",
+        "charactersGenerated": "Characters generated",
+        "estimatedHits": "Estimated cache hits",
+        "missesTracked": "Misses tracked as generated rows: {count}",
+        "storageEstimate": "Storage estimate"
+      },
+      "pregenerate": {
+        "title": "Pre-generate cache",
+        "lessonLabel": "Selected lesson",
+        "lessonPlaceholder": "No lesson selected",
+        "wordsLabel": "Selected words",
+        "wordsPlaceholder": "One word id, slug, or Hanzi per line",
+        "examplesLabel": "Selected examples",
+        "examplesPlaceholder": "One example id or Chinese sentence per line",
+        "hint": "Runs the same cache-first service used by `/api/tts` and stops if more than 100 unique items are submitted.",
+        "submit": "Pre-generate"
+      },
+      "usage": {
+        "title": "Provider and voice usage",
+        "providers": "Providers",
+        "filesCount": "{count} files",
+        "statsLine": "{characters} characters · {hits} hits",
+        "topVoices": "Top voices",
+        "voiceStatsLine": "{characters} characters · {hits} hits · {size}"
+      },
+      "recent": {
+        "title": "Recently accessed cache entries",
+        "emptyTitle": "No cached audio yet",
+        "emptyDescription": "Generate pronunciation audio from study surfaces or the pre-generation tool first.",
+        "table": {
+          "preview": "Preview",
+          "provider": "Provider",
+          "voice": "Voice",
+          "chars": "Chars",
+          "hits": "Hits",
+          "size": "Size",
+          "lastAccessed": "Last accessed"
+        }
+      },
+      "stale": {
+        "title": "Old unused candidates",
+        "daysLabel": "Unused for days",
+        "limitLabel": "Candidate limit",
+        "refresh": "Refresh",
+        "emptyTitle": "No stale candidates",
+        "emptyDescription": "Nothing currently falls outside the selected last-access window.",
+        "entryStats": "{voice} · hits {hits} · last accessed {date}",
+        "neverAccessed": "never"
+      },
+      "statusMessages": {
+        "success": "{label}: pre-generated {items} items ({hits} hits, {misses} misses).",
+        "empty": "No lesson, word, or example targets were provided.",
+        "tooMany": "Pre-generation batch too large ({count} items). Reduce the selection and try again.",
+        "error": "Pre-generation failed. Check server logs for the provider error details."
+      }
     }
   }
 }

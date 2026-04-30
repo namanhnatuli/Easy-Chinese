@@ -1459,6 +1459,67 @@
       "skipped": "已跳过：{count}",
       "issues": "问题：{count}",
       "noImportYet": "本次会话中还没有执行导入。"
+    },
+    "ttsCache": {
+      "eyebrow": "缓存管理",
+      "title": "语音缓存 (TTS Cache)",
+      "description": "查看已缓存的发音音频，通过相同的缓存优先流程预生成新项目，并在清理前检查旧条目。",
+      "stats": {
+        "cachedFiles": "已缓存文件",
+        "charactersGenerated": "已生成字符数",
+        "estimatedHits": "预估缓存命中",
+        "missesTracked": "未命中（按生成行统计）：{count}",
+        "storageEstimate": "预估占用空间"
+      },
+      "pregenerate": {
+        "title": "预生成缓存",
+        "lessonLabel": "选择课程",
+        "lessonPlaceholder": "未选择课程",
+        "wordsLabel": "选择词汇",
+        "wordsPlaceholder": "每行一个词汇 ID、slug 或汉字",
+        "examplesLabel": "选择例句",
+        "examplesPlaceholder": "每行一个例句 ID 或中文句子",
+        "hint": "使用与 `/api/tts` 相同的缓存优先服务运行，单次提交超过 100 个唯一项时将停止。",
+        "submit": "开始预生成"
+      },
+      "usage": {
+        "title": "服务商与语音使用情况",
+        "providers": "服务商",
+        "filesCount": "{count} 个文件",
+        "statsLine": "{characters} 字符 · {hits} 次命中",
+        "topVoices": "热门语音",
+        "voiceStatsLine": "{characters} 字符 · {hits} 次命中 · {size}"
+      },
+      "recent": {
+        "title": "最近访问的缓存条目",
+        "emptyTitle": "暂无缓存音频",
+        "emptyDescription": "请先从学习页面或预生成工具生成发音音频。",
+        "table": {
+          "preview": "预览",
+          "provider": "服务商",
+          "voice": "语音",
+          "chars": "字符",
+          "hits": "命中",
+          "size": "大小",
+          "lastAccessed": "最后访问"
+        }
+      },
+      "stale": {
+        "title": "长期未用的待选条目",
+        "daysLabel": "未用天数",
+        "limitLabel": "待选上限",
+        "refresh": "刷新",
+        "emptyTitle": "暂无陈旧条目",
+        "emptyDescription": "当前没有超出所选访问窗口的项目。",
+        "entryStats": "{voice} · {hits} 次命中 · 最后访问 {date}",
+        "neverAccessed": "从未访问"
+      },
+      "statusMessages": {
+        "success": "{label}: 已预生成 {items} 个项目 ({hits} 命中, {misses} 未命中)。",
+        "empty": "未提供课程、词汇或例句目标。",
+        "tooMany": "预生成批次过大 ({count} 个项目)。请减少选择后重试。",
+        "error": "预生成失败。请检查服务器日志以获取服务商错误详情。"
+      }
     }
   }
 }

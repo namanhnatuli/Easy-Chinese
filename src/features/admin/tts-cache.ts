@@ -233,19 +233,26 @@ export async function getTtsCacheAdminOverview(params?: {
     estimatedTotalMisses: rows.length,
     providers: [...providerMap.values()].sort((left, right) => right.files - left.files),
     voices: [...voiceMap.values()].sort((left, right) => right.files - left.files).slice(0, 10),
-    recentEntries: rows.slice(0, 25).map((row) => ({
-      id: row.id,
-      cacheKey: row.cache_key,
-      provider: row.provider as "azure" | "google",
-      voice: row.voice,
-      languageCode: row.language_code,
-      textPreview: row.text_preview,
-      sizeBytes: Number(row.size_bytes ?? 0),
-      characterCount: row.character_count ?? 0,
-      accessCount: row.access_count ?? 0,
-      createdAt: row.created_at,
-      lastAccessedAt: row.last_accessed_at,
-    })),
+    recentEntries: [...rows]
+      .sort((left, right) => {
+        const leftTime = left.last_accessed_at ? new Date(left.last_accessed_at).getTime() : new Date(left.created_at).getTime();
+        const rightTime = right.last_accessed_at ? new Date(right.last_accessed_at).getTime() : new Date(right.created_at).getTime();
+        return rightTime - leftTime;
+      })
+      .slice(0, 10)
+      .map((row) => ({
+        id: row.id,
+        cacheKey: row.cache_key,
+        provider: row.provider as "azure" | "google",
+        voice: row.voice,
+        languageCode: row.language_code,
+        textPreview: row.text_preview,
+        sizeBytes: Number(row.size_bytes ?? 0),
+        characterCount: row.character_count ?? 0,
+        accessCount: row.access_count ?? 0,
+        createdAt: row.created_at,
+        lastAccessedAt: row.last_accessed_at,
+      })),
     staleEntries,
     staleDays,
     lessonOptions: (lessons ?? []).map((lesson) => ({

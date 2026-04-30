@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getTtsCacheAdminOverview, preGenerateTtsCacheAction } from "@/features/admin/tts-cache";
 import { requireAdminUser } from "@/lib/auth";
 import { formatBytes } from "@/lib/utils";
+import { getServerI18n } from "@/i18n/server";
 
 function parsePositiveInteger(value: string | string[] | undefined, fallback: number) {
   const normalized = Array.isArray(value) ? value[0] : value;
@@ -17,7 +18,7 @@ function parsePositiveInteger(value: string | string[] | undefined, fallback: nu
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
-function getStatusMessage(searchParams: Record<string, string | string[] | undefined>) {
+function getStatusMessage(searchParams: Record<string, string | string[] | undefined>, t: any) {
   const status = typeof searchParams.status === "string" ? searchParams.status : null;
 
   if (status === "success") {
@@ -25,20 +26,20 @@ function getStatusMessage(searchParams: Record<string, string | string[] | undef
     const hits = typeof searchParams.hits === "string" ? searchParams.hits : "0";
     const misses = typeof searchParams.misses === "string" ? searchParams.misses : "0";
     const label = typeof searchParams.label === "string" ? decodeURIComponent(searchParams.label) : "selection";
-    return `${label}: pre-generated ${items} items (${hits} hits, ${misses} misses).`;
+    return t("admin.ttsCache.statusMessages.success", { label, items, hits, misses });
   }
 
   if (status === "empty") {
-    return "No lesson, word, or example targets were provided.";
+    return t("admin.ttsCache.statusMessages.empty");
   }
 
   if (status === "too-many") {
     const count = typeof searchParams.count === "string" ? searchParams.count : "0";
-    return `Pre-generation batch too large (${count} items). Reduce the selection and try again.`;
+    return t("admin.ttsCache.statusMessages.tooMany", { count });
   }
 
   if (status === "error") {
-    return "Pre-generation failed. Check server logs for the provider error details.";
+    return t("admin.ttsCache.statusMessages.error");
   }
 
   return null;
@@ -50,25 +51,26 @@ export default async function AdminTtsCachePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireAdminUser();
+  const { t } = await getServerI18n();
   const resolvedSearchParams = await searchParams;
   const staleDays = parsePositiveInteger(resolvedSearchParams.staleDays, 30);
   const staleLimit = parsePositiveInteger(resolvedSearchParams.staleLimit, 25);
   const overview = await getTtsCacheAdminOverview({ staleDays, staleLimit });
-  const statusMessage = getStatusMessage(resolvedSearchParams);
+  const statusMessage = getStatusMessage(resolvedSearchParams, t);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Audio Operations"
-        title="TTS Cache"
-        description="Review cached pronunciation audio, pre-generate new items through the same cache-first flow, and inspect old entries before any cleanup work."
+        eyebrow={t("admin.ttsCache.eyebrow")}
+        title={t("admin.ttsCache.title")}
+        description={t("admin.ttsCache.description")}
         actions={
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="outline">
-              <Link href="/admin/lessons">Lessons</Link>
+              <Link href="/admin/lessons">{t("admin.overview.sections.lessonsTitle")}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/admin/words">Words</Link>
+              <Link href="/admin/words">{t("admin.overview.sections.wordsTitle")}</Link>
             </Button>
           </div>
         }
@@ -84,7 +86,7 @@ export default async function AdminTtsCachePage({
         <Card className="border-border/80">
           <CardContent className="flex items-center justify-between gap-4 p-6">
             <div>
-              <p className="text-sm text-muted-foreground">Cached files</p>
+              <p className="text-sm text-muted-foreground">{t("admin.ttsCache.stats.cachedFiles")}</p>
               <p className="mt-2 text-3xl font-semibold">{overview.totalCachedFiles}</p>
             </div>
             <Database className="size-6 text-muted-foreground" />
@@ -93,7 +95,7 @@ export default async function AdminTtsCachePage({
         <Card className="border-border/80">
           <CardContent className="flex items-center justify-between gap-4 p-6">
             <div>
-              <p className="text-sm text-muted-foreground">Characters generated</p>
+              <p className="text-sm text-muted-foreground">{t("admin.ttsCache.stats.charactersGenerated")}</p>
               <p className="mt-2 text-3xl font-semibold">{overview.totalCharactersGenerated}</p>
             </div>
             <Volume2 className="size-6 text-muted-foreground" />
@@ -102,10 +104,10 @@ export default async function AdminTtsCachePage({
         <Card className="border-border/80">
           <CardContent className="flex items-center justify-between gap-4 p-6">
             <div>
-              <p className="text-sm text-muted-foreground">Estimated cache hits</p>
+              <p className="text-sm text-muted-foreground">{t("admin.ttsCache.stats.estimatedHits")}</p>
               <p className="mt-2 text-3xl font-semibold">{overview.estimatedTotalHits}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Misses tracked as generated rows: {overview.estimatedTotalMisses}
+                {t("admin.ttsCache.stats.missesTracked", { count: overview.estimatedTotalMisses })}
               </p>
             </div>
             <Zap className="size-6 text-muted-foreground" />
@@ -114,7 +116,7 @@ export default async function AdminTtsCachePage({
         <Card className="border-border/80">
           <CardContent className="flex items-center justify-between gap-4 p-6">
             <div>
-              <p className="text-sm text-muted-foreground">Storage estimate</p>
+              <p className="text-sm text-muted-foreground">{t("admin.ttsCache.stats.storageEstimate")}</p>
               <p className="mt-2 text-3xl font-semibold">{formatBytes(overview.totalStorageBytes)}</p>
             </div>
             <HardDrive className="size-6 text-muted-foreground" />
@@ -125,13 +127,13 @@ export default async function AdminTtsCachePage({
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="border-border/80">
           <CardHeader>
-            <CardTitle>Pre-generate cache</CardTitle>
+            <CardTitle>{t("admin.ttsCache.pregenerate.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <form action={preGenerateTtsCacheAction} className="space-y-5">
               <div className="space-y-2">
                 <label htmlFor="lessonId" className="text-sm font-medium text-foreground">
-                  Selected lesson
+                  {t("admin.ttsCache.pregenerate.lessonLabel")}
                 </label>
                 <select
                   id="lessonId"
@@ -139,10 +141,10 @@ export default async function AdminTtsCachePage({
                   defaultValue=""
                   className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="">No lesson selected</option>
+                  <option value="">{t("admin.ttsCache.pregenerate.lessonPlaceholder")}</option>
                   {overview.lessonOptions.map((lesson) => (
                     <option key={lesson.id} value={lesson.id}>
-                      {lesson.isPublished ? "Published" : "Draft"} · {lesson.title}
+                      {lesson.isPublished ? t("admin.status.published") : t("admin.status.draft")} · {lesson.title}
                     </option>
                   ))}
                 </select>
@@ -150,33 +152,33 @@ export default async function AdminTtsCachePage({
 
               <div className="space-y-2">
                 <label htmlFor="wordEntries" className="text-sm font-medium text-foreground">
-                  Selected words
+                  {t("admin.ttsCache.pregenerate.wordsLabel")}
                 </label>
                 <textarea
                   id="wordEntries"
                   name="wordEntries"
                   rows={5}
-                  placeholder="One word id, slug, or Hanzi per line"
+                  placeholder={t("admin.ttsCache.pregenerate.wordsPlaceholder")}
                   className="w-full rounded-xl border border-input bg-background px-3 py-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="exampleEntries" className="text-sm font-medium text-foreground">
-                  Selected examples
+                  {t("admin.ttsCache.pregenerate.examplesLabel")}
                 </label>
                 <textarea
                   id="exampleEntries"
                   name="exampleEntries"
                   rows={5}
-                  placeholder="One example id or Chinese sentence per line"
+                  placeholder={t("admin.ttsCache.pregenerate.examplesPlaceholder")}
                   className="w-full rounded-xl border border-input bg-background px-3 py-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               <div className="flex items-center justify-between gap-3 rounded-2xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                <p>Runs the same cache-first service used by `/api/tts` and stops if more than 100 unique items are submitted.</p>
-                <Button type="submit">Pre-generate</Button>
+                <p>{t("admin.ttsCache.pregenerate.hint")}</p>
+                <Button type="submit">{t("admin.ttsCache.pregenerate.submit")}</Button>
               </div>
             </form>
           </CardContent>
@@ -184,27 +186,34 @@ export default async function AdminTtsCachePage({
 
         <Card className="border-border/80">
           <CardHeader>
-            <CardTitle>Provider and voice usage</CardTitle>
+            <CardTitle>{t("admin.ttsCache.usage.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-3">
-              <p className="text-sm font-medium text-foreground">Providers</p>
+              <p className="text-sm font-medium text-foreground">{t("admin.ttsCache.usage.providers")}</p>
               {overview.providers.map((provider) => (
                 <div key={provider.provider} className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{provider.provider}</Badge>
-                      <span className="text-sm text-muted-foreground">{provider.files} files</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t("admin.ttsCache.usage.filesCount", { count: provider.files })}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground">{formatBytes(provider.storageBytes)}</span>
                   </div>
-                  <p className="mt-2 text-sm text-foreground">{provider.characters} characters · {provider.hits} hits</p>
+                  <p className="mt-2 text-sm text-foreground">
+                    {t("admin.ttsCache.usage.statsLine", {
+                      characters: provider.characters,
+                      hits: provider.hits,
+                    })}
+                  </p>
                 </div>
               ))}
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-medium text-foreground">Top voices</p>
+              <p className="text-sm font-medium text-foreground">{t("admin.ttsCache.usage.topVoices")}</p>
               {overview.voices.map((voice) => (
                 <div key={`${voice.provider}:${voice.voice}`} className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
@@ -212,10 +221,16 @@ export default async function AdminTtsCachePage({
                       <p className="text-sm font-medium text-foreground">{voice.voice}</p>
                       <p className="text-xs text-muted-foreground">{voice.provider}</p>
                     </div>
-                    <Badge variant="outline">{voice.files} files</Badge>
+                    <Badge variant="outline">
+                      {t("admin.ttsCache.usage.filesCount", { count: voice.files })}
+                    </Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {voice.characters} characters · {voice.hits} hits · {formatBytes(voice.storageBytes)}
+                    {t("admin.ttsCache.usage.voiceStatsLine", {
+                      characters: voice.characters,
+                      hits: voice.hits,
+                      size: formatBytes(voice.storageBytes),
+                    })}
                   </p>
                 </div>
               ))}
@@ -224,46 +239,53 @@ export default async function AdminTtsCachePage({
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-6">
         <Card className="border-border/80">
           <CardHeader>
-            <CardTitle>Recent cache entries</CardTitle>
+            <CardTitle>{t("admin.ttsCache.recent.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             {overview.recentEntries.length === 0 ? (
               <EmptyState
-                title="No cached audio yet"
-                description="Generate pronunciation audio from study surfaces or the pre-generation tool first."
+                title={t("admin.ttsCache.recent.emptyTitle")}
+                description={t("admin.ttsCache.recent.emptyDescription")}
               />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Preview</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Voice</TableHead>
-                    <TableHead>Chars</TableHead>
-                    <TableHead>Hits</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Last accessed</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.preview")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.provider")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.voice")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.chars")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.hits")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.size")}</TableHead>
+                    <TableHead className="text-right">{t("admin.ttsCache.recent.table.lastAccessed")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {overview.recentEntries.map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell>
-                        <div className="max-w-[18rem] truncate text-sm text-foreground">{entry.textPreview}</div>
-                        <div className="text-xs text-muted-foreground">{entry.languageCode}</div>
+                        <div className="max-w-[18rem] truncate text-sm text-foreground font-medium">
+                          {entry.textPreview}
+                        </div>
+                        <div className="text-xs text-muted-foreground uppercase">{entry.languageCode}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{entry.provider}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{entry.voice}</TableCell>
-                      <TableCell>{entry.characterCount}</TableCell>
-                      <TableCell>{entry.accessCount}</TableCell>
-                      <TableCell>{formatBytes(entry.sizeBytes)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {entry.lastAccessedAt ? new Date(entry.lastAccessedAt).toLocaleString() : "Never"}
+                      <TableCell className="text-sm">{entry.characterCount}</TableCell>
+                      <TableCell className="text-sm">{entry.accessCount}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{formatBytes(entry.sizeBytes)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="text-sm text-foreground">
+                          {entry.lastAccessedAt ? new Date(entry.lastAccessedAt).toLocaleDateString() : t("admin.ttsCache.stale.neverAccessed")}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {entry.lastAccessedAt ? new Date(entry.lastAccessedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -275,53 +297,60 @@ export default async function AdminTtsCachePage({
 
         <Card className="border-border/80">
           <CardHeader>
-            <CardTitle>Old unused candidates</CardTitle>
+            <CardTitle>{t("admin.ttsCache.stale.title")}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <form method="get" className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Unused for days</span>
-                <input
-                  type="number"
-                  min={1}
-                  name="staleDays"
-                  defaultValue={overview.staleDays}
-                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Candidate limit</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  name="staleLimit"
-                  defaultValue={staleLimit}
-                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </label>
-              <div className="flex items-end">
-                <Button type="submit" variant="outline" className="h-11">Refresh</Button>
+          <CardContent className="space-y-6">
+            <form method="get" className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 flex-1">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.stale.daysLabel")}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    name="staleDays"
+                    defaultValue={overview.staleDays}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.stale.limitLabel")}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    name="staleLimit"
+                    defaultValue={staleLimit}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
               </div>
+              <Button type="submit" variant="outline" className="h-11 w-full sm:w-auto">
+                {t("admin.ttsCache.stale.refresh")}
+              </Button>
             </form>
 
             {overview.staleEntries.length === 0 ? (
               <EmptyState
-                title="No stale candidates"
-                description="Nothing currently falls outside the selected last-access window."
+                title={t("admin.ttsCache.stale.emptyTitle")}
+                description={t("admin.ttsCache.stale.emptyDescription")}
               />
             ) : (
-              <div className="space-y-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {overview.staleEntries.map((entry) => (
                   <div key={entry.id} className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <Badge variant="outline">{entry.provider}</Badge>
                       <span className="text-xs text-muted-foreground">{formatBytes(entry.sizeBytes)}</span>
                     </div>
-                    <p className="mt-2 text-sm text-foreground">{entry.textPreview}</p>
+                    <p className="mt-2 text-sm text-foreground line-clamp-2">{entry.textPreview}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {entry.voice} · hits {entry.accessCount} · last accessed{" "}
-                      {entry.lastAccessedAt ? new Date(entry.lastAccessedAt).toLocaleDateString() : "never"}
+                      {t("admin.ttsCache.stale.entryStats", {
+                        voice: entry.voice,
+                        hits: entry.accessCount,
+                        date: entry.lastAccessedAt 
+                          ? new Date(entry.lastAccessedAt).toLocaleDateString() 
+                          : t("admin.ttsCache.stale.neverAccessed")
+                      })}
                     </p>
                   </div>
                 ))}
