@@ -61,8 +61,8 @@ function ActionCard({
   prominent?: boolean;
 }) {
   return (
-    <Card className={prominent ? "border-primary/30 bg-primary/5" : "border-border/80"}>
-      <CardHeader className="space-y-4">
+    <Card className={prominent ? "flex h-full flex-col border-primary/30 bg-primary/5" : "flex h-full flex-col border-border/80"}>
+      <CardHeader className="flex-1 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className={prominent ? "rounded-2xl bg-primary/10 p-3 text-primary" : "rounded-2xl bg-muted p-3 text-foreground"}>
             {icon}
@@ -74,7 +74,7 @@ function ActionCard({
           <CardDescription className="leading-6">{body}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="mt-auto">
         <Button asChild className="w-full justify-between">
           <Link href={href}>
             {ctaLabel}
@@ -236,17 +236,17 @@ export async function HomeDashboard({ data }: { data: HomePageData }) {
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-slate-950 text-white">
+        <Card className="border-border/80 bg-card/95">
           <CardHeader className="gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               {t("home.dailyGoalProgressTitle")}
             </p>
-            <CardTitle className="text-2xl text-white">
+            <CardTitle className="text-2xl text-foreground">
               {data.isAuthenticated && data.summary
                 ? t("dashboard.levelValue", { level: data.summary.level })
                 : t("home.levelFocusTitle")}
             </CardTitle>
-            <CardDescription className="text-slate-300">
+            <CardDescription className="text-base leading-7 text-muted-foreground">
               {data.isAuthenticated && data.summary
                 ? t("dashboard.levelProgress", {
                     current: data.summary.currentXp,
@@ -260,8 +260,8 @@ export async function HomeDashboard({ data }: { data: HomePageData }) {
               value={data.isAuthenticated && data.summary ? data.summary.levelProgressPercent : 0}
               tone="amber"
             />
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-slate-300">
+            <div className="rounded-3xl border border-border/70 bg-muted/40 p-4">
+              <p className="text-sm leading-6 text-muted-foreground">
                 {data.isAuthenticated && data.summary
                   ? t("dashboard.goalRemaining", { count: data.summary.remainingToday })
                   : t("home.signInToSaveProgress")}

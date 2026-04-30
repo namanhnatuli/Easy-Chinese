@@ -64,22 +64,19 @@ NEXT_PUBLIC_DEFAULT_LOCALE=en
 TTS setup:
 
 ```env
-TTS_PROVIDER=azure
-TTS_DEFAULT_LANGUAGE=zh-CN
-TTS_DEFAULT_VOICE=zh-CN-XiaoxiaoNeural
 TTS_DEFAULT_SPEAKING_RATE=0.82
 TTS_DEFAULT_PITCH=0
 TTS_STORAGE_BUCKET=tts-audio
 TTS_STORAGE_ACCESS=public
 TTS_MAX_CHARACTERS_PER_REQUEST=280
 TTS_ALLOWED_LANGUAGE_CODES=zh-CN
-TTS_ALLOWED_AZURE_VOICES=zh-CN-XiaoxiaoNeural,zh-CN-YunxiNeural
-TTS_ALLOWED_GOOGLE_VOICES=cmn-CN-Standard-A,cmn-CN-Standard-B,cmn-CN-Wavenet-A
 TTS_ANONYMOUS_REQUEST_LIMIT_PER_MINUTE=30
 AZURE_SPEECH_KEY=
 AZURE_SPEECH_REGION=
 GOOGLE_TTS_API_KEY=
 ```
+
+`TTS_PROVIDER` and provider-specific voice allowlists are no longer controlled by env. Authenticated users now choose their preferred TTS provider and voice in the Settings page, while anonymous requests fall back to the first provider that is actually configured on the server.
 
 Environment values are validated at runtime for the core Supabase/public app settings. Invalid or missing required values now fail early instead of producing silent auth or data errors.
 

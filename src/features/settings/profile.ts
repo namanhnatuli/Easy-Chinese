@@ -3,7 +3,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { userSettingsSchema } from "@/features/settings/schema";
 import { normalizeLearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import { getProfileForUserId } from "@/features/auth/profile";
-import { normalizeFontPreference, normalizeLanguage, normalizeThemePreference } from "@/features/settings/preferences";
+import {
+  normalizeFontPreference,
+  normalizeLanguage,
+  normalizeThemePreference,
+  normalizeTtsProviderPreference,
+  normalizeTtsVoicePreference,
+} from "@/features/settings/preferences";
 import type { UserSettingsInput } from "@/features/settings/types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -31,6 +37,8 @@ export async function updateUserSettings({
       preferred_language: normalizeLanguage(parsed.language),
       preferred_theme: normalizeThemePreference(parsed.theme),
       preferred_font: normalizeFontPreference(parsed.font),
+      preferred_tts_provider: normalizeTtsProviderPreference(parsed.ttsProvider),
+      preferred_tts_voice: normalizeTtsVoicePreference(parsed.ttsProvider, parsed.ttsVoice),
     })
     .eq("id", userId);
 

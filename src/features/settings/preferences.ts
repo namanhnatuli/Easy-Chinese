@@ -8,6 +8,8 @@ import {
   clampMaximumIntervalDays,
   getDefaultDailyGoal,
 } from "@/features/memory/spaced-repetition";
+import { getSupportedTtsVoices, getTtsProviderDefaults, isSupportedTtsVoice } from "@/features/tts/catalog";
+import type { TtsProvider } from "@/features/tts/schema";
 
 export function normalizeLanguage(value: string | null | undefined): SupportedLanguage {
   return value === "vi" || value === "zh" ? value : "en";
@@ -27,6 +29,25 @@ export function normalizeFontPreference(
   return "sans";
 }
 
+export function normalizeTtsProviderPreference(
+  value: string | null | undefined,
+): TtsProvider {
+  return value === "google" ? "google" : "azure";
+}
+
+export function normalizeTtsVoicePreference(
+  provider: string | null | undefined,
+  voice: string | null | undefined,
+) {
+  const normalizedProvider = normalizeTtsProviderPreference(provider);
+
+  if (voice && isSupportedTtsVoice(normalizedProvider, voice)) {
+    return voice;
+  }
+
+  return getTtsProviderDefaults(normalizedProvider).defaultVoice;
+}
+
 export function getInitialUserSettings(
   profile: Profile,
   learningSettings?: Partial<
@@ -37,6 +58,8 @@ export function getInitialUserSettings(
     language: normalizeLanguage(profile.preferredLanguage),
     theme: normalizeThemePreference(profile.preferredTheme),
     font: normalizeFontPreference(profile.preferredFont),
+    ttsProvider: normalizeTtsProviderPreference(profile.preferredTtsProvider),
+    ttsVoice: normalizeTtsVoicePreference(profile.preferredTtsProvider, profile.preferredTtsVoice),
     dailyGoal: Math.max(1, Math.min(Math.round(learningSettings?.dailyGoal ?? getDefaultDailyGoal()), 200)),
     schedulerType: learningSettings?.schedulerType === "fsrs" ? "fsrs" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
     desiredRetention: clampDesiredRetention(learningSettings?.desiredRetention ?? DEFAULT_LEARNING_SCHEDULER_SETTINGS.desiredRetention),
@@ -64,4 +87,12 @@ export function getFontLabel(font: PreferredFont) {
 
 export function getSchedulerLabel(schedulerType: UserSettingsInput["schedulerType"]) {
   return schedulerType === "fsrs" ? "FSRS" : "SM-2 / Anki-like";
+}
+
+export function getTtsProviderLabel(provider: TtsProvider) {
+  return provider === "google" ? "Google Cloud TTS" : "Azure Speech";
+}
+
+export function getTtsVoiceOptions(provider: TtsProvider) {
+  return getSupportedTtsVoices(provider);
 }

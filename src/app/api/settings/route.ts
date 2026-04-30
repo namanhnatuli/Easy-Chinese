@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
       theme: payload.theme,
       font: payload.font,
       language: payload.language,
+      ttsProvider: payload.ttsProvider,
+      ttsVoice: payload.ttsVoice,
       dailyGoal: payload.dailyGoal,
       schedulerType: payload.schedulerType,
       desiredRetention: payload.desiredRetention,

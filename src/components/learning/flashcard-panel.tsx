@@ -72,7 +72,7 @@ export function FlashcardPanel({
         <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">{prompt.frontLabel}</p>
         <div className="mt-4 flex flex-col items-center gap-4">
           <p className="text-hanzi text-5xl">{prompt.frontText}</p>
-          {!revealed ? (
+          {revealed ? (
             <PronunciationButton
               text={prompt.back.hanzi}
               variant="outline"
@@ -80,15 +80,13 @@ export function FlashcardPanel({
               className="text-muted-foreground hover:text-foreground"
             >
               <Volume2 className="mr-2 h-4 w-4" />
-              Nghe phát âm
+              {t("learning.playPronunciation")}
             </PronunciationButton>
           ) : null}
         </div>
 
-        {revealed ? (
+        {revealed && (
           <StudyDetailedAnswer details={prompt.back} />
-        ) : (
-          <p className="mt-6 text-sm text-muted-foreground">{t("learning.revealAnswer")}</p>
         )}
       </div>
 

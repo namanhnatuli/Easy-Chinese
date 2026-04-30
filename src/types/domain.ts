@@ -56,6 +56,8 @@ export interface Profile extends TimestampedEntity {
   preferredLanguage: string;
   preferredTheme: PreferredTheme;
   preferredFont: PreferredFont;
+  preferredTtsProvider: TtsProvider;
+  preferredTtsVoice: string | null;
 }
 
 export interface Topic extends TimestampedEntity {

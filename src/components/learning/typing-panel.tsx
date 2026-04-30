@@ -73,11 +73,6 @@ export function TypingPanel({
           className="w-full rounded-2xl border bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-emerald-500"
         />
 
-        {question.hint ? (
-          <p id="typing-question-hint" className="text-sm text-muted-foreground">
-            {t("learning.hint", { value: question.hint })}
-          </p>
-        ) : null}
 
         {feedback ? (
           <div className="space-y-4">

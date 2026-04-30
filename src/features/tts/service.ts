@@ -13,7 +13,7 @@ import {
   getAudioUrlForStorageObject,
   type TtsCacheLookupResult,
 } from "@/features/tts/repository";
-import { type TtsResolveRequestInput } from "@/features/tts/schema";
+import { type TtsProvider, type TtsResolveRequestInput } from "@/features/tts/schema";
 import { selectTtsProvider, validateTtsRequest } from "@/features/tts/validation";
 
 export type ResolvedTtsAudioResult = Omit<TtsCacheLookupResult, "cacheStatus" | "audioUrl"> & {
@@ -113,8 +113,14 @@ async function writeTtsCacheObject(params: {
   return data;
 }
 
-export async function resolveTtsAudio(input: TtsResolveRequestInput): Promise<ResolvedTtsAudioResult> {
-  const request = validateTtsRequest(input);
+export async function resolveTtsAudio(
+  input: TtsResolveRequestInput,
+  preferences?: {
+    provider?: TtsProvider | null;
+    voice?: string | null;
+  },
+): Promise<ResolvedTtsAudioResult> {
+  const request = validateTtsRequest(input, preferences);
   logger.info("tts_request_received", {
     provider: request.provider,
     languageCode: request.languageCode,

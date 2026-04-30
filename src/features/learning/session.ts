@@ -14,10 +14,13 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 export function buildFlashcardPrompt(word: LessonStudyWord, index: number): FlashcardPrompt {
+  // Alternate between Hanzi -> Meaning and Meaning -> Hanzi/Sound
+  const isHanziFront = index % 2 === 0;
+  
   return {
     mode: "flashcard",
-    frontLabel: "Hanzi",
-    frontText: word.hanzi,
+    frontLabel: isHanziFront ? "Hanzi" : "Meaning",
+    frontText: isHanziFront ? word.hanzi : word.vietnameseMeaning,
     back: {
       hanzi: word.hanzi,
       simplified: word.simplified,
@@ -37,6 +40,7 @@ export function buildMultipleChoiceQuestion(
   currentIndex: number,
 ): MultipleChoiceStudyQuestion {
   const word = words[currentIndex];
+  // Alternate between Hanzi -> Meaning and Meaning -> Hanzi
   const variant =
     currentIndex % 2 === 0 ? "hanzi_to_meaning" : "meaning_to_hanzi";
   const distractorPool = rotatePool(
@@ -90,18 +94,23 @@ export function buildTypingQuestion(
   currentIndex: number,
 ): TypingStudyQuestion {
   const word = words[currentIndex];
+  
+  // Alternate between Meaning -> Hanzi and Pinyin -> Hanzi
+  // We avoid Meaning -> Pinyin here as the user might want to focus on characters
+  const variant = currentIndex % 2 === 0 ? "meaning_to_hanzi" : "pinyin_to_hanzi";
 
   return {
     mode: "typing",
-    variant: "meaning_to_hanzi",
-    prompt: `${word.vietnameseMeaning}`,
+    variant,
+    prompt: variant === "meaning_to_hanzi" ? word.vietnameseMeaning : word.pinyin,
     acceptedAnswers: uniqueStrings([
       word.simplified,
       word.hanzi,
       word.traditional ?? "",
     ].filter(Boolean)),
     placeholder: "Enter Chinese characters",
-    hint: word.pinyin,
+    // Remove pinyin hint from metadata as well to be safe, or keep it if we decide to use it elsewhere
+    hint: undefined,
     detailedAnswer: {
       hanzi: word.hanzi,
       simplified: word.simplified,

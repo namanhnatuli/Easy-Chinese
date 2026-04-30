@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
+import { getProfileForUserId } from "@/features/auth/profile";
 import { getTtsConfig } from "@/features/tts/config";
 import { isTtsServiceError } from "@/features/tts/errors";
 import { resolveTtsAudio } from "@/features/tts/service";
 import { ttsResolveRequestSchema } from "@/features/tts/schema";
 import { logger } from "@/lib/logger";
 import { checkBestEffortRateLimit } from "@/lib/rate-limit";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getRequestIdentifier(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -42,7 +44,16 @@ export async function POST(request: Request) {
 
     const json = await request.json();
     const payload = ttsResolveRequestSchema.parse(json);
-    const lookup = await resolveTtsAudio(payload);
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const profile = user ? await getProfileForUserId(supabase, user.id) : null;
+
+    const lookup = await resolveTtsAudio(payload, {
+      provider: profile?.preferredTtsProvider,
+      voice: profile?.preferredTtsVoice,
+    });
 
     return NextResponse.json({
       audioUrl: lookup.audioUrl,

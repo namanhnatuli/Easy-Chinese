@@ -3,8 +3,9 @@ import {
   buildTtsStoragePath,
   buildTtsTextPreview,
 } from "@/features/tts/cache-key";
-import { getTtsConfig } from "@/features/tts/config";
-import { ttsResolveRequestSchema, type TtsResolveRequestInput } from "@/features/tts/schema";
+import { getTtsProviderDefaults, isSupportedTtsVoice } from "@/features/tts/catalog";
+import { getTtsConfig, resolveConfiguredTtsProvider } from "@/features/tts/config";
+import { ttsResolveRequestSchema, type TtsProvider, type TtsResolveRequestInput } from "@/features/tts/schema";
 
 export interface ResolvedTtsCacheRequest {
   text: string;
@@ -21,12 +22,22 @@ export interface ResolvedTtsCacheRequest {
   storagePath: string;
 }
 
-export function resolveTtsCacheRequest(input: TtsResolveRequestInput): ResolvedTtsCacheRequest {
+export function resolveTtsCacheRequest(
+  input: TtsResolveRequestInput,
+  preferences?: {
+    provider?: TtsProvider | null;
+    voice?: string | null;
+  },
+): ResolvedTtsCacheRequest {
   const parsed = ttsResolveRequestSchema.parse(input);
   const config = getTtsConfig();
-  const provider = parsed.provider ?? config.provider;
-  const languageCode = parsed.languageCode ?? config.defaultLanguage;
-  const voice = parsed.voice ?? config.defaultVoice;
+  const provider = resolveConfiguredTtsProvider(parsed.provider ?? preferences?.provider);
+  const providerDefaults = getTtsProviderDefaults(provider);
+  const languageCode = parsed.languageCode ?? providerDefaults.defaultLanguage;
+  const preferredVoice = parsed.voice ?? preferences?.voice;
+  const voice = preferredVoice && isSupportedTtsVoice(provider, preferredVoice)
+    ? preferredVoice
+    : providerDefaults.defaultVoice;
   const speakingRate = parsed.speakingRate ?? config.speakingRate;
   const pitch = parsed.pitch ?? config.pitch;
 

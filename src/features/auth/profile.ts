@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
+import { normalizeTtsProviderPreference, normalizeTtsVoicePreference } from "@/features/settings/preferences";
 import { resolveBootstrapRole } from "@/lib/admin-bootstrap";
 import { logger } from "@/lib/logger";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -19,6 +20,8 @@ const profileRowSchema = z.object({
   preferred_language: z.string(),
   preferred_theme: profileThemeSchema,
   preferred_font: profileFontSchema,
+  preferred_tts_provider: z.enum(["azure", "google"]),
+  preferred_tts_voice: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -48,6 +51,8 @@ function mapProfileRow(row: ProfileRow): Profile {
     preferredLanguage: row.preferred_language,
     preferredTheme: row.preferred_theme,
     preferredFont: row.preferred_font,
+    preferredTtsProvider: normalizeTtsProviderPreference(row.preferred_tts_provider),
+    preferredTtsVoice: normalizeTtsVoicePreference(row.preferred_tts_provider, row.preferred_tts_voice),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -60,7 +65,7 @@ export async function getProfileForUserId(
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, email, display_name, avatar_url, role, preferred_language, preferred_theme, preferred_font, created_at, updated_at",
+      "id, email, display_name, avatar_url, role, preferred_language, preferred_theme, preferred_font, preferred_tts_provider, preferred_tts_voice, created_at, updated_at",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -105,6 +110,8 @@ export async function ensureProfileForUser(
     preferred_language: existingProfile?.preferredLanguage ?? "en",
     preferred_theme: existingProfile?.preferredTheme ?? ("system" as const),
     preferred_font: existingProfile?.preferredFont ?? ("sans" as const),
+    preferred_tts_provider: existingProfile?.preferredTtsProvider ?? ("azure" as const),
+    preferred_tts_voice: existingProfile?.preferredTtsVoice ?? null,
   };
 
   // Skip upsert if the profile exists and critical fields haven't changed.
@@ -114,7 +121,9 @@ export async function ensureProfileForUser(
     existingProfile.role === desiredRole &&
     existingProfile.email === payload.email &&
     existingProfile.displayName === payload.display_name &&
-    existingProfile.avatarUrl === payload.avatar_url
+    existingProfile.avatarUrl === payload.avatar_url &&
+    existingProfile.preferredTtsProvider === payload.preferred_tts_provider &&
+    existingProfile.preferredTtsVoice === payload.preferred_tts_voice
   ) {
     return existingProfile;
   }
@@ -125,7 +134,7 @@ export async function ensureProfileForUser(
     .from("profiles")
     .upsert(payload, { onConflict: "id" })
     .select(
-      "id, email, display_name, avatar_url, role, preferred_language, preferred_theme, preferred_font, created_at, updated_at",
+      "id, email, display_name, avatar_url, role, preferred_language, preferred_theme, preferred_font, preferred_tts_provider, preferred_tts_voice, created_at, updated_at",
     )
     .single();
 

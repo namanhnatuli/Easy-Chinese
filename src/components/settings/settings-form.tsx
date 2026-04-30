@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Palette, Save, SlidersHorizontal, Type } from "lucide-react";
+import { Palette, Save, SlidersHorizontal, Type, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { dispatchPreferenceUpdate } from "@/components/settings/preferences-provider";
@@ -24,6 +24,8 @@ import {
   getInitialUserSettings,
   normalizeLanguage,
   normalizeThemePreference,
+  getTtsProviderLabel,
+  getTtsVoiceOptions,
 } from "@/features/settings/preferences";
 import { useI18n } from "@/i18n/client";
 import type { UserSettingsInput } from "@/features/settings/types";
@@ -46,6 +48,8 @@ export function SettingsForm({
 
   const hasChanges =
     values.font !== savedValues.font ||
+    values.ttsProvider !== savedValues.ttsProvider ||
+    values.ttsVoice !== savedValues.ttsVoice ||
     values.dailyGoal !== savedValues.dailyGoal ||
     values.schedulerType !== savedValues.schedulerType ||
     values.desiredRetention !== savedValues.desiredRetention ||
@@ -151,6 +155,71 @@ export function SettingsForm({
               <p id="font-help" className="text-sm text-muted-foreground">
                 {t("settings.fontHelp")}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/80 bg-card/95">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Volume2 className="size-4" />
+                {t("settings.ttsTitle")}
+              </CardTitle>
+              <CardDescription>{t("settings.ttsDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-3">
+                <Label htmlFor="tts-provider">{t("settings.ttsProviderLabel")}</Label>
+                <Select
+                  value={values.ttsProvider}
+                  onValueChange={(value) => {
+                    const nextProvider = value as UserSettingsInput["ttsProvider"];
+                    const nextVoiceOptions = getTtsVoiceOptions(nextProvider);
+                    const nextVoice = nextVoiceOptions.includes(values.ttsVoice)
+                      ? values.ttsVoice
+                      : nextVoiceOptions[0];
+
+                    setValues((current) => ({
+                      ...current,
+                      ttsProvider: nextProvider,
+                      ttsVoice: nextVoice,
+                    }));
+                    setErrorMessage(null);
+                  }}
+                >
+                  <SelectTrigger id="tts-provider" aria-describedby="tts-provider-help">
+                    <SelectValue placeholder={t("settings.ttsProviderLabel")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="azure">{getTtsProviderLabel("azure")}</SelectItem>
+                    <SelectItem value="google">{getTtsProviderLabel("google")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p id="tts-provider-help" className="text-sm text-muted-foreground">
+                  {t("settings.ttsProviderHelp")}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="tts-voice">{t("settings.ttsVoiceLabel")}</Label>
+                <Select
+                  value={values.ttsVoice}
+                  onValueChange={(value) => updateField("ttsVoice", value)}
+                >
+                  <SelectTrigger id="tts-voice" aria-describedby="tts-voice-help">
+                    <SelectValue placeholder={t("settings.ttsVoiceLabel")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getTtsVoiceOptions(values.ttsProvider).map((voice) => (
+                      <SelectItem key={voice} value={voice}>
+                        {voice}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p id="tts-voice-help" className="text-sm text-muted-foreground">
+                  {t("settings.ttsVoiceHelp")}
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -273,6 +342,8 @@ export function SettingsForm({
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{getFontLabel(values.font)}</Badge>
+                <Badge variant="secondary">{getTtsProviderLabel(values.ttsProvider)}</Badge>
+                <Badge variant="secondary">{values.ttsVoice}</Badge>
                 <Badge variant="secondary">{t("settings.dailyGoalBadge", { value: values.dailyGoal })}</Badge>
                 <Badge variant="secondary">{getSchedulerLabel(values.schedulerType)}</Badge>
                 <Badge variant="secondary">{t("settings.retentionBadge", { value: values.desiredRetention.toFixed(2) })}</Badge>
