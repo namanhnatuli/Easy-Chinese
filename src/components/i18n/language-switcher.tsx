@@ -14,15 +14,20 @@ import {
 } from "@/i18n/config";
 import { replaceLocaleInPathname } from "@/i18n/navigation";
 import { useI18n } from "@/i18n/client";
+import { cn } from "@/lib/utils";
 
 export function LanguageSwitcher({
   authenticated = false,
   ariaLabel,
   onLocaleChange,
+  triggerClassName,
+  compact = false,
 }: {
   authenticated?: boolean;
   ariaLabel?: string;
   onLocaleChange?: (locale: AppLocale) => void;
+  triggerClassName?: string;
+  compact?: boolean;
 }) {
   const { locale, t } = useI18n();
   const pathname = usePathname();
@@ -62,10 +67,12 @@ export function LanguageSwitcher({
 
   return (
     <Select value={locale} onValueChange={handleChange} disabled={isPending}>
-      <SelectTrigger aria-label={ariaLabel} className="min-w-[9.5rem]">
+      <SelectTrigger aria-label={ariaLabel} className={cn("min-w-[9.5rem]", triggerClassName)}>
         <div className="flex items-center gap-2">
           <Languages className="size-4" />
-          <SelectValue />
+          <span className={cn(compact && "sr-only md:not-sr-only")}>
+            <SelectValue />
+          </span>
         </div>
       </SelectTrigger>
       <SelectContent>

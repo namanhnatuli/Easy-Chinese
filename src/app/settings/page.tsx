@@ -25,8 +25,8 @@ export default async function SettingsPage() {
   return (
     <SettingsForm
       profile={profile}
-        learningSettings={
-          learningStats
+      learningSettings={
+        learningStats
           ? {
               dailyGoal: learningStats.daily_goal ?? 10,
               schedulerType:

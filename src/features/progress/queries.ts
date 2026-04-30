@@ -1,4 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getUserProgressAnalytics,
+  getUserProgressSummary,
+  getUserRecentActivity,
+  getUserSkillBreakdown,
+  getUserVocabularyStatusBreakdown,
+} from "@/features/progress/dashboard";
 import { getGamificationDashboardSummary } from "@/features/gamification/queries";
 import { buildDailyActivitySummary, buildProgressSummary } from "@/features/progress/summary";
 import {
@@ -8,6 +15,7 @@ import {
   listRecommendedLessonsForUser,
 } from "@/features/memory/queries";
 import { getPracticeDashboardSummary, listRecentPracticeActivity } from "@/features/practice/queries";
+import type { DashboardTimeRange } from "@/features/progress/dashboard.schemas";
 
 import type {
   DashboardData,
@@ -184,9 +192,13 @@ export async function listRecentArticleProgress(
     .filter((item): item is RecentArticleProgressItem => item !== null);
 }
 
-export async function getDashboardData(userId: string): Promise<DashboardData> {
+export async function getDashboardData(
+  userId: string,
+  options?: { range?: DashboardTimeRange },
+): Promise<DashboardData> {
   const supabase = await createSupabaseServerClient();
   const now = new Date();
+  const range = options?.range ?? "30d";
 
   const [
     { data: memoryRows, error: memoryError },
@@ -238,6 +250,11 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     recentPracticeActivity,
     dailyGoalProgress,
     gamification,
+    progressSummary,
+    progressAnalytics,
+    skillBreakdown,
+    vocabularyStatusBreakdown,
+    recentActivityFeed,
     personalizedLessons,
     recommendedArticles,
   ] = await Promise.all([
@@ -248,6 +265,11 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     listRecentPracticeActivity(userId),
     getDailyGoalProgress(userId),
     getGamificationDashboardSummary(userId),
+    getUserProgressSummary(userId),
+    getUserProgressAnalytics(userId, { range }),
+    getUserSkillBreakdown(userId),
+    getUserVocabularyStatusBreakdown(userId),
+    getUserRecentActivity(userId),
     listRecommendedLessonsForUser(userId, 3),
     listRecommendedArticlesForUser(userId, 3),
   ]);
@@ -270,7 +292,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
             descriptionKey: "dashboard.suggestedActionBodies.lesson" as const,
           }
         : {
-            href: "/practice/reading/words",
+            href: "/practice/reading",
             titleKey: "dashboard.suggestedActions.practice" as const,
             descriptionKey: "dashboard.suggestedActionBodies.practice" as const,
           };
@@ -301,6 +323,12 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 
   return {
     summary,
+    progressSummary,
+    progressTimeSeries: progressAnalytics.timeSeries,
+    progressComparison: progressAnalytics.comparison,
+    skillBreakdown,
+    vocabularyStatusBreakdown,
+    recentActivityFeed,
     completedLessonsCount,
     inProgressLessonsCount,
     completedArticlesCount,

@@ -9,8 +9,7 @@ import {
 
 import "@/app/globals.css";
 
-import { AppHeader } from "@/components/layout/app-header";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppShell } from "@/components/layout/app-shell";
 import { PreferencesProvider } from "@/components/settings/preferences-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getAuthContext } from "@/lib/auth";
@@ -62,15 +61,9 @@ export default async function RootLayout({
         </a>
         <PreferencesProvider language={locale} theme={theme} font={font} />
         <I18nProvider locale={locale} messages={messages}>
-          <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col gap-6 px-4 py-4 sm:px-5 lg:flex-row lg:px-6 lg:py-6">
-            <AppSidebar user={user} />
-            <div className="min-w-0 flex-1 space-y-6">
-              <AppHeader user={user} />
-              <main id="main-content" className="page-shell" tabIndex={-1}>
-                {children}
-              </main>
-            </div>
-          </div>
+          <AppShell user={user} initialTheme={theme}>
+            {children}
+          </AppShell>
         </I18nProvider>
         <Toaster />
       </body>

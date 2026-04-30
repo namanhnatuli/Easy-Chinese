@@ -59,3 +59,25 @@ export async function updateUserSettings({
     throw learningStatsError;
   }
 }
+
+export async function updateUserThemePreference({
+  userId,
+  theme,
+}: {
+  userId: string;
+  theme: UserSettingsInput["theme"];
+}) {
+  const adminSupabase = createSupabaseAdminClient();
+  const normalizedTheme = normalizeThemePreference(theme);
+
+  const { error } = await adminSupabase
+    .from("profiles")
+    .update({
+      preferred_theme: normalizedTheme,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+}

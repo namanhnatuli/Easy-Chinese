@@ -1,4 +1,12 @@
 import type { MemoryCardState, ProgressStatus, ReviewMode, ReviewResult, SchedulerGrade, SchedulerType } from "@/types/domain";
+import type {
+  UserProgressPeriodComparison,
+  UserProgressSummary,
+  UserProgressTimeSeries,
+  UserRecentActivity,
+  UserSkillBreakdown,
+  UserVocabularyStatusBreakdown,
+} from "@/features/progress/dashboard.types";
 import type { GamificationDashboardSummary } from "@/features/gamification/queries";
 import type { PracticeDashboardSummary, RecentPracticeActivityItem } from "@/features/practice/types";
 
@@ -115,6 +123,12 @@ export interface RecentArticleProgressItem {
 
 export interface DashboardData {
   summary: ProgressSummary;
+  progressSummary: UserProgressSummary;
+  progressTimeSeries: UserProgressTimeSeries;
+  progressComparison: UserProgressPeriodComparison;
+  skillBreakdown: UserSkillBreakdown;
+  vocabularyStatusBreakdown: UserVocabularyStatusBreakdown;
+  recentActivityFeed: UserRecentActivity;
   completedLessonsCount: number;
   inProgressLessonsCount: number;
   completedArticlesCount: number;

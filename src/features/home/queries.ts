@@ -7,7 +7,6 @@ import {
 import { getDashboardData } from "@/features/progress/queries";
 import { listPublicArticles, type PublicArticleListItem } from "@/features/public/articles";
 import { listPublicLessons, type PublicLessonListItem } from "@/features/public/lessons";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AuthUser } from "@/types/domain";
 
 export interface HomeDashboardSummary {
@@ -98,67 +97,6 @@ export interface HomePageData {
 
 const getCachedDashboardData = cache(async (userId: string) => getDashboardData(userId));
 
-function getCurrentDayBounds() {
-  const now = new Date();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-
-  return {
-    from: dayStart.toISOString(),
-    to: dayEnd.toISOString(),
-  };
-}
-
-async function getCompletedWordCountToday(userId: string): Promise<number> {
-  const supabase = await createSupabaseServerClient();
-  const { from, to } = getCurrentDayBounds();
-  const { data, error } = await supabase
-    .from("review_events")
-    .select("word_id")
-    .eq("user_id", userId)
-    .in("grade", ["hard", "good", "easy"])
-    .gte("reviewed_at", from)
-    .lt("reviewed_at", to);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Set((data ?? []).map((row) => row.word_id).filter((value): value is string => Boolean(value)))
-    .size;
-}
-
-async function getDifficultWordCount(userId: string): Promise<number> {
-  const supabase = await createSupabaseServerClient();
-  const [{ data: readingRows, error: readingError }, { data: writingRows, error: writingError }] =
-    await Promise.all([
-      supabase
-        .from("user_reading_progress")
-        .select("word_id")
-        .eq("user_id", userId)
-        .eq("status", "difficult")
-        .not("word_id", "is", null),
-      supabase
-        .from("user_writing_progress")
-        .select("word_id")
-        .eq("user_id", userId)
-        .eq("status", "difficult"),
-    ]);
-
-  if (readingError) {
-    throw readingError;
-  }
-
-  if (writingError) {
-    throw writingError;
-  }
-
-  return new Set([
-    ...(readingRows ?? []).map((row) => row.word_id).filter((value): value is string => Boolean(value)),
-    ...(writingRows ?? []).map((row) => row.word_id).filter((value): value is string => Boolean(value)),
-  ]).size;
-}
-
 function mapPublicLessonItem(lesson: PublicLessonListItem): HomeRecommendedLessonItem {
   return {
     id: lesson.id,
@@ -188,16 +126,16 @@ export async function getDashboardSummary(userId: string): Promise<HomeDashboard
   const data = await getCachedDashboardData(userId);
 
   return {
-    streakCount: data.dailyGoalProgress.streakCount,
-    totalXp: data.gamification.totalXp,
+    streakCount: data.progressSummary.streakDays,
+    totalXp: data.progressSummary.totalXp,
     level: data.gamification.level,
     currentXp: data.gamification.currentXp,
     nextLevelXp: data.gamification.nextLevelXp,
     levelProgressPercent: data.gamification.progressPercent,
-    dailyGoal: data.dailyGoalProgress.dailyGoal,
-    completedToday: data.dailyGoalProgress.completedToday,
-    remainingToday: data.dailyGoalProgress.remainingToday,
-    wordsToReviewToday: data.dailyGoalProgress.wordsToReviewToday,
+    dailyGoal: data.progressSummary.dailyGoal,
+    completedToday: data.progressSummary.completionToday,
+    remainingToday: Math.max(data.progressSummary.dailyGoal - data.progressSummary.completionToday, 0),
+    wordsToReviewToday: data.progressSummary.dueToday,
   };
 }
 
@@ -207,17 +145,13 @@ export async function getReviewQueueCount(userId: string): Promise<number> {
 }
 
 export async function getUserStats(userId: string): Promise<HomeUserStats> {
-  const [data, wordsCompletedToday, difficultWordsCount] = await Promise.all([
-    getCachedDashboardData(userId),
-    getCompletedWordCountToday(userId),
-    getDifficultWordCount(userId),
-  ]);
+  const data = await getCachedDashboardData(userId);
 
   return {
-    totalWordsLearned: data.summary.totalStudied,
-    wordsDueToday: data.summary.dueTodayCount,
-    wordsCompletedToday,
-    difficultWordsCount,
+    totalWordsLearned: data.progressSummary.totalWordsLearned,
+    wordsDueToday: data.progressSummary.dueToday,
+    wordsCompletedToday: data.progressSummary.completionToday,
+    difficultWordsCount: data.progressSummary.difficultWords,
     writingPracticeCount: data.practiceSummary.writingCharactersPracticed,
   };
 }

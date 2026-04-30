@@ -1,183 +1,201 @@
 "use client";
 
+import type { ComponentType } from "react";
 import Link from "next/link";
-import { BookOpen, FileText, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings, Shield, Sparkles, Upload, Volume2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, FileText, GraduationCap, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings2, Shield, Sparkles, Upload, Volume2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { SidebarNavGroup } from "@/components/layout/sidebar-nav-group";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { stripLocaleFromPathname } from "@/i18n/navigation";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils";
+
 import type { AuthUser } from "@/types/domain";
 
-interface SidebarLink {
+interface SidebarNavItemConfig {
   href: string;
   label: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  description?: string;
+  icon: ComponentType<{ className?: string }>;
 }
 
-function SidebarNavList({
-  title,
-  links,
-}: {
+interface SidebarNavGroupConfig {
+  key: string;
   title: string;
-  links: SidebarLink[];
-}) {
-  const pathname = stripLocaleFromPathname(usePathname());
-  const { link } = useI18n();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="px-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-        {title}
-      </p>
-      <div className="flex flex-col gap-1">
-        {links.map((item) => {
-          const matchesItem =
-            pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
-          const hasMoreSpecificMatch = links.some((candidate) => {
-            if (candidate.href === item.href || candidate.href.length <= item.href.length) {
-              return false;
-            }
-
-            return pathname === candidate.href || pathname.startsWith(`${candidate.href}/`);
-          });
-          const active = matchesItem && !hasMoreSpecificMatch;
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={link(item.href)}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "focus-ring flex items-start gap-3 rounded-2xl px-3 py-3 transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground shadow-soft"
-                  : "text-muted-foreground hover:bg-background hover:text-foreground",
-              )}
-            >
-              <span
-                className={cn(
-                  "mt-0.5 flex size-9 items-center justify-center rounded-2xl",
-                  active ? "bg-white/15" : "bg-muted",
-                )}
-              >
-                <Icon className="size-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    "block text-sm font-semibold",
-                    active ? "text-primary-foreground" : "text-foreground",
-                  )}
-                >
-                  {item.label}
-                </span>
-                <span
-                  className={cn(
-                    "mt-0.5 block text-xs",
-                    active ? "text-primary-foreground/80" : "text-muted-foreground",
-                  )}
-                >
-                  {item.description}
-                </span>
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
+  items: SidebarNavItemConfig[];
 }
 
-export function SidebarNavigation({ user }: { user: AuthUser | null }) {
-  const { t } = useI18n();
-  const publicLinks: SidebarLink[] = [
-    { href: "/", label: t("navigation.home.label"), description: t("navigation.home.description"), icon: Sparkles },
-    { href: "/lessons", label: t("navigation.lessons.label"), description: t("navigation.lessons.description"), icon: BookOpen },
-    { href: "/vocabulary", label: t("navigation.vocabulary.label"), description: t("navigation.vocabulary.description"), icon: LibraryBig },
-    { href: "/grammar", label: t("navigation.grammar.label"), description: t("navigation.grammar.description"), icon: BookOpen },
-    { href: "/practice", label: t("navigation.practice.label"), description: t("navigation.practice.description"), icon: PenTool },
-    { href: "/articles", label: t("navigation.articles.label"), description: t("navigation.articles.description"), icon: FileText },
-  ];
-  const authenticatedLinks: SidebarLink[] = [
-    { href: "/dashboard", label: t("navigation.dashboard.label"), description: t("navigation.dashboard.description"), icon: LayoutDashboard },
-    { href: "/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
-    { href: "/settings", label: t("navigation.settings.label"), description: t("navigation.settings.description"), icon: Settings },
-  ];
-  const adminLinks: SidebarLink[] = [
-    { href: "/admin", label: t("navigation.admin.label"), description: t("navigation.admin.description"), icon: Shield },
-    { href: "/admin/words", label: t("navigation.words.label"), description: t("navigation.words.description"), icon: LibraryBig },
-    { href: "/admin/import", label: t("navigation.import.label"), description: t("navigation.import.description"), icon: Upload },
-    { href: "/admin/content-sync", label: t("navigation.contentSync.label"), description: t("navigation.contentSync.description"), icon: Sparkles },
-    { href: "/admin/tts-cache", label: "TTS cache", description: "Audio cache metrics and tools", icon: Volume2 },
-    { href: "/admin/grammar", label: t("navigation.manageGrammar.label"), description: t("navigation.manageGrammar.description"), icon: BookOpen },
-    { href: "/admin/lessons", label: t("navigation.manageLessons.label"), description: t("navigation.manageLessons.description"), icon: LayoutDashboard },
-    { href: "/admin/lesson-generator", label: t("navigation.lessonGenerator.label"), description: t("navigation.lessonGenerator.description"), icon: Sparkles },
-    { href: "/admin/articles", label: t("navigation.manageArticles.label"), description: t("navigation.manageArticles.description"), icon: FileText },
+function routeMatches(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getSidebarGroups(user: AuthUser | null, t: ReturnType<typeof useI18n>["t"]): SidebarNavGroupConfig[] {
+  const groups: SidebarNavGroupConfig[] = [
+    {
+      key: "study",
+      title: t("navigation.studyGroup"),
+      items: [
+        { href: "/", label: t("navigation.home.label"), description: t("navigation.home.description"), icon: Sparkles },
+        { href: "/lessons", label: t("navigation.lessons.label"), description: t("navigation.lessons.description"), icon: GraduationCap },
+        { href: "/vocabulary", label: t("navigation.vocabulary.label"), description: t("navigation.vocabulary.description"), icon: LibraryBig },
+        { href: "/grammar", label: t("navigation.grammar.label"), description: t("navigation.grammar.description"), icon: BookOpen },
+        { href: "/articles", label: t("navigation.articles.label"), description: t("navigation.articles.description"), icon: FileText },
+      ],
+    },
+    {
+      key: "practice",
+      title: t("navigation.practiceGroup"),
+      items: [
+        { href: "/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
+        { href: "/practice/reading", label: t("dashboard.ctaPracticeReading"), description: t("dashboard.ctaPracticeReadingBody"), icon: BookOpen },
+        { href: "/practice/writing", label: t("dashboard.ctaPracticeWriting"), description: t("dashboard.ctaPracticeWritingBody"), icon: PenTool },
+        { href: "/practice", label: t("navigation.practice.label"), description: t("navigation.practice.description"), icon: Sparkles },
+      ],
+    },
   ];
 
+  if (user) {
+    groups.push({
+      key: "progress",
+      title: t("navigation.progressGroup"),
+      items: [
+        { href: "/dashboard", label: t("navigation.dashboard.label"), description: t("navigation.dashboard.description"), icon: LayoutDashboard },
+      ],
+    });
+  }
+
+  if (user?.role === "admin") {
+    groups.push({
+      key: "admin",
+      title: t("navigation.adminGroup"),
+      items: [
+        { href: "/admin", label: t("navigation.admin.label"), description: t("navigation.admin.description"), icon: Shield },
+        { href: "/admin/words", label: t("navigation.words.label"), description: t("navigation.words.description"), icon: LibraryBig },
+        { href: "/admin/lessons", label: t("navigation.manageLessons.label"), description: t("navigation.manageLessons.description"), icon: GraduationCap },
+        { href: "/admin/grammar", label: t("navigation.manageGrammar.label"), description: t("navigation.manageGrammar.description"), icon: BookOpen },
+        { href: "/admin/articles", label: t("navigation.manageArticles.label"), description: t("navigation.manageArticles.description"), icon: FileText },
+        { href: "/admin/content-sync", label: t("navigation.contentSync.label"), description: t("navigation.contentSync.description"), icon: Upload },
+        { href: "/admin/import", label: t("navigation.import.label"), description: t("navigation.import.description"), icon: Upload },
+        { href: "/admin/lesson-generator", label: t("navigation.lessonGenerator.label"), description: t("navigation.lessonGenerator.description"), icon: Sparkles },
+        { href: "/admin/tts-cache", label: t("admin.ttsCache.title"), description: t("admin.ttsCache.description"), icon: Volume2 },
+        { href: "/admin/topics", label: t("admin.topics.title"), description: t("admin.topics.description"), icon: Settings2 },
+        { href: "/admin/radicals", label: t("admin.radicals.title"), description: t("admin.radicals.description"), icon: Settings2 },
+      ],
+    });
+  }
+
+  return groups;
+}
+
+export function AppSidebarNavigation({
+  user,
+  collapsed,
+}: {
+  user: AuthUser | null;
+  collapsed: boolean;
+}) {
+  const { t } = useI18n();
+  const pathname = stripLocaleFromPathname(usePathname());
+  const groups = getSidebarGroups(user, t);
+
   return (
-    <nav aria-label="Primary navigation" className="flex flex-col gap-6">
-      <SidebarNavList title={t("navigation.explore")} links={publicLinks} />
-      {user ? <SidebarNavList title={t("navigation.account")} links={authenticatedLinks} /> : null}
-      {user?.role === "admin" ? <SidebarNavList title={t("navigation.manage")} links={adminLinks} /> : null}
+    <nav aria-label="Primary navigation" className={cn("flex flex-col gap-4", collapsed && "items-center")}>
+      {groups.map((group) => (
+        <SidebarNavGroup
+          key={group.key}
+          title={group.title}
+          collapsed={collapsed}
+          initiallyOpen={group.items.some((item) => routeMatches(pathname, item.href))}
+          items={group.items.map((item) => ({
+            ...item,
+            active:
+              routeMatches(pathname, item.href) &&
+              !group.items.some((candidate) => candidate.href !== item.href && candidate.href.length > item.href.length && routeMatches(pathname, candidate.href)),
+          }))}
+        />
+      ))}
     </nav>
   );
 }
 
-export function AppSidebar({ user }: { user: AuthUser | null }) {
+export function AppSidebar({
+  user,
+  collapsed,
+  onToggleCollapsed,
+}: {
+  user: AuthUser | null;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+}) {
   const { t, link } = useI18n();
 
   return (
-    <aside className="hidden w-full max-w-[18rem] shrink-0 lg:block">
-      <div className="sticky top-6 flex flex-col gap-6 rounded-[2rem] border border-border/80 bg-card/95 p-5 shadow-soft backdrop-blur">
-        <div className="flex flex-col gap-4">
-          <Badge variant="default" className="w-fit">
-            {t("header.studyWorkspace")}
-          </Badge>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-xl font-semibold">{t("common.appName")}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t("header.pageTitles.home.description")}
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] bg-[radial-gradient(circle_at_top,rgba(13,148,136,0.18),transparent_50%)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              {t("header.todayFocus")}
-            </p>
-            <p className="mt-2 text-base font-semibold">{t("header.focusHeadline")}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("header.focusBody")}
-            </p>
-          </div>
-        </div>
+    <aside
+      className={cn(
+        "sticky top-20 hidden h-[calc(100vh-6rem)] shrink-0 overflow-hidden rounded-[2rem] border border-border/80 bg-card/95 shadow-soft backdrop-blur lg:flex lg:flex-col",
+        collapsed ? "w-[5.25rem]" : "w-[17.5rem]",
+      )}
+    >
+      <div className={cn("flex items-center gap-3 border-b border-border/70 p-4", collapsed && "justify-center")}>
+        {!collapsed ? (
+          <Link href={link("/")} className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">{t("common.appName")}</p>
+            <p className="text-xs text-muted-foreground">{t("header.studyWorkspace")}</p>
+          </Link>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="rounded-xl"
+          aria-label={collapsed ? t("navigation.expandSidebar") : t("navigation.collapseSidebar")}
+          onClick={onToggleCollapsed}
+        >
+          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+        </Button>
+      </div>
 
-        <Separator />
-        <SidebarNavigation user={user} />
-        <Separator />
+      <div className={cn("flex-1 overflow-y-auto p-3", collapsed && "px-2")}>
+        <AppSidebarNavigation user={user} collapsed={collapsed} />
+      </div>
 
-        <div className="rounded-[1.5rem] bg-muted/50 p-4">
-          <p className="text-sm font-semibold text-foreground">
-            {user
-              ? t("header.signedInAs", { name: user.displayName ?? "learner" })
-              : t("header.anonymousMode")}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {user
-              ? t("header.signedInBody")
-              : t("header.anonymousBody")}
-          </p>
-          {!user ? (
-            <Button asChild variant="secondary" className="mt-4 w-full justify-center">
-              <Link href={link("/auth/sign-in")}>{t("header.saveProgressCta")}</Link>
-            </Button>
-          ) : null}
-        </div>
+      <Separator />
+      <div className={cn("p-3", collapsed && "px-2")}>
+        <Button
+          asChild
+          variant="ghost"
+          className={cn(
+            "h-auto w-full rounded-2xl p-0",
+            collapsed ? "justify-center" : "justify-start",
+          )}
+        >
+          <Link
+            href={link("/settings")}
+            aria-label={t("common.settings")}
+            className={cn(
+              "focus-ring flex w-full items-start gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-muted hover:text-foreground",
+              collapsed ? "justify-center px-0" : "",
+            )}
+          >
+            <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl bg-background">
+              <Settings2 className="size-4" />
+            </span>
+            {!collapsed ? (
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">{t("common.settings")}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {t("navigation.settings.description")}
+                </span>
+              </span>
+            ) : null}
+          </Link>
+        </Button>
       </div>
     </aside>
   );

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,17 +7,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({
+  breadcrumb,
+  backButton,
   eyebrow,
   title,
   description,
   badge,
+  badges,
   actions,
   className,
 }: {
+  breadcrumb?: ReactNode;
+  backButton?: ReactNode;
   eyebrow?: string;
   title: string;
   description: string;
   badge?: string;
+  badges?: ReactNode;
   actions?: ReactNode;
   className?: string;
 }) {
@@ -25,9 +31,16 @@ export function PageHeader({
     <Card className={cn("overflow-hidden border-border/80 bg-card/95", className)}>
       <CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
         <div className="flex flex-col gap-4">
+          {breadcrumb || backButton ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {backButton}
+              {breadcrumb}
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2">
             {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{eyebrow}</p> : null}
             {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+            {badges}
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-foreground sm:text-4xl">{title}</h1>
@@ -62,7 +75,7 @@ export function HeaderLinkButton({
 }: {
   href: string;
   children: ReactNode;
-  variant?: React.ComponentProps<typeof Button>["variant"];
+  variant?: ComponentProps<typeof Button>["variant"];
 }) {
   return (
     <Button asChild variant={variant}>

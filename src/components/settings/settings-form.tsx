@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Globe2, MoonStar, Palette, Save, SlidersHorizontal, Type } from "lucide-react";
+import { Palette, Save, SlidersHorizontal, Type } from "lucide-react";
 import { toast } from "sonner";
 
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { dispatchPreferenceUpdate } from "@/components/settings/preferences-provider";
 import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +22,8 @@ import {
   getSchedulerLabel,
   getFontLabel,
   getInitialUserSettings,
-  getLanguageLabel,
-  getThemeLabel,
+  normalizeLanguage,
+  normalizeThemePreference,
 } from "@/features/settings/preferences";
 import { useI18n } from "@/i18n/client";
 import type { UserSettingsInput } from "@/features/settings/types";
@@ -46,8 +45,6 @@ export function SettingsForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const hasChanges =
-    values.language !== savedValues.language ||
-    values.theme !== savedValues.theme ||
     values.font !== savedValues.font ||
     values.dailyGoal !== savedValues.dailyGoal ||
     values.schedulerType !== savedValues.schedulerType ||
@@ -69,12 +66,18 @@ export function SettingsForm({
     startSaving(async () => {
       setErrorMessage(null);
 
+      const payload = {
+        ...values,
+        language: normalizeLanguage(document.documentElement.lang),
+        theme: normalizeThemePreference(document.documentElement.dataset.themePreference),
+      } satisfies UserSettingsInput;
+
       const response = await fetch("/api/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -85,8 +88,9 @@ export function SettingsForm({
         return;
       }
 
-      setSavedValues(values);
-      dispatchPreferenceUpdate(values);
+      setValues(payload);
+      setSavedValues(payload);
+      dispatchPreferenceUpdate(payload);
       toast.success(t("settings.saveSuccess"));
     });
   }
@@ -122,65 +126,6 @@ export function SettingsForm({
 
       <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="grid gap-4">
-          <Card className="border-border/80 bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe2 className="size-4" />
-                {t("settings.languageTitle")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings.languageDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Label htmlFor="language-preference">{t("settings.appLanguage")}</Label>
-              <div id="language-preference">
-                <LanguageSwitcher
-                  authenticated
-                  ariaLabel={t("settings.appLanguage")}
-                  onLocaleChange={(language) => {
-                    updateField("language", language);
-                    setSavedValues((current) => ({
-                      ...current,
-                      language,
-                    }));
-                  }}
-                />
-              </div>
-              <p id="language-help" className="text-sm text-muted-foreground">
-                {t("settings.languageHelp")}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/80 bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MoonStar className="size-4" />
-                {t("settings.themeTitle")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings.themeDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Label htmlFor="theme-preference">{t("settings.themeTitle")}</Label>
-              <Select value={values.theme} onValueChange={(value) => updateField("theme", value as UserSettingsInput["theme"])}>
-                <SelectTrigger id="theme-preference" aria-describedby="theme-help">
-                  <SelectValue placeholder={t("settings.themeTitle")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">{t("settings.system")}</SelectItem>
-                  <SelectItem value="light">{t("settings.light")}</SelectItem>
-                  <SelectItem value="dark">{t("settings.dark")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p id="theme-help" className="text-sm text-muted-foreground">
-                {t("settings.themeHelp")}
-              </p>
-            </CardContent>
-          </Card>
-
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -327,8 +272,6 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{getLanguageLabel(values.language)}</Badge>
-                <Badge variant="secondary">{getThemeLabel(values.theme)}</Badge>
                 <Badge variant="secondary">{getFontLabel(values.font)}</Badge>
                 <Badge variant="secondary">{t("settings.dailyGoalBadge", { value: values.dailyGoal })}</Badge>
                 <Badge variant="secondary">{getSchedulerLabel(values.schedulerType)}</Badge>
