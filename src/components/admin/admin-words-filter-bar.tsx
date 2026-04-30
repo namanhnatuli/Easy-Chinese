@@ -25,7 +25,7 @@ export function AdminWordsFilterBar({
 
   const [q, setQ] = useState(searchParams.get("q") ?? "");
   const [hsk, setHsk] = useState(searchParams.get("hsk") ?? "all");
-  const [tag, setTag] = useState(searchParams.get("tag") ?? "all");
+  const [tag, setTag] = useState(searchParams.get("topic") ?? "all");
 
   const createQueryString = useCallback(
     (params: Record<string, string | null>) => {
@@ -50,7 +50,7 @@ export function AdminWordsFilterBar({
     const query = createQueryString({
       q: updatedQ.trim() || null,
       hsk: updatedHsk !== "all" ? updatedHsk : null,
-      tag: updatedTag !== "all" ? updatedTag : null,
+      topic: updatedTag !== "all" ? updatedTag : null,
       page: "1", // reset page to 1 on filter change
     });
 

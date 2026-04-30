@@ -4,25 +4,26 @@
 -- ==========================================
 
 -- 1. TOPICS
-insert into public.topics (name, slug)
+insert into public.topics (name, slug, tag_slugs)
 values
-  ('Giáo dục', 'giao_duc'),
-  ('Giao tiếp', 'giao_tiep'),
-  ('Con người', 'con_nguoi'),
-  ('Đời sống', 'doi_song'),
-  ('Hành động', 'hanh_dong'),
-  ('Thời gian', 'thoi_gian'),
-  ('Thiên nhiên', 'thien_nhien'),
-  ('Trừu tường', 'truu_tuong'),
-  ('Cảm xúc', 'cam_xuc'),
-  ('Sức khoẻ', 'suc_khoe'),
-  ('Giao thông', 'giao_thong'),
-  ('Công nghệ', 'cong_nghe'),
-  ('Văn hoá', 'van_hoa'),
-  ('Xã hội', 'xa_hoi')
-  ('Lượng từ', 'luong_tu')
+  ('Giáo dục', 'giao_duc', array['hoc_tap','truong_hoc','giao_duc','mon_hoc','hoc_thuat','luyen_tap','kiem_tra','thi_cu']),
+  ('Giao tiếp', 'giao_tiep', array['ngon_ngu','giao_tiep','hoi_thoai','chao_hoi','gioi_thieu','cau_hoi','tra_loi','dong_y','tu_choi','bieu_dat','phat_am','viet','doc','nghe','noi']),
+  ('Con người', 'con_nguoi', array['con_nguoi','ca_nhan','gia_dinh','quan_he','ban_be','hon_nhan','tre_em','nguoi_lon','gioi_tinh','tinh_cach','tinh_trang','vai_tro','nghe_nghiep','chuc_danh']),
+  ('Đời sống', 'doi_song', array['doi_song','sinh_hoat','nha_cua','vat_dung','do_dung','noi_that','dien_may','an_uong','nau_an','do_an','do_uong','mua_sam','tieu_dung']),
+  ('Hành động', 'hanh_dong', array['hanh_dong','di_chuyen','lam_viec','nghi_ngoi','giai_tri','the_thao','tro_choi']),
+  ('Thời gian', 'thoi_gian', array['thoi_gian','ngay_thang','nam','gio_time','qua_khu','hien_tai','tuong_lai','tan_suat','thoi_diem','dia_diem','phuong_huong','vi_tri','khong_gian']),
+  ('Thiên nhiên', 'thien_nhien', array['thien_nhien','thoi_tiet','khi_hau','dong_vat','thuc_vat','cay_coi','song_nui','bien','mua','gio_wind','nhiet_do']),
+  ('Trừu tượng', 'tru_tuong', array['tru_tuong','y_nghia','tu_duy','nhan_thuc','logic','ly_luan','khai_niem','gia_tri','muc_tieu','y_dinh','quyet_dinh']),
+  ('Cảm xúc', 'cam_xuc', array['cam_xuc','tinh_cam','vui','buon','tuc_gian','so_hai','yeu_thich','ghet','lo_lang','hanh_phuc','met_moi']),
+  ('Sức khoẻ', 'suc_khoe', array['suc_khoe','benh_tat','thuoc','bac_si','dieu_tri','co_the','bo_phan_co_the','cam_giac','an_toan']),
+  ('Giao thông', 'giao_thong', array['giao_thong','phuong_tien','xe_co','oto','xe_may','tau','may_bay','duong_bo','duong_sat','duong_hang_khong']),
+  ('Công nghệ', 'cong_nghe', array['cong_nghe','may_tinh','internet','phan_mem','ung_dung','du_lieu','ai','lap_trinh','he_thong','mang']),
+  ('Văn hoá', 'van_hoa', array['van_hoa','am_nhac','phim_anh','truyen','nghe_thuat','le_hoi','du_lich']),
+  ('Xã hội', 'xa_hoi', array['chinh_tri','phap_luat','luat','chinh_sach','quyen_luc','chinh_phu','xa_hoi','an_ninh','quan_su']),
+  ('Lượng từ', 'luong_tu', array['so_dem','so_luong','so_thu_tu','do_luong','don_vi','mau_sac','kich_thuoc','hinh_dang'])
 on conflict (slug) do update set
-  name = excluded.name;
+  name = excluded.name,
+  tag_slugs = excluded.tag_slugs;
 
 -- 2. KANGXI RADICALS (214)
 with raw_seed(raw_label) as (

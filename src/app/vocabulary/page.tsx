@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import {
   formatPublicPartOfSpeech,
   formatPublicStructureType,
@@ -20,11 +21,16 @@ const PAGE_SIZE = 12;
 
 function buildVocabularyPath(params: {
   page?: number;
+  q?: string;
   hsk?: number;
   topic?: string;
   radical?: string;
 }) {
   const searchParams = new URLSearchParams();
+
+  if (params.q) {
+    searchParams.set("q", params.q);
+  }
 
   if (params.hsk) {
     searchParams.set("hsk", String(params.hsk));
@@ -75,7 +81,17 @@ export default async function VocabularyPage({
       />
 
       <FilterBar>
-        <form className="grid w-full gap-3 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]" method="get">
+        <form className="grid w-full gap-3 lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))_auto]" method="get">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-foreground">{t("filters.searchPlaceholder")}</span>
+            <input
+              name="q"
+              defaultValue={filters.q ?? ""}
+              placeholder={t("vocabulary.filters.searchPlaceholder")}
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </label>
+
           <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">{t("filters.hskLevel")}</span>
             <select
@@ -185,11 +201,23 @@ export default async function VocabularyPage({
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <p className="text-hanzi">{word.hanzi}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-hanzi">
+                        {word.simplified}
+                        {word.traditional && word.traditional !== word.simplified ? ` [${word.traditional}]` : ""}
+                      </p>
+                      <PronunciationButton
+                        text={word.simplified}
+                        lang="zh-CN"
+                        rate={0.82}
+                        className="shrink-0"
+                      >
+                        Nghe từ
+                      </PronunciationButton>
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                       <span className="text-pinyin">{word.pinyin}</span>
                       {word.hanViet ? <span>{t("vocabulary.hanViet", { value: word.hanViet })}</span> : null}
-                      {word.traditional ? <span>{t("vocabulary.traditionalShort", { value: word.traditional })}</span> : null}
                     </div>
                   </div>
 
@@ -245,6 +273,7 @@ export default async function VocabularyPage({
                   href={link(
                     buildVocabularyPath({
                       page: wordsPage.page - 1,
+                      q: filters.q,
                       hsk: filters.hsk,
                       topic: filters.topic,
                       radical: filters.radical,
@@ -264,6 +293,7 @@ export default async function VocabularyPage({
                   href={link(
                     buildVocabularyPath({
                       page: wordsPage.page + 1,
+                      q: filters.q,
                       hsk: filters.hsk,
                       topic: filters.topic,
                       radical: filters.radical,

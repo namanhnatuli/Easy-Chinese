@@ -249,6 +249,9 @@
     "description": "Browse published vocabulary with clear Hanzi, pinyin, Hán Việt, and meaning, then jump into the learner shell when you are ready.",
     "emptyTitle": "No published words match these filters",
     "emptyDescription": "Try a different HSK level, topic, or radical filter to widen the results.",
+    "filters": {
+      "searchPlaceholder": "Search by hanzi, pinyin, meaning, or slug"
+    },
     "openDetail": "Open detail",
     "pageStatus": "Page {page} of {totalPages}",
     "structureBadge": "Structure: {value}",

@@ -63,6 +63,7 @@ create table public.topics (
   name text not null,
   slug text not null unique,
   description text,
+  tag_slugs text[] not null default '{}'::text[],
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -72,6 +73,7 @@ create table public.word_tags (
   slug text not null unique,
   label text not null,
   description text,
+  topic_id uuid references public.topics(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -570,6 +572,7 @@ create table public.vocab_sync_apply_events (
 
 -- Indexes
 create index profiles_role_idx on public.profiles(role);
+create index topics_tag_slugs_idx on public.topics using gin(tag_slugs);
 create index words_hsk_level_idx on public.words(hsk_level);
 create index words_topic_id_idx on public.words(topic_id);
 create index words_radical_id_idx on public.words(radical_id);
@@ -587,6 +590,7 @@ create unique index words_external_source_source_row_key_unique_idx
   on public.words(external_source, source_row_key)
   where external_source is not null and source_row_key is not null;
 create index word_examples_word_id_idx on public.word_examples(word_id);
+create index word_tags_topic_id_idx on public.word_tags(topic_id);
 create index word_tag_links_tag_idx on public.word_tag_links(word_tag_id);
 create index word_radicals_radical_idx on public.word_radicals(radical_id);
 create index word_radicals_word_sort_idx on public.word_radicals(word_id, sort_order);

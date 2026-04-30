@@ -19,6 +19,10 @@ import type { NormalizedVocabSyncPayload } from "@/features/vocabulary-sync/type
 import { getVocabSyncRow, listVocabSyncRowsForBatch, updateVocabSyncRow, listVocabSyncRowsByIds } from "@/features/vocabulary-sync/repository";
 import type { VocabSyncRow } from "@/features/vocabulary-sync/types";
 import { fetchExistingWordCandidates } from "@/features/vocabulary-sync/word-snapshots";
+import {
+  loadTopicTagResolutionRows,
+  resolveTopicAssignmentsFromRows,
+} from "@/features/shared/topic-tag-resolution";
 import { logger } from "@/lib/logger";
 
 const normalizedExampleSchema = z.object({
@@ -295,6 +299,7 @@ async function upsertAppliedWord(params: {
   newSlug: string | null;
   appliedBy: string | null;
   mainRadicalId: string | null;
+  topicId: string | null;
 }) {
   const {
     supabase,
@@ -305,6 +310,7 @@ async function upsertAppliedWord(params: {
     newSlug,
     appliedBy,
     mainRadicalId,
+    topicId,
   } = params;
   const now = new Date().toISOString();
   const basePayload = {
@@ -339,6 +345,7 @@ async function upsertAppliedWord(params: {
     last_source_updated_at: payload.sourceUpdatedAt,
     is_published: true,
     radical_id: mainRadicalId,
+    topic_id: topicId,
   };
 
   if (!targetWordId) {
@@ -417,12 +424,15 @@ async function replaceWordTagLinks(params: {
   topicTags: string[];
 }) {
   const { supabase, wordId, topicTags } = params;
+  const topicRows = await loadTopicTagResolutionRows(supabase);
+  const topicAssignments = resolveTopicAssignmentsFromRows(topicRows, topicTags);
 
   if (topicTags.length > 0) {
     const { error: upsertError } = await supabase.from("word_tags").upsert(
       topicTags.map((slug) => ({
         slug,
         label: buildWordTagLabel(slug),
+        topic_id: topicAssignments.topicIdByTagSlug.get(slug) ?? null,
       })),
       { onConflict: "slug" },
     );
@@ -675,6 +685,8 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
   try {
     const radicalAssignments = await resolveRadicalAssignments(supabase, payload.mainRadicals);
     const mainRadicalId = radicalAssignments.find((assignment) => assignment.isMain)?.radicalId ?? null;
+    const topicRows = await loadTopicTagResolutionRows(supabase);
+    const topicAssignments = resolveTopicAssignmentsFromRows(topicRows, payload.topicTags);
     const { wordId, operation } = await upsertAppliedWord({
       supabase,
       row,
@@ -684,6 +696,7 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
       newSlug,
       appliedBy,
       mainRadicalId,
+      topicId: topicAssignments.primaryTopicId,
     });
 
     await replaceWordExamples({

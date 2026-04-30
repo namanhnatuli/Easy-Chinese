@@ -249,6 +249,9 @@
     "description": "浏览已发布的词汇，清楚查看汉字、拼音、汉越读音与释义，然后在准备好时进入学习界面。",
     "emptyTitle": "没有符合这些筛选条件的已发布词汇",
     "emptyDescription": "尝试其他 HSK 等级、主题或部首以扩大结果。",
+    "filters": {
+      "searchPlaceholder": "按汉字、拼音、释义或 slug 搜索"
+    },
     "openDetail": "查看详情",
     "pageStatus": "第 {page} 页，共 {totalPages} 页",
     "structureBadge": "结构：{value}",

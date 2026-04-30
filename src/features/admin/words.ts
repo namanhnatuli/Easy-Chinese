@@ -12,6 +12,10 @@ import {
   redirectTo,
 } from "@/features/admin/shared";
 import { splitPipeDelimited } from "@/features/admin/content-sync-utils";
+import {
+  loadTopicTagResolutionRows,
+  resolveTopicAssignmentsFromRows,
+} from "@/features/shared/topic-tag-resolution";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { logger } from "@/lib/logger";
 
@@ -126,7 +130,7 @@ export async function listWordsPage(input: {
   pageSize: number;
   q?: string;
   hsk?: number;
-  tag?: string;
+  topic?: string;
 }): Promise<AdminWordListPage> {
   const { supabase } = await requireAdminSupabase();
   const requestedPage = Number.isFinite(input.page) && input.page > 0 ? Math.floor(input.page) : 1;
@@ -137,11 +141,11 @@ export async function listWordsPage(input: {
     head: true,
   });
 
-  if (input.tag) {
-    query = supabase.from("words").select("id, word_tag_links!inner(word_tags!inner(slug))", {
+  if (input.topic) {
+    query = supabase.from("words").select("id, topics!inner(slug)", {
       count: "exact",
       head: true,
-    }).eq("word_tag_links.word_tags.slug", input.tag);
+    }).eq("topics.slug", input.topic);
   }
 
   if (input.q) {
@@ -167,11 +171,11 @@ export async function listWordsPage(input: {
     .order("updated_at", { ascending: false })
     .range(from, to);
 
-  if (input.tag) {
+  if (input.topic) {
     dataQuery = supabase
       .from("words")
-      .select("id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published, updated_at, word_tag_links!inner(word_tags!inner(slug))")
-      .eq("word_tag_links.word_tags.slug", input.tag)
+      .select("id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published, updated_at, topics!inner(slug)")
+      .eq("topics.slug", input.topic)
       .order("updated_at", { ascending: false })
       .range(from, to);
   }
@@ -390,6 +394,9 @@ export async function saveWordAction(formData: FormData) {
   }
 
   const primaryRadicalId = parsed.radicalIds[0] ?? null;
+  const topicRows = await loadTopicTagResolutionRows(supabase);
+  const topicAssignments = resolveTopicAssignmentsFromRows(topicRows, parsed.topicTags);
+  const resolvedTopicId = parsed.topicId ?? topicAssignments.primaryTopicId;
 
   const payload = {
     slug: parsed.slug,
@@ -404,7 +411,7 @@ export async function saveWordAction(formData: FormData) {
     meanings_vi: parsed.meaningsVi,
     traditional_variant: parsed.traditionalVariant,
     hsk_level: parsed.hskLevel,
-    topic_id: parsed.topicId,
+    topic_id: resolvedTopicId,
     radical_id: primaryRadicalId,
     review_status: "approved" as const,
     ai_status: parsed.aiStatus,
@@ -498,6 +505,7 @@ export async function saveWordAction(formData: FormData) {
           .filter(Boolean)
           .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
           .join(" "),
+        topic_id: topicAssignments.topicIdByTagSlug.get(slug) ?? null,
       })),
       { onConflict: "slug" },
     );

@@ -249,6 +249,9 @@
     "description": "Xem từ vựng đã xuất bản với Hán tự, pinyin, Hán Việt và nghĩa rõ ràng, rồi chuyển sang chế độ học khi bạn sẵn sàng.",
     "emptyTitle": "Không có từ nào khớp với bộ lọc",
     "emptyDescription": "Thử cấp HSK, chủ đề hoặc bộ thủ khác để mở rộng kết quả.",
+    "filters": {
+      "searchPlaceholder": "Tìm theo chữ Hán, pinyin, nghĩa hoặc slug"
+    },
     "openDetail": "Mở chi tiết",
     "pageStatus": "Trang {page} / {totalPages}",
     "structureBadge": "Cấu trúc: {value}",

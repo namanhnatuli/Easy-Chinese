@@ -21,7 +21,14 @@ function parsePositiveInteger(value: string | string[] | undefined, fallback: nu
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
-function buildAdminWordsPath(params: { page?: number; pageSize?: number; q?: string | null; hsk?: string | null; tag?: string | null; searchParams?: URLSearchParams }) {
+function buildAdminWordsPath(params: {
+  page?: number;
+  pageSize?: number;
+  q?: string | null;
+  hsk?: string | null;
+  topic?: string | null;
+  searchParams?: URLSearchParams;
+}) {
   const searchParams = params.searchParams ? new URLSearchParams(params.searchParams) : new URLSearchParams();
 
   if (params.page !== undefined) {
@@ -50,9 +57,9 @@ function buildAdminWordsPath(params: { page?: number; pageSize?: number; q?: str
     else searchParams.delete("hsk");
   }
 
-  if (params.tag !== undefined) {
-    if (params.tag && params.tag !== "all") searchParams.set("tag", params.tag);
-    else searchParams.delete("tag");
+  if (params.topic !== undefined) {
+    if (params.topic && params.topic !== "all") searchParams.set("topic", params.topic);
+    else searchParams.delete("topic");
   }
 
   const query = searchParams.toString();
@@ -70,18 +77,32 @@ export default async function AdminWordsPage({
   const { supabase } = await requireAdminSupabase();
   const q = typeof searchParamsValue.q === "string" ? searchParamsValue.q : undefined;
   const hsk = typeof searchParamsValue.hsk === "string" ? parseInt(searchParamsValue.hsk, 10) : undefined;
-  const tag = typeof searchParamsValue.tag === "string" ? searchParamsValue.tag : undefined;
+  const topic =
+    typeof searchParamsValue.topic === "string"
+      ? searchParamsValue.topic
+      : typeof searchParamsValue.tag === "string"
+        ? searchParamsValue.tag
+        : undefined;
 
   const requestedPageSize = parsePositiveInteger(searchParamsValue.pageSize, 10);
   const pageSize = PAGE_SIZE_OPTIONS.includes(requestedPageSize as (typeof PAGE_SIZE_OPTIONS)[number])
     ? requestedPageSize
     : 10;
   const requestedPage = parsePositiveInteger(searchParamsValue.page, 1);
-  const wordsPage = await listWordsPage({ page: requestedPage, pageSize, q, hsk: isNaN(hsk as number) ? undefined : hsk, tag });
+  const wordsPage = await listWordsPage({
+    page: requestedPage,
+    pageSize,
+    q,
+    hsk: isNaN(hsk as number) ? undefined : hsk,
+    topic,
+  });
   const words = wordsPage.items;
   
-  const { data: wordTags } = await supabase.from("word_tags").select("slug, label").order("label");
-  const availableTags = wordTags ?? [];
+  const { data: topics } = await supabase.from("topics").select("slug, name").order("name");
+  const availableTopics = (topics ?? []).map((item) => ({
+    slug: item.slug,
+    label: item.name,
+  }));
   const start = wordsPage.totalItems === 0 ? 0 : (wordsPage.page - 1) * wordsPage.pageSize + 1;
   const end = wordsPage.totalItems === 0
     ? 0
@@ -106,7 +127,7 @@ export default async function AdminWordsPage({
       />
 
       <AdminWordsFilterBar 
-        availableTags={availableTags} 
+        availableTags={availableTopics}
         searchPlaceholder={t("filters.searchPlaceholder") || "Search words..."}
         hskPlaceholder={t("filters.allLevels")}
         tagsPlaceholder={t("filters.allTopics")}

@@ -4,6 +4,7 @@ import { TAG_LABELS } from "@/features/vocabulary-sync/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const vocabularyFilterSchema = z.object({
+  q: z.string().trim().min(1).optional(),
   hsk: z.coerce.number().int().min(1).max(9).optional(),
   topic: z.string().trim().min(1).optional(),
   radical: z.string().uuid().optional(),
@@ -27,6 +28,7 @@ export interface PublicWordTag {
 }
 
 export interface VocabularyFilters {
+  q?: string;
   hsk?: number;
   topic?: string;
   radical?: string;
@@ -264,6 +266,7 @@ function attachWordRelations<T extends PublicWordListItem>(
 
 export function parseVocabularyFilters(searchParams: Record<string, string | string[] | undefined>) {
   return vocabularyFilterSchema.parse({
+    q: optionalQueryValue(searchParams.q),
     hsk: optionalQueryValue(searchParams.hsk),
     topic: optionalQueryValue(searchParams.topic),
     radical: optionalQueryValue(searchParams.radical),
@@ -339,20 +342,40 @@ export async function listPublicWordsPage(
     }
   }
 
+  const topicSelect = filters.topic ? "topics!inner" : "topics";
   let countQuery = supabase
     .from("words")
-    .select("id, topics(slug)", { count: "exact", head: true })
+    .select(`id, ${topicSelect}(slug)`, { count: "exact", head: true })
     .eq("is_published", true);
 
   let listQuery = supabase
     .from("words")
     .select(
-      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, meanings_vi, hsk_level, notes, part_of_speech, radical_summary, character_structure_type, ambiguity_flag, source_confidence, topics(id, name, slug)",
+      `id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, meanings_vi, hsk_level, notes, part_of_speech, radical_summary, character_structure_type, ambiguity_flag, source_confidence, ${topicSelect}(id, name, slug)`,
       { count: "exact" },
     )
     .eq("is_published", true)
     .order("hsk_level")
     .order("hanzi");
+
+  if (filters.q) {
+    const escaped = filters.q.replace(/[%_,]/g, "\\$&");
+    const searchExpression = [
+      `slug.ilike.%${escaped}%`,
+      `simplified.ilike.%${escaped}%`,
+      `traditional.ilike.%${escaped}%`,
+      `hanzi.ilike.%${escaped}%`,
+      `pinyin.ilike.%${escaped}%`,
+      `han_viet.ilike.%${escaped}%`,
+      `vietnamese_meaning.ilike.%${escaped}%`,
+      `english_meaning.ilike.%${escaped}%`,
+      `normalized_text.ilike.%${escaped}%`,
+      `meanings_vi.ilike.%${escaped}%`,
+    ].join(",");
+
+    countQuery = countQuery.or(searchExpression);
+    listQuery = listQuery.or(searchExpression);
+  }
 
   if (filters.hsk) {
     countQuery = countQuery.eq("hsk_level", filters.hsk);
