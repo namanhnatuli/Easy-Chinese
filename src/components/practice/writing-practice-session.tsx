@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, Eraser, LogIn } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Eraser,
+  LogIn,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
-import { HanziWriterAnimator } from "@/components/practice/hanzi-writer-animator";
+import { HanziWriterAnimator } from "@/components/shared/hanzi-writer-animator";
 import { HanziWritingCanvas } from "@/components/practice/hanzi-writing-canvas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,9 +51,16 @@ export function WritingPracticeSession({
       return 0;
     }
 
-    return Math.round((Math.min(index + 1, word.characters.length) / word.characters.length) * 100);
+    return Math.round(
+      (Math.min(index + 1, word.characters.length) / word.characters.length) *
+        100,
+    );
   }, [index, word.characters.length]);
-  const dueHints = predictDueHintsForGrades(word.memory, new Date(), schedulerSettings);
+  const dueHints = predictDueHintsForGrades(
+    word.memory,
+    new Date(),
+    schedulerSettings,
+  );
 
   useEffect(() => {
     setClearSignal((value) => value + 1);
@@ -91,7 +104,9 @@ export function WritingPracticeSession({
       });
 
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+        const body = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
         toast.error(body?.message ?? t("practice.writing.saveFailed"));
       }
     } finally {
@@ -141,25 +156,45 @@ export function WritingPracticeSession({
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           {t("practice.completeEyebrow")}
         </p>
-        <h2 className="mt-2 text-3xl font-semibold text-foreground">{word.hanzi}</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{t("practice.writing.completeDescription")}</p>
+        <h2 className="mt-2 text-3xl font-semibold text-foreground">
+          {word.hanzi}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+          {t("practice.writing.completeDescription")}
+        </p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-[1.5rem] bg-slate-500/10 p-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400">{t("practice.grades.again")}</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">{againCount}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t("practice.grades.again")}
+            </p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {againCount}
+            </p>
           </div>
           <div className="rounded-[1.5rem] bg-amber-500/10 p-4">
-            <p className="text-sm text-amber-600 dark:text-amber-400">{t("practice.grades.hard")}</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">{hardCount}</p>
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              {t("practice.grades.hard")}
+            </p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {hardCount}
+            </p>
           </div>
           <div className="rounded-[1.5rem] bg-emerald-500/10 p-4">
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("practice.grades.good")}</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">{goodCount}</p>
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              {t("practice.grades.good")}
+            </p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {goodCount}
+            </p>
           </div>
           <div className="rounded-[1.5rem] bg-sky-500/10 p-4">
-            <p className="text-sm text-sky-600 dark:text-sky-400">{t("practice.grades.easy")}</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">{easyCount}</p>
+            <p className="text-sm text-sky-600 dark:text-sky-400">
+              {t("practice.grades.easy")}
+            </p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {easyCount}
+            </p>
           </div>
         </div>
 
@@ -177,7 +212,9 @@ export function WritingPracticeSession({
             {t("practice.restart")}
           </Button>
           <Button asChild variant="outline">
-            <Link href={link("/practice/writing")}>{t("practice.writing.backToWords")}</Link>
+            <Link href={link("/practice/writing")}>
+              {t("practice.writing.backToWords")}
+            </Link>
           </Button>
         </div>
       </section>
@@ -192,19 +229,32 @@ export function WritingPracticeSession({
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {t("practice.writing.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold text-foreground">{word.hanzi}</h2>
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t("practice.writing.description")}</p>
+            <h2 className="text-3xl font-semibold text-foreground">
+              {word.hanzi}
+            </h2>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+              {t("practice.writing.description")}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{index + 1} / {word.characters.length}</Badge>
+            <Badge variant="secondary">
+              {index + 1} / {word.characters.length}
+            </Badge>
             <Badge variant="secondary">{progressPercent}%</Badge>
-            <Badge variant="outline">{isSaving ? t("common.saving") : t("practice.writing.canvasBadge")}</Badge>
+            <Badge variant="outline">
+              {isSaving
+                ? t("common.saving")
+                : t("practice.writing.canvasBadge")}
+            </Badge>
           </div>
         </div>
 
         <div className="h-2 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.max(progressPercent, 6)}%` }} />
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${Math.max(progressPercent, 6)}%` }}
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -218,28 +268,49 @@ export function WritingPracticeSession({
                   {currentCharacter.character}
                 </p>
                 <div className="flex items-center justify-center rounded-2xl bg-secondary/50 p-2 shadow-inner">
-                  <HanziWriterAnimator character={currentCharacter.character} size={90} />
+                  <HanziWriterAnimator
+                    character={currentCharacter.character}
+                    size={90}
+                  />
                 </div>
               </div>
-              <p className="mt-4 text-lg text-muted-foreground">{word.pinyin}</p>
-              <p className="mt-2 text-base text-muted-foreground">{word.vietnameseMeaning}</p>
+              <p className="mt-4 text-lg text-muted-foreground">
+                {word.pinyin}
+              </p>
+              <p className="mt-2 text-base text-muted-foreground">
+                {word.vietnameseMeaning}
+              </p>
             </div>
 
             <div className="rounded-[1.25rem] bg-secondary/50 p-4 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">{t("practice.writing.characterStatus")}</p>
-              <p className="mt-3">{t("practice.status", { value: currentCharacter.status })}</p>
-              <p className="mt-1">{t("practice.writing.attempts", { count: currentCharacter.attemptCount })}</p>
+              <p className="font-semibold text-foreground">
+                {t("practice.writing.characterStatus")}
+              </p>
+              <p className="mt-3">
+                {t("practice.status", { value: currentCharacter.status })}
+              </p>
+              <p className="mt-1">
+                {t("practice.writing.attempts", {
+                  count: currentCharacter.attemptCount,
+                })}
+              </p>
             </div>
 
             <div className="rounded-[1.25rem] bg-secondary/50 p-4 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">{t("practice.writing.strokeGuideTitle")}</p>
-              <p className="mt-3">{t("practice.writing.strokeGuideDescription")}</p>
+              <p className="font-semibold text-foreground">
+                {t("practice.writing.strokeGuideTitle")}
+              </p>
+              <p className="mt-3">
+                {t("practice.writing.strokeGuideDescription")}
+              </p>
               <p className="mt-2">{t("practice.writing.strokeGuideRule")}</p>
             </div>
 
-            {(!isAuthenticated || showAnonymousNotice) ? (
+            {!isAuthenticated || showAnonymousNotice ? (
               <div className="rounded-[1.25rem] border border-amber-500/20 bg-amber-500/10 p-4">
-                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{t("practice.signInNotice")}</p>
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                  {t("practice.signInNotice")}
+                </p>
                 <Button asChild variant="outline" className="mt-3">
                   <Link href={signInHref}>
                     <LogIn className="size-4" />
@@ -259,50 +330,108 @@ export function WritingPracticeSession({
             />
 
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button type="button" variant="outline" onClick={() => setClearSignal((value) => value + 1)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setClearSignal((value) => value + 1)}
+              >
                 <Eraser className="size-4" />
                 {t("practice.writing.clearCanvas")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setShowGrid((value) => !value)}>
-                {showGrid ? t("practice.writing.hideGrid") : t("practice.writing.showGrid")}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowGrid((value) => !value)}
+              >
+                {showGrid
+                  ? t("practice.writing.hideGrid")
+                  : t("practice.writing.showGrid")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setShowGuideOverlay((value) => !value)}>
-                {showGuideOverlay ? t("practice.writing.hideGuide") : t("practice.writing.showGuide")}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowGuideOverlay((value) => !value)}
+              >
+                {showGuideOverlay
+                  ? t("practice.writing.hideGuide")
+                  : t("practice.writing.showGuide")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setIndex((value) => Math.max(value - 1, 0))} disabled={index === 0}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIndex((value) => Math.max(value - 1, 0))}
+                disabled={index === 0}
+              >
                 <ArrowLeft className="size-4" />
                 {t("common.previous")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setIndex((value) => Math.min(value + 1, word.characters.length - 1))} disabled={index >= word.characters.length - 1}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setIndex((value) =>
+                    Math.min(value + 1, word.characters.length - 1),
+                  )
+                }
+                disabled={index >= word.characters.length - 1}
+              >
                 {t("common.next")}
                 <ArrowRight className="size-4" />
               </Button>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Button type="button" size="lg" variant="outline" onClick={() => void handlePersist("again")}>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                onClick={() => void handlePersist("again")}
+              >
                 <span className="flex flex-col items-center leading-tight">
                   <span>{t("practice.grades.again")}</span>
-                  <span className="text-[0.68rem] opacity-80">{dueHints.again}</span>
+                  <span className="text-[0.68rem] opacity-80">
+                    {dueHints.again}
+                  </span>
                 </span>
               </Button>
-              <Button type="button" size="lg" variant="secondary" onClick={() => void handlePersist("hard")}>
+              <Button
+                type="button"
+                size="lg"
+                variant="secondary"
+                onClick={() => void handlePersist("hard")}
+              >
                 <span className="flex flex-col items-center leading-tight">
                   <span>{t("practice.grades.hard")}</span>
-                  <span className="text-[0.68rem] opacity-80">{dueHints.hard}</span>
+                  <span className="text-[0.68rem] opacity-80">
+                    {dueHints.hard}
+                  </span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-emerald-600 text-white hover:bg-emerald-500" onClick={() => void handlePersist("good")}>
+              <Button
+                type="button"
+                size="lg"
+                className="bg-emerald-600 text-white hover:bg-emerald-500"
+                onClick={() => void handlePersist("good")}
+              >
                 <CheckCircle2 className="size-4" />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{t("practice.grades.good")}</span>
-                  <span className="text-[0.68rem] opacity-80">{dueHints.good}</span>
+                  <span className="text-[0.68rem] opacity-80">
+                    {dueHints.good}
+                  </span>
                 </span>
               </Button>
-              <Button type="button" size="lg" className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => void handlePersist("easy")}>
+              <Button
+                type="button"
+                size="lg"
+                className="bg-sky-600 text-white hover:bg-sky-500"
+                onClick={() => void handlePersist("easy")}
+              >
                 <span className="flex flex-col items-center leading-tight">
                   <span>{t("practice.grades.easy")}</span>
-                  <span className="text-[0.68rem] opacity-80">{dueHints.easy}</span>
+                  <span className="text-[0.68rem] opacity-80">
+                    {dueHints.easy}
+                  </span>
                 </span>
               </Button>
             </div>

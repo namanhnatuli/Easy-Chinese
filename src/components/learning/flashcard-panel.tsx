@@ -1,7 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Volume2 } from "lucide-react";
+
+import { PronunciationButton } from "@/components/shared/pronunciation-button";
+import { Button } from "@/components/ui/button";
 import { StudyDetailedAnswer } from "@/components/learning/study-detailed-answer";
 import type { FlashcardPrompt, StudyFeedback } from "@/features/learning/types";
 import type { SchedulerGrade } from "@/types/domain";
@@ -30,12 +32,6 @@ export function FlashcardPanel({
 }) {
   const { t } = useI18n();
   const isLocked = feedback !== null;
-
-  const handlePlayAudio = () => {
-    const utterance = new SpeechSynthesisUtterance(prompt.back.hanzi);
-    utterance.lang = "zh-CN";
-    window.speechSynthesis.speak(utterance);
-  };
   const gradeButtons: Array<{
     grade: SchedulerGrade;
     labelKey: "again" | "hard" | "good" | "easy";
@@ -77,10 +73,15 @@ export function FlashcardPanel({
         <div className="mt-4 flex flex-col items-center gap-4">
           <p className="text-hanzi text-5xl">{prompt.frontText}</p>
           {!revealed ? (
-            <Button variant="outline" size="sm" onClick={handlePlayAudio} className="text-muted-foreground hover:text-foreground">
+            <PronunciationButton
+              text={prompt.back.hanzi}
+              variant="outline"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
               <Volume2 className="mr-2 h-4 w-4" />
               Nghe phát âm
-            </Button>
+            </PronunciationButton>
           ) : null}
         </div>
 

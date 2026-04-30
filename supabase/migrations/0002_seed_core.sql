@@ -20,6 +20,7 @@ values
   ('Công nghệ', 'cong_nghe'),
   ('Văn hoá', 'van_hoa'),
   ('Xã hội', 'xa_hoi')
+  ('Lượng từ', 'luong_tu')
 on conflict (slug) do update set
   name = excluded.name;
 

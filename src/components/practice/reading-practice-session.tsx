@@ -7,6 +7,11 @@ import { toast } from "sonner";
 
 import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
 import { PronunciationFeedback } from "@/components/practice/pronunciation-feedback";
+import {
+  cancelSpeechSynthesis,
+  PronunciationButton,
+  speakText,
+} from "@/components/shared/pronunciation-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
@@ -79,22 +84,17 @@ export function ReadingPracticeSession({
     : null;
 
   function playAudio() {
-    if (
-      !currentItem ||
-      typeof window === "undefined" ||
-      !("speechSynthesis" in window) ||
-      typeof window.SpeechSynthesisUtterance === "undefined"
-    ) {
+    if (!currentItem) {
       return;
     }
 
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new window.SpeechSynthesisUtterance(getSpeechText(currentItem));
-      utterance.lang = "zh-CN";
-      utterance.rate = 0.82;
-      window.speechSynthesis.speak(utterance);
-    } catch {
+    const didSpeak = speakText({
+      text: getSpeechText(currentItem),
+      lang: "zh-CN",
+      rate: 0.82,
+    });
+
+    if (!didSpeak) {
       toast.error(t("practice.reading.audioUnavailable"));
     }
   }
@@ -174,9 +174,7 @@ export function ReadingPracticeSession({
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
+      cancelSpeechSynthesis();
     };
   }, [currentItem, t]);
 
@@ -269,10 +267,16 @@ export function ReadingPracticeSession({
         <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
           <div className="rounded-[1.75rem] border bg-muted/30 p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" variant="secondary" onClick={playAudio}>
+              <PronunciationButton
+                text={getSpeechText(currentItem)}
+                lang="zh-CN"
+                rate={0.82}
+                variant="secondary"
+                onUnsupported={() => toast.error(t("practice.reading.audioUnavailable"))}
+              >
                 <Volume2 className="size-4" />
                 {t("practice.reading.playAudio")}
-              </Button>
+              </PronunciationButton>
               <Button type="button" variant="ghost" onClick={() => setShowPinyin((value) => !value)}>
                 {showPinyin ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 {showPinyin ? t("practice.reading.hidePinyin") : t("practice.reading.showPinyin")}
