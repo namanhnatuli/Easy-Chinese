@@ -106,7 +106,7 @@ export function SidebarNavigation({ user }: { user: AuthUser | null }) {
   ];
   const authenticatedLinks: SidebarLink[] = [
     { href: "/dashboard", label: t("navigation.dashboard.label"), description: t("navigation.dashboard.description"), icon: LayoutDashboard },
-    { href: "/practice/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
+    { href: "/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
     { href: "/settings", label: t("navigation.settings.label"), description: t("navigation.settings.description"), icon: Settings },
   ];
   const adminLinks: SidebarLink[] = [

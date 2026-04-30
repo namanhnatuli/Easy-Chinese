@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 const modules = [
   {
-    href: "/practice/review",
+    href: "/review",
     icon: RotateCcw,
     titleKey: "practice.cards.review.title",
     descriptionKey: "practice.cards.review.description",
@@ -50,7 +50,7 @@ export default async function PracticePage() {
         actions={
           <HeaderActions
             secondary={
-              <HeaderLinkButton href={link("/practice/review")} variant="outline">
+              <HeaderLinkButton href={link("/review")} variant="outline">
                 {t("common.continueReview")}
               </HeaderLinkButton>
             }

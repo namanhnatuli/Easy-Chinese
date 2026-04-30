@@ -183,7 +183,7 @@ export async function DashboardOverview({
                     {t("common.continueLearning")}
                   </HeaderLinkButton>
                 ) : null}
-                <HeaderLinkButton href={link("/practice/review")}>{t("common.continueReview")}</HeaderLinkButton>
+                <HeaderLinkButton href={link("/review")}>{t("common.continueReview")}</HeaderLinkButton>
               </>
             }
           />
@@ -359,7 +359,7 @@ export async function DashboardOverview({
                   </p>
                 </div>
                 <Button asChild>
-                  <Link href={link("/practice/review")}>{t("dashboard.startReview")}</Link>
+                  <Link href={link("/review")}>{t("dashboard.startReview")}</Link>
                 </Button>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">

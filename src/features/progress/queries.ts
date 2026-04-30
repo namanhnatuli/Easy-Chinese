@@ -259,7 +259,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const suggestedNextAction =
     dailyGoalProgress.wordsToReviewToday > 0
       ? {
-          href: "/practice/review",
+          href: "/review",
           titleKey: "dashboard.suggestedActions.review" as const,
           descriptionKey: "dashboard.suggestedActionBodies.review" as const,
         }
