@@ -48,12 +48,10 @@ function createWorkerTriggers() {
   const keyCount = getGeminiApiKeyCount_();
   const workerCount = Math.min(CONFIG.WORKER_COUNT, keyCount);
 
-  console.log(`[TRIGGER] create workers = ${workerCount}`);
+  console.log(`[TRIGGER] create worker triggers count=${workerCount}`);
 
   for (let i = 0; i < workerCount; i++) {
-    const fnName = `autoProcessPendingRowsWorker${i}`;
-
-    ScriptApp.newTrigger(fnName)
+    ScriptApp.newTrigger(`autoProcessPendingRowsWorker${i}`)
       .timeBased()
       .everyMinutes(CONFIG.WORKER_TRIGGER_INTERVAL_MIN)
       .create();
@@ -70,4 +68,19 @@ function deleteWorkerTriggers_() {
       ScriptApp.deleteTrigger(trigger);
     }
   });
+}
+
+function resetWorkerTriggers() {
+  deleteWorkerTriggers_();
+  createWorkerTriggers();
+}
+
+function listProjectTriggersInfo() {
+  const triggers = ScriptApp.getProjectTriggers();
+
+  const lines = triggers.map((t, idx) => {
+    return `${idx + 1}. ${t.getHandlerFunction()} | ${t.getEventType()} | ${t.getTriggerSource()}`;
+  });
+
+  SpreadsheetApp.getUi().alert(lines.length ? lines.join('\n') : 'No project triggers found.');
 }

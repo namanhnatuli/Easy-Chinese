@@ -258,28 +258,24 @@ function normalizeComponentBreakdown_(items) {
   }).filter(x => x.character);
 }
 
-function touchRowUpdatedAt_(sheet, row) {
-  if (!sheet || !row || row <= CONFIG.HEADER_ROW) return;
-  sheet.getRange(row, CONFIG.COL_UPDATED_AT).setValue(now_());
-}
-
 function writeExecutionMeta_(sheet, row, meta) {
   meta = meta || {};
 
   try {
-    const key = meta.apiKey
-      ? maskApiKey_(meta.apiKey)
-      : '';
+    sheet.getRange(row, CONFIG.COL_LAST_API_KEY).setValue(
+      meta.apiKey ? maskApiKey_(meta.apiKey) : ''
+    );
 
-    const model = meta.model || '';
-    const durationMs = meta.durationMs || '';
-
-    sheet.getRange(row, CONFIG.COL_LAST_API_KEY).setValue(key);
-    sheet.getRange(row, CONFIG.COL_LAST_MODEL).setValue(model);
-    sheet.getRange(row, CONFIG.COL_LAST_DURATION_MS).setValue(durationMs);
+    sheet.getRange(row, CONFIG.COL_LAST_MODEL).setValue(meta.model || '');
+    sheet.getRange(row, CONFIG.COL_LAST_DURATION_MS).setValue(meta.durationMs || '');
   } catch (err) {
     console.log('[META] writeExecutionMeta error: ' + err.message);
   }
+}
+
+function touchRowUpdatedAt_(sheet, row) {
+  if (!sheet || row <= CONFIG.HEADER_ROW) return;
+  sheet.getRange(row, CONFIG.COL_UPDATED_AT).setValue(now_());
 }
 
 function shouldProcessStatus_(aiStatus) {

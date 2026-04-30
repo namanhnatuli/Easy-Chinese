@@ -5,7 +5,6 @@ function collectPendingRowsForWorker_(sheet, limit, workerIndex, workerCount) {
   for (let row = CONFIG.HEADER_ROW + 1; row <= lastRow; row++) {
     if (items.length >= limit) break;
 
-    // chia shard theo row number
     if (row % workerCount !== workerIndex) continue;
 
     const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
@@ -21,26 +20,33 @@ function collectPendingRowsForWorker_(sheet, limit, workerIndex, workerCount) {
     });
   }
 
+  // 🔥 LOG QUAN TRỌNG
+  const rows = items.map(i => i.row);
+  console.log(`[WORKER ${workerIndex}] collected rows: [${rows.join(', ')}]`);
+
   return items;
 }
 
-function processPendingBatchForWorker_(workerIndex, workerCount) {
+function processPendingBatchForWorker_(workerIndex) {
   const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.HANZI_SHEET);
 
-  const batchItems = collectPendingRowsForWorker_(
+  const batchItems = claimPendingRows_(
     sheet,
     CONFIG.AI_MICRO_BATCH_SIZE,
-    workerIndex,
-    workerCount
+    workerIndex
   );
 
   if (!batchItems.length) {
-    console.log(`[WORKER ${workerIndex}] no pending rows`);
+    console.log(`[WORKER ${workerIndex}] no rows claimed`);
     return { processed: 0 };
   }
 
+  console.log(
+    `[WORKER ${workerIndex}] processing rows: ${batchItems.map(i => i.row).join(', ')}`
+  );
+
   try {
-    const result = generateBatchEntriesWithGeminiForKey_(batchItems, workerIndex);
+    const result = generateBatchEntriesWithGeminiForWorker_(batchItems, workerIndex);
     const meta = result.__meta || {};
     const returnedItems = Array.isArray(result.items) ? result.items : [];
 
@@ -56,18 +62,25 @@ function processPendingBatchForWorker_(workerIndex, workerCount) {
       const found = resultMap[batchItem.row_key];
 
       if (!found) {
+        console.log(`[WORKER ${workerIndex}] missing result for row ${batchItem.row}`);
         writeAiRetryLater_(sheet, batchItem.row, meta);
         return;
       }
+
+      console.log(`[WORKER ${workerIndex}] writing row ${batchItem.row}`);
 
       writeAiResult_(sheet, batchItem.row, found, meta);
       processed++;
     });
 
+    console.log(`[WORKER ${workerIndex}] batch done processed=${processed}`);
+
     return { processed };
   } catch (err) {
     const msg = String(err.message || '');
     const meta = err.__meta || {};
+
+    console.log(`[WORKER ${workerIndex}] batch error: ${msg}`);
 
     batchItems.forEach(batchItem => {
       if (isRetryableErrorMessage_(msg)) {

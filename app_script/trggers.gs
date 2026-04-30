@@ -33,13 +33,15 @@ function onEdit(e) {
     if (!inputText) continue;
 
     markRowPending_(sheet, row);
-    affectedRows += 1;
+    affectedRows++;
   }
 
   if (affectedRows > 0 && numRows <= CONFIG.INLINE_PASTE_THRESHOLD_ROWS && numCols === 1) {
     const row = startRow;
+
     if (row > CONFIG.HEADER_ROW) {
       const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
+
       if (inputText) {
         processInputRow_(sheet, row, false);
       }
@@ -49,6 +51,7 @@ function onEdit(e) {
 
 function createEditTrigger() {
   const ss = SpreadsheetApp.getActive();
+
   ScriptApp.newTrigger('onEdit')
     .forSpreadsheet(ss)
     .onEdit()

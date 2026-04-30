@@ -5,10 +5,6 @@ function autoProcessPendingRowsWorker3() { processWorker_(3); }
 function autoProcessPendingRowsWorker4() { processWorker_(4); }
 function autoProcessPendingRowsWorker5() { processWorker_(5); }
 function autoProcessPendingRowsWorker6() { processWorker_(6); }
-function autoProcessPendingRowsWorker7() { processWorker_(7); }
-function autoProcessPendingRowsWorker8() { processWorker_(8); }
-function autoProcessPendingRowsWorker9() { processWorker_(9); }
-// có thể define thêm nếu cần max 10 worker
 
 function processWorker_(workerIndex) {
   const keyCount = getGeminiApiKeyCount_();
@@ -19,9 +15,9 @@ function processWorker_(workerIndex) {
     return;
   }
 
-  console.log(`[WORKER ${workerIndex}] start`);
+  console.log(`[WORKER ${workerIndex}] START`);
 
-  const result = processPendingBatchForWorker_(workerIndex, workerCount);
+  const result = processPendingBatchForWorker_(workerIndex);
 
-  console.log(`[WORKER ${workerIndex}] done ${JSON.stringify(result)}`);
+  console.log(`[WORKER ${workerIndex}] END result=${JSON.stringify(result)}`);
 }

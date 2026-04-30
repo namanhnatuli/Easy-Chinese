@@ -13,14 +13,19 @@ function generateBatchEntriesWithGemini_(batchItems) {
   return callGeminiBatchRoundRobin_(batchItems);
 }
 
-function generateBatchEntriesWithGeminiForKey_(batchItems, keyIndex) {
-  const apiKey = getGeminiApiKeyByIndex_(keyIndex);
-  const model = getRoundRobinOrderedModels_()[0];
+function generateBatchEntriesWithGeminiForKey_(batchItems, workerIndex) {
+  const keyInfo = takeNextGeminiApiKey_();
+  const modelInfo = takeNextGeminiModel_();
+
+  const apiKey = keyInfo.apiKey;
+  const model = modelInfo.model;
 
   const startedAt = Date.now();
   const keyMasked = maskApiKey_(apiKey);
 
-  console.log(`[WORKER ${keyIndex}] START key=${keyMasked} model=${model} size=${batchItems.length}`);
+  console.log(
+    `[WORKER ${workerIndex}] GEMINI START keyIndex=${keyInfo.keyIndex} key=${keyMasked} modelIndex=${modelInfo.modelIndex} model=${model} size=${batchItems.length}`
+  );
 
   try {
     const result = callGeminiBatchWithRetryPerModel_(model, apiKey, batchItems);
@@ -28,15 +33,20 @@ function generateBatchEntriesWithGeminiForKey_(batchItems, keyIndex) {
 
     result.__meta = { apiKey, model, durationMs };
 
-    advanceRoundRobinPointer_();
+    console.log(
+      `[WORKER ${workerIndex}] GEMINI SUCCESS keyIndex=${keyInfo.keyIndex} model=${model} duration=${durationMs}ms`
+    );
 
-    console.log(`[WORKER ${keyIndex}] SUCCESS duration=${durationMs}ms`);
     return result;
   } catch (err) {
     const durationMs = Date.now() - startedAt;
+
     err.__meta = { apiKey, model, durationMs };
 
-    console.log(`[WORKER ${keyIndex}] FAIL duration=${durationMs}ms error=${err.message}`);
+    console.log(
+      `[WORKER ${workerIndex}] GEMINI FAIL keyIndex=${keyInfo.keyIndex} model=${model} duration=${durationMs}ms error=${err.message}`
+    );
+
     throw err;
   }
 }

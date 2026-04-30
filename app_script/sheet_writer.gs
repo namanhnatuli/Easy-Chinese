@@ -8,6 +8,12 @@ function markRowPending_(sheet, row, meta) {
   updateTimestamp_(sheet, row);
 }
 
+function markRowProcessing_(sheet, row, workerIndex) {
+  sheet.getRange(row, CONFIG.COL_AI_STATUS).setValue('processing');
+  sheet.getRange(row, CONFIG.COL_LAST_MODEL).setValue(`worker_${workerIndex}`);
+  updateTimestamp_(sheet, row);
+}
+
 function writeAiResult_(sheet, row, data, meta) {
   const topicTags = normalizeTopicTags_(data.topic_tags);
   const partOfSpeech = normalizePartOfSpeech_(data.part_of_speech);

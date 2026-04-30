@@ -32,32 +32,25 @@ const CONFIG = {
   COL_AI_STATUS: 24,
   COL_UPDATED_AT: 25,
 
-  // Z / AA / AB
-  COL_LAST_API_KEY: 26,
-  COL_LAST_MODEL: 27,
-  COL_LAST_DURATION_MS: 28,
+  COL_LAST_API_KEY: 26,      // Z
+  COL_LAST_MODEL: 27,        // AA
+  COL_LAST_DURATION_MS: 28,  // AB
 
-  GEMINI_MODELS: [
-    'gemini-3.1-flash-lite-preview',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite-preview',
-    'gemini-2.5-flash-lite',
-    'gemini-3.1-flash-lite-preview',
-    'gemini-3-flash-preview',
+  GEMINI_MODEL_WEIGHTS: [
+    { model: 'gemini-3.1-flash-lite-preview', weight: 5 },
+    { model: 'gemini-2.5-flash', weight: 2 },
+    { model: 'gemini-2.5-flash-lite', weight: 1 },
+    { model: 'gemini-3-flash-preview', weight: 1 }
   ],
 
   MAX_RETRY_ATTEMPTS_PER_MODEL: 1,
   BASE_RETRY_DELAY_MS: 1500,
 
-  INLINE_PASTE_THRESHOLD_ROWS: 1,
-  BATCH_SLEEP_MS: 500,
-  BATCH_MAX_ROWS_PER_RUN: 1,
-  BATCH_MAX_RUNTIME_MS: 60000,
-  AUTO_TRIGGER_EVERY_MINUTES: 5,
-  AI_MICRO_BATCH_SIZE: 2,
-
-  WORKER_COUNT: 3,
+  AI_MICRO_BATCH_SIZE: 3,
+  WORKER_COUNT: 5,
   WORKER_TRIGGER_INTERVAL_MIN: 5,
+
+  STALE_PROCESSING_MINUTES: 15
 };
 
 const ALLOWED_TOPIC_TAGS = [
