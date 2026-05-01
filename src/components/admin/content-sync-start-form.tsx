@@ -39,7 +39,10 @@ export function ContentSyncStartForm({
   return (
     <form action={handleAction} className="grid gap-x-4 gap-y-4 lg:grid-cols-[2fr_2fr_1fr_1fr_auto] lg:items-start relative">
       {isPending && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl" />
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="mt-2 text-sm font-medium text-foreground">{labels.pending}</p>
+        </div>
       )}
       <Field label={labels.spreadsheetId} hint={labels.spreadsheetHint}>
         <input

@@ -3,7 +3,8 @@ function onEdit(e) {
 
   const range = e.range;
   const sheet = range.getSheet();
-  if (sheet.getName() !== CONFIG.HANZI_SHEET) return;
+  const kind = getSheetKind_(sheet);
+  if (!kind) return;
 
   const startRow = range.getRow();
   const startCol = range.getColumn();
@@ -17,7 +18,16 @@ function onEdit(e) {
     touchRowUpdatedAt_(sheet, row);
   }
 
-  if (!(CONFIG.COL_INPUT_TEXT >= startCol && CONFIG.COL_INPUT_TEXT <= endCol)) {
+  const isHanziInputEdit =
+    kind === 'hanzi' &&
+    CONFIG.COL_INPUT_TEXT >= startCol &&
+    CONFIG.COL_INPUT_TEXT <= endCol;
+  const isGrammarSourceEdit =
+    kind === 'grammar' &&
+    startCol <= GRAMMAR_COL.RAW_HSK &&
+    endCol >= GRAMMAR_COL.RAW_TITLE;
+
+  if (!isHanziInputEdit && !isGrammarSourceEdit) {
     return;
   }
 
@@ -28,10 +38,16 @@ function onEdit(e) {
     const row = startRow + offset;
     if (row <= CONFIG.HEADER_ROW) continue;
 
-    const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
-    if (!inputText) continue;
+    if (kind === 'hanzi') {
+      const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
+      if (!inputText) continue;
+      markRowPending_(sheet, row);
+    } else {
+      const sourcePayload = getGrammarSourcePayload_(sheet, row);
+      if (!sourcePayload.row_key) continue;
+      markGrammarRowPending_(sheet, row);
+    }
 
-    markRowPending_(sheet, row);
     affectedRows += 1;
     if (numRows === 1 && numCols === 1) {
       singleTargetRow = row;

@@ -83,11 +83,37 @@ function normalizeBatchItems_(batchItems) {
   if (!Array.isArray(batchItems)) return [];
 
   return batchItems
-    .map(item => ({
-      row_key: safeString_(item && item.row_key),
-      input_text: safeString_(item && item.input_text)
-    }))
-    .filter(item => item.row_key && item.input_text);
+    .map(item => {
+      const rowKey = safeString_(item && item.row_key);
+
+      if (item && Object.prototype.hasOwnProperty.call(item, 'raw_title')) {
+        return {
+          row_key: rowKey,
+          raw_title: safeString_(item.raw_title),
+          raw_explanation: safeString_(item.raw_explanation),
+          raw_examples: safeString_(item.raw_examples),
+          raw_hsk: safeString_(item.raw_hsk)
+        };
+      }
+
+      return {
+        row_key: rowKey,
+        input_text: safeString_(item && item.input_text)
+      };
+    })
+    .filter(item => {
+      if (!item.row_key) return false;
+      if (Object.prototype.hasOwnProperty.call(item, 'raw_title')) {
+        return !!(
+          item.raw_title ||
+          item.raw_explanation ||
+          item.raw_examples ||
+          item.raw_hsk
+        );
+      }
+
+      return !!item.input_text;
+    });
 }
 
 function getGeminiApiKeys_() {
@@ -268,11 +294,14 @@ function callGeminiBatchOnce_(model, apiKey, batchItems) {
     ':generateContent?key=' +
     encodeURIComponent(apiKey);
 
+  const promptBuilder = resolveGeminiPromptBuilder_(batchItems);
+  const responseSchemaBuilder = resolveGeminiResponseSchemaBuilder_(batchItems);
+
   const payload = {
-    contents: [{ parts: [{ text: buildGeminiBatchPrompt_(batchItems) }] }],
+    contents: [{ parts: [{ text: promptBuilder(batchItems) }] }],
     generationConfig: {
       responseMimeType: 'application/json',
-      responseSchema: buildGeminiBatchResponseSchema_()
+      responseSchema: responseSchemaBuilder()
     }
   };
 
@@ -304,6 +333,24 @@ function callGeminiBatchOnce_(model, apiKey, batchItems) {
   }
 
   return JSON.parse(text);
+}
+
+function resolveGeminiPromptBuilder_(batchItems) {
+  const firstItem = Array.isArray(batchItems) ? batchItems[0] : null;
+  if (firstItem && Object.prototype.hasOwnProperty.call(firstItem, 'raw_title')) {
+    return buildGeminiGrammarBatchPrompt_;
+  }
+
+  return buildGeminiBatchPrompt_;
+}
+
+function resolveGeminiResponseSchemaBuilder_(batchItems) {
+  const firstItem = Array.isArray(batchItems) ? batchItems[0] : null;
+  if (firstItem && Object.prototype.hasOwnProperty.call(firstItem, 'raw_title')) {
+    return buildGeminiGrammarBatchResponseSchema_;
+  }
+
+  return buildGeminiBatchResponseSchema_;
 }
 
 function buildGeminiBatchPrompt_(batchItems) {
@@ -458,6 +505,104 @@ function buildGeminiBatchResponseSchema_() {
             'ambiguity_flag',
             'ambiguity_note',
             'reading_candidates',
+            'review_status'
+          ]
+        }
+      }
+    },
+    required: ['items']
+  };
+}
+
+function buildGeminiGrammarBatchPrompt_(batchItems) {
+  const inputJson = JSON.stringify(batchItems);
+
+  return [
+    'Bạn là trợ lý chuẩn hóa dữ liệu ngữ pháp tiếng Trung cho một ứng dụng học tiếng Trung dành cho người Việt.',
+    '',
+    'Bạn sẽ nhận danh sách các item ngữ pháp thô từ sheet Google Sheets.',
+    'Mỗi item có các trường:',
+    '- row_key',
+    '- raw_title: tên điểm ngữ pháp thô',
+    '- raw_explanation: giải thích thô',
+    '- raw_examples: ví dụ thô',
+    '- raw_hsk: HSK thô',
+    '',
+    'Mục tiêu: chuyển từng item sang cấu trúc phù hợp với schema grammar_points và grammar_examples.',
+    '',
+    'QUY TẮC CHO MỖI ITEM:',
+    '- title: tiêu đề ngắn gọn, rõ ràng, phù hợp hiển thị trong app.',
+    '- slug: slug tiếng Anh/không dấu, lowercase, nối bằng dấu gạch ngang.',
+    '- structure_text: mẫu/cấu trúc ngữ pháp ngắn gọn, ví dụ như "什么 + danh từ" hoặc mẫu tương đương phù hợp.',
+    '- explanation_vi: giải thích tiếng Việt rõ ràng, đã biên tập lại từ dữ liệu thô.',
+    '- notes: ghi chú học tập ngắn gọn nếu hữu ích, nếu không có thì để rỗng.',
+    '- examples: mảng object, mỗi object gồm:',
+    '  + chinese_text',
+    '  + pinyin',
+    '  + vietnamese_meaning',
+    '- Hãy tách và chuẩn hóa ví dụ thô thành ít nhất 2 examples nếu dữ liệu cho phép.',
+    '- hsk_level: chỉ được là chuỗi số "", "1"..."9".',
+    '- source_confidence: high, medium hoặc low.',
+    '- ambiguity_flag: true hoặc false.',
+    '- ambiguity_note: giải thích ngắn nếu ambiguity_flag=true.',
+    '- review_status: pending hoặc needs_review.',
+    '',
+    'RÀNG BUỘC:',
+    '- Không được bỏ sót row_key.',
+    '- Không được thêm row_key ngoài input.',
+    '- Không markdown.',
+    '- Chỉ trả về JSON hợp lệ.',
+    '',
+    'INPUT ITEMS:',
+    inputJson
+  ].join('\n');
+}
+
+function buildGeminiGrammarBatchResponseSchema_() {
+  return {
+    type: 'OBJECT',
+    properties: {
+      items: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            row_key: { type: 'STRING' },
+            title: { type: 'STRING' },
+            slug: { type: 'STRING' },
+            structure_text: { type: 'STRING' },
+            explanation_vi: { type: 'STRING' },
+            notes: { type: 'STRING' },
+            examples: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  chinese_text: { type: 'STRING' },
+                  pinyin: { type: 'STRING' },
+                  vietnamese_meaning: { type: 'STRING' }
+                },
+                required: ['chinese_text', 'pinyin', 'vietnamese_meaning']
+              }
+            },
+            hsk_level: { type: 'STRING' },
+            source_confidence: { type: 'STRING' },
+            ambiguity_flag: { type: 'BOOLEAN' },
+            ambiguity_note: { type: 'STRING' },
+            review_status: { type: 'STRING' }
+          },
+          required: [
+            'row_key',
+            'title',
+            'slug',
+            'structure_text',
+            'explanation_vi',
+            'notes',
+            'examples',
+            'hsk_level',
+            'source_confidence',
+            'ambiguity_flag',
+            'ambiguity_note',
             'review_status'
           ]
         }

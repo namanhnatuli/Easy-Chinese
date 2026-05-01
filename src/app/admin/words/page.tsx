@@ -13,7 +13,7 @@ import { requireAdminSupabase } from "@/features/admin/shared";
 import { getServerI18n } from "@/i18n/server";
 import { requireAdminUser } from "@/lib/auth";
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 function parsePositiveInteger(value: string | string[] | undefined, fallback: number) {
   const normalized = Array.isArray(value) ? value[0] : value;

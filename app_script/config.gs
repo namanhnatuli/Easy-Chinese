@@ -1,8 +1,10 @@
 const CONFIG = {
   HANZI_SHEET: 'Hanzi',
+  GRAMMAR_SHEET: 'NguPhap',
   CACHE_SHEET: 'AI_CACHE',
   HEADER_ROW: 1,
   HEADER_WIDTH: 28,
+  GRAMMAR_HEADER_WIDTH: 20,
 
   COL_INPUT_TEXT: 1,
   COL_NORMALIZED_TEXT: 2,
@@ -51,7 +53,6 @@ const CONFIG = {
   AI_MICRO_BATCH_SIZE: 3,
   WORKER_COUNT: 5,
   WORKER_TRIGGER_INTERVAL_MIN: 5,
-  WORKER_STAGGER_SECONDS: 30,
   RECOVERY_TRIGGER_INTERVAL_MIN: 15,
 
   STALE_PROCESSING_MINUTES: 15,
@@ -93,6 +94,52 @@ const HANZI_HEADERS = [
   'last_used_model',
   'last_duration_ms'
 ];
+
+const GRAMMAR_HEADERS = [
+  'Điểm ngữ pháp',
+  'Giải thích',
+  'Ví dụ',
+  'HSK',
+  'title',
+  'slug',
+  'structure_text',
+  'explanation_vi',
+  'notes',
+  'examples_structured',
+  'hsk_level',
+  'source_confidence',
+  'ambiguity_flag',
+  'ambiguity_note',
+  'review_status',
+  'ai_status',
+  'updated_at',
+  'last_used_api_key',
+  'last_used_model',
+  'last_duration_ms'
+];
+
+const GRAMMAR_COL = {
+  RAW_TITLE: 1,
+  RAW_EXPLANATION: 2,
+  RAW_EXAMPLES: 3,
+  RAW_HSK: 4,
+  TITLE: 5,
+  SLUG: 6,
+  STRUCTURE_TEXT: 7,
+  EXPLANATION_VI: 8,
+  NOTES: 9,
+  EXAMPLES_STRUCTURED: 10,
+  HSK_LEVEL: 11,
+  SOURCE_CONFIDENCE: 12,
+  AMBIGUITY_FLAG: 13,
+  AMBIGUITY_NOTE: 14,
+  REVIEW_STATUS: 15,
+  AI_STATUS: 16,
+  UPDATED_AT: 17,
+  LAST_API_KEY: 18,
+  LAST_MODEL: 19,
+  LAST_DURATION_MS: 20
+};
 
 const ALLOWED_TOPIC_TAGS = [
   'hoc_tap',

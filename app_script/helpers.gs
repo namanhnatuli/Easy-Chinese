@@ -25,6 +25,42 @@ function getHanziSheet_() {
   return sheet;
 }
 
+function getGrammarSheet_() {
+  const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.GRAMMAR_SHEET);
+  if (!sheet) {
+    throw new Error(`Missing sheet: ${CONFIG.GRAMMAR_SHEET}`);
+  }
+  return sheet;
+}
+
+function getSheetKind_(sheet) {
+  const sheetName = typeof sheet === 'string' ? sheet : sheet.getName();
+  if (sheetName === CONFIG.HANZI_SHEET) return 'hanzi';
+  if (sheetName === CONFIG.GRAMMAR_SHEET) return 'grammar';
+  return '';
+}
+
+function getActiveSupportedSheet_() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const kind = getSheetKind_(sheet);
+  if (!kind) {
+    throw new Error(`Unsupported sheet: ${sheet.getName()}`);
+  }
+
+  return { sheet, kind };
+}
+
+function slugify_(value) {
+  return safeString_(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
 function joinArray_(value, separator) {
   if (!Array.isArray(value)) return '';
   return value
@@ -139,6 +175,30 @@ function normalizeReadingCandidates_(values) {
 
       if (!pinyin && !meanings) return '';
       return `PINYIN=${pinyin}|MEANINGS=${meanings}`;
+    })
+    .filter(Boolean);
+
+  return [...new Set(normalized)].join(' || ');
+}
+
+function normalizeGrammarExamplesOutput_(examples) {
+  if (!Array.isArray(examples)) return '';
+
+  const normalized = examples
+    .map(example => {
+      if (typeof example === 'string') {
+        const text = safeString_(example);
+        if (text.startsWith('CN=') && text.includes('|PY=') && text.includes('|VI=')) {
+          return text;
+        }
+        return '';
+      }
+
+      return formatExamples_([{
+        cn: example.chinese_text || example.cn,
+        py: example.pinyin || example.py,
+        vi: example.vietnamese_meaning || example.vi
+      }]);
     })
     .filter(Boolean);
 
@@ -339,7 +399,15 @@ function writeExecutionMeta_(sheet, row, meta) {
 
 function touchRowUpdatedAt_(sheet, row) {
   if (!sheet || row <= CONFIG.HEADER_ROW) return;
-  sheet.getRange(row, CONFIG.COL_UPDATED_AT).setValue(now_());
+  const kind = getSheetKind_(sheet);
+  if (kind === 'hanzi') {
+    sheet.getRange(row, CONFIG.COL_UPDATED_AT).setValue(now_());
+    return;
+  }
+
+  if (kind === 'grammar') {
+    sheet.getRange(row, GRAMMAR_COL.UPDATED_AT).setValue(now_());
+  }
 }
 
 function shouldProcessStatus_(aiStatus) {
@@ -360,6 +428,10 @@ function validateConfig_() {
     throw new Error('HANZI_HEADERS length does not match CONFIG.HEADER_WIDTH');
   }
 
+  if (GRAMMAR_HEADERS.length !== CONFIG.GRAMMAR_HEADER_WIDTH) {
+    throw new Error('GRAMMAR_HEADERS length does not match CONFIG.GRAMMAR_HEADER_WIDTH');
+  }
+
   if (CONFIG.AI_MICRO_BATCH_SIZE < 1) {
     throw new Error('CONFIG.AI_MICRO_BATCH_SIZE must be >= 1');
   }
@@ -373,24 +445,27 @@ function validateConfig_() {
 }
 
 function validateHeader_() {
-  const sheet = getHanziSheet_();
+  validateSheetHeader_(getHanziSheet_(), HANZI_HEADERS, CONFIG.HEADER_WIDTH, 'Hanzi');
+  validateSheetHeader_(getGrammarSheet_(), GRAMMAR_HEADERS, CONFIG.GRAMMAR_HEADER_WIDTH, 'NguPhap');
+  return true;
+}
+
+function validateSheetHeader_(sheet, expectedHeaders, width, label) {
   const actualHeaders = sheet
-    .getRange(CONFIG.HEADER_ROW, 1, 1, CONFIG.HEADER_WIDTH)
+    .getRange(CONFIG.HEADER_ROW, 1, 1, width)
     .getValues()[0]
     .map(value => safeString_(value));
 
   const mismatches = [];
-  for (let index = 0; index < HANZI_HEADERS.length; index++) {
-    if (actualHeaders[index] !== HANZI_HEADERS[index]) {
+  for (let index = 0; index < expectedHeaders.length; index++) {
+    if (actualHeaders[index] !== expectedHeaders[index]) {
       mismatches.push(
-        `col ${index + 1}: expected "${HANZI_HEADERS[index]}", got "${actualHeaders[index]}"`
+        `col ${index + 1}: expected "${expectedHeaders[index]}", got "${actualHeaders[index]}"`
       );
     }
   }
 
   if (mismatches.length) {
-    throw new Error(`Hanzi header mismatch:\n${mismatches.join('\n')}`);
+    throw new Error(`${label} header mismatch:\n${mismatches.join('\n')}`);
   }
-
-  return true;
 }

@@ -2,6 +2,10 @@ function processInputRow_(sheet, row, forceRefresh) {
   validateConfig_();
   validateHeader_();
 
+  if (getSheetKind_(sheet) === 'grammar') {
+    return processGrammarInputRow_(sheet, row, forceRefresh);
+  }
+
   const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
   if (!inputText) return { processed: 0 };
 

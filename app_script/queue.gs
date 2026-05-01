@@ -144,11 +144,19 @@ function processPendingRows() {
   let batchCount = 0;
 
   while (batchCount < CONFIG.MANUAL_PROCESS_BATCH_LIMIT) {
-    const result = processPendingQueueBatch_({
+    let result = processPendingQueueBatch_({
       source: 'manual',
       workerIndex: 'manual',
       limit: CONFIG.AI_MICRO_BATCH_SIZE
     });
+
+    if (!result.claimedRows || !result.claimedRows.length) {
+      result = processPendingGrammarQueueBatch_({
+        source: 'manual',
+        workerIndex: 'manual',
+        limit: CONFIG.AI_MICRO_BATCH_SIZE
+      });
+    }
 
     if (!result.claimedRows || !result.claimedRows.length) {
       break;
@@ -176,6 +184,18 @@ function hasPendingRows_() {
 
   const statuses = sheet
     .getRange(CONFIG.HEADER_ROW + 1, CONFIG.COL_AI_STATUS, lastRow - CONFIG.HEADER_ROW, 1)
+    .getValues();
+
+  return statuses.some(row => shouldProcessStatus_(row[0]));
+}
+
+function hasPendingGrammarRows_() {
+  const sheet = getGrammarSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= CONFIG.HEADER_ROW) return false;
+
+  const statuses = sheet
+    .getRange(CONFIG.HEADER_ROW + 1, GRAMMAR_COL.AI_STATUS, lastRow - CONFIG.HEADER_ROW, 1)
     .getValues();
 
   return statuses.some(row => shouldProcessStatus_(row[0]));

@@ -174,7 +174,22 @@ export default async function AdminContentSyncPage({
                         {t("contentSync.overview.globalQueueDescription")}
                       </p>
                     </div>
-                    <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
+                      {data.filteredRows.length > 0 && (
+                        <form action={approveAllEligibleContentSyncRowsAction}>
+                          <input type="hidden" name="return_view" value={data.filters.view} />
+                          <SubmitButton 
+                            size="sm" 
+                            variant="outline" 
+                            showOverlay 
+                            pendingText={t("common.loading")}
+                          >
+                            {t("contentSync.queue.bulkApprove")}
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ) : null}
@@ -188,7 +203,22 @@ export default async function AdminContentSyncPage({
                         {t("contentSync.overview.globalResolvedDescription")}
                       </p>
                     </div>
-                    <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary">{data.filteredRows.length} {t("contentSync.queue.rowsLabel")}</Badge>
+                      {data.filteredRows.length > 0 && (
+                        <form action={applyAllApprovedContentSyncRowsAction}>
+                          <input type="hidden" name="return_view" value={data.filters.view} />
+                          <SubmitButton 
+                            size="sm" 
+                            variant="outline" 
+                            showOverlay 
+                            pendingText={t("common.loading")}
+                          >
+                            {t("contentSync.queue.bulkApply")}
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ) : null}

@@ -8,6 +8,7 @@ function autoProcessPendingRowsWorker6() { processWorker_(6); }
 
 function processWorker_(workerIndex) {
   validateConfig_();
+  validateHeader_();
 
   const activeWorkerCount = Math.min(CONFIG.WORKER_COUNT, getGeminiApiKeyCount_());
   if (workerIndex >= activeWorkerCount) {
@@ -17,11 +18,37 @@ function processWorker_(workerIndex) {
 
   console.log(`[WORKER ${workerIndex}] START`);
 
-  const result = processPendingQueueBatch_({
-    source: 'worker',
-    workerIndex,
-    limit: CONFIG.AI_MICRO_BATCH_SIZE
-  });
+  let result;
+
+  if (workerIndex % 2 === 0) {
+    result = processPendingQueueBatch_({
+      source: 'worker',
+      workerIndex,
+      limit: CONFIG.AI_MICRO_BATCH_SIZE
+    });
+
+    if (!result.claimedRows || !result.claimedRows.length) {
+      result = processPendingGrammarQueueBatch_({
+        source: 'grammar-worker',
+        workerIndex,
+        limit: CONFIG.AI_MICRO_BATCH_SIZE
+      });
+    }
+  } else {
+    result = processPendingGrammarQueueBatch_({
+      source: 'grammar-worker',
+      workerIndex,
+      limit: CONFIG.AI_MICRO_BATCH_SIZE
+    });
+
+    if (!result.claimedRows || !result.claimedRows.length) {
+      result = processPendingQueueBatch_({
+        source: 'worker',
+        workerIndex,
+        limit: CONFIG.AI_MICRO_BATCH_SIZE
+      });
+    }
+  }
 
   console.log(`[WORKER ${workerIndex}] END result=${JSON.stringify(result)}`);
 }
