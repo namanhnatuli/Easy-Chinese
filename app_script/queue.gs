@@ -20,6 +20,7 @@ function claimPendingRows_(sheet, limit, workerIndex) {
 
     const claimed = [];
     const claimedAt = now_();
+    const claimWrites = [];
 
     for (let index = 0; index < rowCount && claimed.length < limit; index++) {
       const row = CONFIG.HEADER_ROW + 1 + index;
@@ -29,19 +30,30 @@ function claimPendingRows_(sheet, limit, workerIndex) {
       if (!inputText) continue;
       if (!shouldProcessStatus_(aiStatus)) continue;
 
-      sheet
-        .getRange(row, CONFIG.COL_AI_STATUS, 1, 2)
-        .setValues([['processing', claimedAt]]);
-
       claimed.push({
         row,
         row_key: String(row),
         input_text: inputText
       });
+
+      claimWrites.push({
+        row,
+        values: [['processing', claimedAt]]
+      });
+    }
+
+    claimWrites.forEach(write => {
+      sheet
+        .getRange(write.row, CONFIG.COL_AI_STATUS, 1, 2)
+        .setValues(write.values);
+    });
+
+    if (claimWrites.length) {
+      SpreadsheetApp.flush();
     }
 
     console.log(
-      `[QUEUE] worker=${workerIndex} claimed=${claimed.length} rows=[${claimed.map(item => item.row).join(', ')}]`
+      `[QUEUE] worker=${workerIndex} claimed=${claimed.length} rows=[${claimed.map(item => item.row).join(', ')}] flushed=${claimWrites.length > 0}`
     );
 
     return claimed;

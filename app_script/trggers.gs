@@ -75,7 +75,9 @@ function createWorkerTriggers() {
   deleteWorkerTriggers_();
 
   const workerCount = Math.min(CONFIG.WORKER_COUNT, getGeminiApiKeyCount_());
-  console.log(`[TRIGGER] create worker triggers count=${workerCount}`);
+  console.log(
+    `[TRIGGER] create fixed worker triggers count=${workerCount} interval=${CONFIG.WORKER_TRIGGER_INTERVAL_MIN}m`
+  );
 
   for (let index = 0; index < workerCount; index++) {
     ScriptApp.newTrigger(`autoProcessPendingRowsWorker${index}`)
