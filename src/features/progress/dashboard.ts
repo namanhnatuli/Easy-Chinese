@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { countSuccessfulLearningActivitiesToday } from "@/features/memory/activity";
 
 import { calculateLevelFromXp } from "@/features/gamification/leveling";
 import {
@@ -137,6 +138,10 @@ function buildTimeSeriesFromRows(
       point.readingCompleted += 1;
     }
 
+    if (row.practice_type === "listening_dictation") {
+      point.listeningCompleted += 1;
+    }
+
     if (row.practice_type === "writing_character") {
       point.writingCompleted += 1;
     }
@@ -184,6 +189,7 @@ function buildProgressComparison(
       xpEarned: buildComparisonMetric(current.xpEarned, previous.xpEarned),
       accuracyRate: buildComparisonMetric(current.accuracyRate, previous.accuracyRate),
       readingCompleted: buildComparisonMetric(current.readingCompleted, previous.readingCompleted),
+      listeningCompleted: buildComparisonMetric(current.listeningCompleted, previous.listeningCompleted),
       writingCompleted: buildComparisonMetric(current.writingCompleted, previous.writingCompleted),
       lessonsCompleted: buildComparisonMetric(current.lessonsCompleted, previous.lessonsCompleted),
     },
@@ -218,11 +224,11 @@ export async function getUserProgressSummary(userId: string): Promise<UserProgre
     { data: learningStatsRow, error: learningStatsError },
     { data: xpRow, error: xpError },
     { data: levelRow, error: levelError },
-    { count: completedToday, error: completedTodayError },
     { count: correctReviewCount, error: correctReviewError },
     { count: incorrectReviewCount, error: incorrectReviewError },
     { data: difficultReadingRows, error: difficultReadingError },
     { data: difficultWritingRows, error: difficultWritingError },
+    completedToday,
   ] = await Promise.all([
     supabase
       .from("user_word_memory")
@@ -235,13 +241,6 @@ export async function getUserProgressSummary(userId: string): Promise<UserProgre
       .maybeSingle(),
     supabase.from("user_xp").select("total_xp").eq("user_id", userId).maybeSingle(),
     supabase.from("user_level").select("level").eq("user_id", userId).maybeSingle(),
-    supabase
-      .from("review_events")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("grade", ["hard", "good", "easy"])
-      .gte("reviewed_at", startOfToday.toISOString())
-      .lt("reviewed_at", endOfToday.toISOString()),
     supabase
       .from("review_events")
       .select("*", { count: "exact", head: true })
@@ -263,13 +262,18 @@ export async function getUserProgressSummary(userId: string): Promise<UserProgre
       .select("word_id")
       .eq("user_id", userId)
       .eq("status", "difficult"),
+    countSuccessfulLearningActivitiesToday({
+      supabase,
+      userId,
+      from: startOfToday.toISOString(),
+      to: endOfToday.toISOString(),
+    }),
   ]);
 
   if (memoryError) throw memoryError;
   if (learningStatsError) throw learningStatsError;
   if (xpError) throw xpError;
   if (levelError) throw levelError;
-  if (completedTodayError) throw completedTodayError;
   if (correctReviewError) throw correctReviewError;
   if (incorrectReviewError) throw incorrectReviewError;
   if (difficultReadingError) throw difficultReadingError;
@@ -345,6 +349,7 @@ export async function getUserSkillBreakdown(userId: string): Promise<UserSkillBr
   const [
     { count: reviewCount, error: reviewError },
     { count: readingCount, error: readingError },
+    { count: listeningCount, error: listeningError },
     { count: writingCount, error: writingError },
     { count: articleCount, error: articleError },
     { data: lessonRows, error: lessonError },
@@ -352,6 +357,11 @@ export async function getUserSkillBreakdown(userId: string): Promise<UserSkillBr
     supabase.from("review_events").select("*", { count: "exact", head: true }).eq("user_id", userId),
     supabase
       .from("user_reading_progress")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "completed"),
+    supabase
+      .from("user_listening_progress")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("status", "completed"),
@@ -373,6 +383,7 @@ export async function getUserSkillBreakdown(userId: string): Promise<UserSkillBr
 
   if (reviewError) throw reviewError;
   if (readingError) throw readingError;
+  if (listeningError) throw listeningError;
   if (writingError) throw writingError;
   if (articleError) throw articleError;
   if (lessonError) throw lessonError;
@@ -385,12 +396,14 @@ export async function getUserSkillBreakdown(userId: string): Promise<UserSkillBr
   return {
     reviews: reviewCount ?? 0,
     reading: readingCount ?? 0,
+    listening: listeningCount ?? 0,
     writing: writingCount ?? 0,
     articles: articleCount ?? 0,
     lessons,
     hasActivity:
       (reviewCount ?? 0) > 0 ||
       (readingCount ?? 0) > 0 ||
+      (listeningCount ?? 0) > 0 ||
       (writingCount ?? 0) > 0 ||
       (articleCount ?? 0) > 0 ||
       lessons > 0,
@@ -434,7 +447,7 @@ export async function getUserRecentActivity(
       .limit(limit),
     supabase
       .from("practice_events")
-      .select("created_at, practice_type, result, words(slug, hanzi), word_examples(chinese_text)")
+      .select("created_at, practice_type, result, metadata, tts_audio_cache(text_preview, source_text, character_count), words(slug, hanzi), word_examples(chinese_text)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit),
@@ -482,6 +495,11 @@ export async function getUserRecentActivity(
   for (const row of practiceRows ?? []) {
     const word = Array.isArray(row.words) ? row.words[0] : row.words;
     const sentence = Array.isArray(row.word_examples) ? row.word_examples[0] : row.word_examples;
+    const listening = Array.isArray(row.tts_audio_cache) ? row.tts_audio_cache[0] : row.tts_audio_cache;
+    const metadata =
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : null;
 
     if (row.practice_type === "writing_character" && word) {
       items.push({
@@ -520,6 +538,21 @@ export async function getUserRecentActivity(
         href: word?.slug ? `/vocabulary/${word.slug}` : null,
         meta: {
           practiceType: "reading_sentence",
+        },
+      });
+      continue;
+    }
+
+    if (row.practice_type === "listening_dictation" && listening) {
+      items.push({
+        type: "listening",
+        occurredAt: row.created_at,
+        label: listening.source_text ?? listening.text_preview,
+        detail: row.result,
+        href: "/practice/listening",
+        meta: {
+          characterCount: listening.character_count,
+          hintUsed: metadata?.hintUsed === true,
         },
       });
     }

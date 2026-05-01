@@ -77,6 +77,10 @@
       "label": "Luyện tập",
       "description": "Đọc và viết Hán tự"
     },
+    "listening": {
+      "label": "Luyện nghe",
+      "description": "Chép chính tả từ audio tiếng Trung đã lưu đệm"
+    },
     "articles": {
       "label": "Bài viết",
       "description": "Ghi chú học tập và bài so sánh"
@@ -829,7 +833,8 @@
     },
     "cta": {
       "reading": "Luyện đọc",
-      "writing": "Luyện viết"
+      "writing": "Luyện viết",
+      "listening": "Luyện nghe"
     },
     "cards": {
       "review": {
@@ -847,6 +852,10 @@
       "writingHanzi": {
         "title": "Viết Hán tự",
         "description": "Luyện từng chữ Hán trên khung viết đơn giản."
+      },
+      "listening": {
+        "title": "Chép chính tả",
+        "description": "Phát lại audio tiếng Trung đã lưu đệm, gõ Hanzi bạn nghe được và kiểm tra độ chính xác."
       }
     },
     "review": {
@@ -916,6 +925,56 @@
       "hideGrid": "Ẩn lưới",
       "showGuide": "Hiện mẫu",
       "hideGuide": "Ẩn mẫu"
+    },
+    "listening": {
+      "eyebrow": "Luyện nghe",
+      "title": "Chép chính tả với audio tiếng Trung đã lưu đệm",
+      "description": "Nghe các đoạn tiếng Trung đã được cache, gõ Hanzi bạn nghe được và luyện độ chính xác mà không tạo TTS mới.",
+      "filters": {
+        "difficulty": "Độ khó",
+        "allDifficulties": "Mọi độ khó",
+        "easy": "Dễ",
+        "medium": "Vừa",
+        "hard": "Khó",
+        "sourceType": "Nguồn",
+        "allSources": "Mọi nguồn",
+        "apply": "Áp dụng"
+      },
+      "sourceType": {
+        "word": "Từ vựng",
+        "example": "Ví dụ",
+        "article": "Bài viết",
+        "custom": "Tùy chỉnh"
+      },
+      "promptTitle": "Âm thanh",
+      "playAudio": "Phát âm thanh",
+      "replay": "Nghe lại",
+      "audioUnavailable": "Không thể phát audio luyện nghe này.",
+      "typeWhatYouHear": "Gõ lại nội dung bạn nghe được",
+      "answerPlaceholder": "Nhập Hanzi bạn vừa nghe",
+      "checkAnswer": "Kiểm tra đáp án",
+      "skip": "Bỏ qua",
+      "nextItem": "Câu tiếp theo",
+      "correct": "Đúng",
+      "almostCorrect": "Gần đúng",
+      "incorrect": "Sai",
+      "skipped": "Đã bỏ qua",
+      "correctAnswer": "Đáp án đúng",
+      "score": "Điểm khớp: {value}%",
+      "showFirstCharacter": "Hiện chữ đầu tiên",
+      "showPinyinHint": "Hiện gợi ý pinyin",
+      "hintsTitle": "Gợi ý",
+      "characterCount": "Số ký tự: {count}",
+      "sourceTypeLabel": "Nguồn",
+      "firstCharacter": "Ký tự đầu",
+      "hintAffectsScore": "Nếu dùng gợi ý, đáp án đúng hoàn toàn sẽ chỉ được tính là gần đúng cho score và XP.",
+      "saveFailed": "Không thể lưu tiến độ luyện nghe.",
+      "emptyDescription": "Chưa có audio tiếng Trung đã cache phù hợp. Hãy pre-cache thêm audio TTS trước.",
+      "cachedAudioBadge": "Audio đã lưu đệm",
+      "linkedArticle": "Bài viết liên kết",
+      "pinyinLabel": "Pinyin",
+      "meaningLabel": "Nghĩa tiếng Việt",
+      "openSource": "Mở nguồn"
     }
   },
   "dashboard": {
@@ -984,6 +1043,16 @@
     "bookmarkedArticlesDescription": "Các ghi chú lưu lại để xem sau",
     "readingCompleted": "Đọc đã hoàn thành",
     "readingCompletedDescription": "Mục luyện đọc đã đánh dấu hoàn thành",
+    "listeningCompleted": "Nghe đã hoàn thành",
+    "listeningCompletedDescription": "Mục chép chính tả đã hoàn thành",
+    "listeningAttempts": "Lượt luyện nghe",
+    "listeningAttemptsDescription": "Các lượt chép chính tả đã lưu trên audio cache",
+    "listeningAccuracy": "Độ chính xác luyện nghe",
+    "listeningAccuracyDescription": "Tỷ lệ đúng và gần đúng so với số lần sai",
+    "listeningDifficult": "Nghe khó",
+    "listeningDifficultDescription": "Các mục luyện nghe vẫn cần lặp lại thêm",
+    "listeningToday": "Luyện nghe hôm nay",
+    "listeningTodayDescription": "Các lượt chép chính tả đã lưu trong hôm nay",
     "difficultReading": "Đọc khó",
     "difficultReadingDescription": "Mục luyện đọc được đánh dấu khó",
     "writingCharacters": "Chữ đã luyện viết",
@@ -1015,6 +1084,7 @@
     "activityTypes": {
       "review": "Ôn tập",
       "reading": "Luyện đọc",
+      "listening": "Luyện nghe",
       "writing": "Luyện viết",
       "article": "Bài viết",
       "lesson": "Bài học"
@@ -1072,6 +1142,7 @@
     "skillsDescription": "Tổng hợp nhanh những gì bạn đã làm trong ôn tập, đọc, viết, bài học và bài viết.",
     "skillReviews": "Ôn tập",
     "skillReading": "Luyện đọc",
+    "skillListening": "Luyện nghe",
     "skillWriting": "Luyện viết",
     "skillLessons": "Bài học",
     "skillArticles": "Bài viết",
@@ -1085,6 +1156,8 @@
     "ctaContinueLessonsBody": "Quay lại bài học để giữ nhịp học đều và tiếp tục mở thêm từ mới.",
     "ctaPracticeReading": "Luyện đọc",
     "ctaPracticeReadingBody": "Luyện đọc nhanh để làm quen thêm với chữ Hán và câu mẫu.",
+    "ctaPracticeListening": "Luyện nghe",
+    "ctaPracticeListeningBody": "Tái sử dụng audio tiếng Trung đã cache cho các bài chép chính tả tập trung.",
     "ctaPracticeWriting": "Luyện viết",
     "ctaPracticeWritingBody": "Luyện viết để nhớ mặt chữ chắc hơn và giảm nhầm lẫn khi ôn tập.",
     "ctaStatisticsDetail": "Chi tiết thống kê",
@@ -1133,18 +1206,22 @@
     "noReviewActivity": "Chưa có hoạt động ôn tập",
     "noReviewActivityDescription": "Sự kiện ôn tập sẽ xuất hiện ở đây sau khi bạn hoàn thành bài học hoặc xử lý hàng đợi ôn tập.",
     "recentPracticeActivity": "Hoạt động luyện tập gần đây",
-    "recentPracticeActivityDescription": "Các thao tác luyện đọc và luyện viết đã lưu gần nhất.",
+    "recentPracticeActivityDescription": "Các thao tác luyện đọc, luyện nghe và luyện viết đã lưu gần nhất.",
     "noPracticeActivity": "Chưa có hoạt động luyện tập",
     "noPracticeActivityDescription": "Hoạt động luyện đọc và luyện viết sẽ hiện ở đây sau phiên luyện đầu tiên.",
     "practiceType": {
       "reading_word": "Đọc từ",
       "reading_sentence": "Đọc câu",
-      "writing_character": "Viết chữ"
+      "writing_character": "Viết chữ",
+      "listening_dictation": "Chép chính tả"
     },
     "practiceResult": {
       "completed": "hoàn thành",
       "difficult": "khó",
-      "skipped": "bỏ qua"
+      "skipped": "bỏ qua",
+      "correct": "đúng",
+      "almost": "gần đúng",
+      "incorrect": "sai"
     }
   },
   "ai": {
@@ -1644,12 +1721,27 @@
         "topVoices": "Giọng đọc phổ biến nhất",
         "voiceStatsLine": "{characters} ký tự · {hits} lượt hit · {size}"
       },
+      "filters": {
+        "sourceType": "Loại nguồn",
+        "allSourceTypes": "Mọi loại nguồn",
+        "languageCode": "Mã ngôn ngữ",
+        "minCharacters": "Số ký tự tối thiểu",
+        "maxCharacters": "Số ký tự tối đa",
+        "missingSourceTextOnly": "Chỉ hiện dòng thiếu source text",
+        "apply": "Áp dụng bộ lọc"
+      },
+      "backfill": {
+        "title": "Backfill metadata nguồn còn thiếu",
+        "description": "Hiện có {count} dòng cache chưa có source text chuẩn.",
+        "submit": "Chạy backfill"
+      },
       "recent": {
         "title": "Mục cache truy cập gần đây",
         "emptyTitle": "Chưa có âm thanh cache",
         "emptyDescription": "Hãy tạo âm thanh phát âm từ các trang học hoặc công cụ tạo trước.",
         "table": {
           "preview": "Xem trước",
+          "sourceType": "Nguồn",
           "provider": "Nhà cung cấp",
           "voice": "Giọng đọc",
           "chars": "Ký tự",
@@ -1672,7 +1764,8 @@
         "success": "{label}: đã tạo trước {items} mục ({hits} hit, {misses} miss).",
         "empty": "Không có bài học, từ vựng hoặc ví dụ nào được cung cấp.",
         "tooMany": "Batch tạo trước quá lớn ({count} mục). Hãy giảm bớt lựa chọn và thử lại.",
-        "error": "Tạo trước thất bại. Kiểm tra logs server để biết chi tiết lỗi từ provider."
+        "error": "Tạo trước thất bại. Kiểm tra logs server để biết chi tiết lỗi từ provider.",
+        "backfill": "Đã backfill metadata nguồn cho {items} dòng cache."
       }
     }
   }

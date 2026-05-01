@@ -36,6 +36,11 @@ export function StudyDetailedAnswer({
             </p>
             <PronunciationButton
               text={details.hanzi}
+              sourceType="custom"
+              sourceMetadata={{
+                pinyin: details.pinyin,
+                vietnameseMeaning: details.vietnameseMeaning,
+              }}
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full"
@@ -96,6 +101,12 @@ export function StudyDetailedAnswer({
                 <div className="mt-2">
                   <PronunciationButton
                     text={ex.chineseText}
+                    sourceType="example"
+                    sourceRefId={ex.id}
+                    sourceMetadata={{
+                      pinyin: ex.pinyin,
+                      vietnameseMeaning: ex.vietnameseMeaning,
+                    }}
                     variant="outline"
                     size="sm"
                     className="rounded-full"

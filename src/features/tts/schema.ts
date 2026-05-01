@@ -6,8 +6,18 @@ export type TtsProvider = z.infer<typeof ttsProviderSchema>;
 export const ttsStorageAccessSchema = z.enum(["public", "private"]);
 export type TtsStorageAccess = z.infer<typeof ttsStorageAccessSchema>;
 
+export const ttsSourceTypeSchema = z.enum(["word", "example", "article", "custom"]);
+export type TtsSourceType = z.infer<typeof ttsSourceTypeSchema>;
+
+export const ttsSourceMetadataSchema = z.record(z.string(), z.unknown());
+export type TtsSourceMetadata = z.infer<typeof ttsSourceMetadataSchema>;
+
 export const ttsResolveRequestSchema = z.object({
   text: z.string().trim().min(1).max(1_000),
+  sourceText: z.string().trim().min(1).max(1_000).optional(),
+  sourceType: ttsSourceTypeSchema.optional(),
+  sourceRefId: z.string().uuid().optional().nullable(),
+  sourceMetadata: ttsSourceMetadataSchema.optional().nullable(),
   languageCode: z.string().trim().min(2).max(32).optional(),
   voice: z.string().trim().min(1).max(120).optional(),
   provider: ttsProviderSchema.optional(),
@@ -27,6 +37,10 @@ export const ttsAudioCacheRowSchema = z.object({
   language_code: z.string().min(2),
   text_hash: z.string().length(64),
   text_preview: z.string().min(1),
+  source_text: z.string().min(1).nullable(),
+  source_type: ttsSourceTypeSchema.nullable(),
+  source_ref_id: z.string().uuid().nullable(),
+  source_metadata: ttsSourceMetadataSchema.nullable(),
   storage_bucket: z.string().min(1),
   storage_path: z.string().min(1),
   mime_type: z.string().min(1),

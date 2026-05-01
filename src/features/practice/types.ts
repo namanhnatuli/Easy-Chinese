@@ -110,6 +110,12 @@ export interface PracticeDashboardSummary {
   difficultReadingCount: number;
   writingCharactersPracticed: number;
   difficultWritingCount: number;
+  listeningCompletedCount: number;
+  listeningAttempts: number;
+  listeningAccuracy: number;
+  listeningDifficultCount: number;
+  listeningTodayCount: number;
+  listeningBySourceType: Record<"word" | "example" | "article" | "custom", number>;
 }
 
 export interface RecentPracticeActivityItem {
@@ -128,6 +134,14 @@ export interface RecentPracticeActivityItem {
     id: string;
     chineseText: string;
     vietnameseMeaning: string;
+  } | null;
+  listening: {
+    id: string;
+    chineseText: string;
+    sourceType: "word" | "example" | "article" | "custom";
+    characterCount: number;
+    score: number | null;
+    hintUsed: boolean;
   } | null;
 }
 

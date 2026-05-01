@@ -513,10 +513,32 @@ export async function getWritingPracticeWordDetail({
 
 export async function getPracticeDashboardSummary(userId: string): Promise<PracticeDashboardSummary> {
   const supabase = await createSupabaseServerClient();
-  const [{ data: readingRows, error: readingError }, { data: writingRows, error: writingError }] =
+  const now = new Date();
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+  const todayEnd = new Date(new Date(todayStart).getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const [
+    { data: readingRows, error: readingError },
+    { data: writingRows, error: writingError },
+    { data: listeningRows, error: listeningError },
+    { count: listeningTodayCount, error: listeningTodayError },
+    { data: listeningEventRows, error: listeningEventError },
+  ] =
     await Promise.all([
       supabase.from("user_reading_progress").select("status").eq("user_id", userId),
       supabase.from("user_writing_progress").select("status").eq("user_id", userId),
+      supabase.from("user_listening_progress").select("status, attempt_count, correct_count, almost_count, incorrect_count").eq("user_id", userId),
+      supabase
+        .from("practice_events")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("practice_type", "listening_dictation")
+        .gte("created_at", todayStart)
+        .lt("created_at", todayEnd),
+      supabase
+        .from("practice_events")
+        .select("metadata")
+        .eq("user_id", userId)
+        .eq("practice_type", "listening_dictation"),
     ]);
 
   if (readingError) {
@@ -527,11 +549,53 @@ export async function getPracticeDashboardSummary(userId: string): Promise<Pract
     throw writingError;
   }
 
+  if (listeningError) {
+    throw listeningError;
+  }
+
+  if (listeningTodayError) {
+    throw listeningTodayError;
+  }
+
+  if (listeningEventError) {
+    throw listeningEventError;
+  }
+
+  const listeningAttempts = (listeningRows ?? []).reduce((sum, row) => sum + row.attempt_count, 0);
+  const listeningCorrectCount = (listeningRows ?? []).reduce((sum, row) => sum + row.correct_count + row.almost_count, 0);
+  const listeningIncorrectCount = (listeningRows ?? []).reduce((sum, row) => sum + row.incorrect_count, 0);
+  const listeningAccuracyBase = listeningCorrectCount + listeningIncorrectCount;
+  const listeningBySourceType = {
+    word: 0,
+    example: 0,
+    article: 0,
+    custom: 0,
+  } as Record<"word" | "example" | "article" | "custom", number>;
+
+  for (const row of listeningEventRows ?? []) {
+    const metadata =
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : null;
+    const sourceType = metadata?.sourceType;
+    if (sourceType === "word" || sourceType === "example" || sourceType === "article" || sourceType === "custom") {
+      listeningBySourceType[sourceType] += 1;
+    } else {
+      listeningBySourceType.custom += 1;
+    }
+  }
+
   return {
     readingCompletedCount: (readingRows ?? []).filter((row) => row.status === "completed").length,
     difficultReadingCount: (readingRows ?? []).filter((row) => row.status === "difficult").length,
     writingCharactersPracticed: (writingRows ?? []).length,
     difficultWritingCount: (writingRows ?? []).filter((row) => row.status === "difficult").length,
+    listeningCompletedCount: (listeningRows ?? []).filter((row) => row.status === "completed").length,
+    listeningAttempts,
+    listeningAccuracy: listeningAccuracyBase > 0 ? Math.round((listeningCorrectCount / listeningAccuracyBase) * 100) : 0,
+    listeningDifficultCount: (listeningRows ?? []).filter((row) => row.status === "difficult").length,
+    listeningTodayCount: listeningTodayCount ?? 0,
+    listeningBySourceType,
   };
 }
 
@@ -543,7 +607,7 @@ export async function listRecentPracticeActivity(
   const { data, error } = await supabase
     .from("practice_events")
     .select(
-      "id, created_at, practice_type, result, words(id, slug, hanzi, pinyin, vietnamese_meaning), word_examples(id, chinese_text, vietnamese_meaning)",
+      "id, created_at, practice_type, result, metadata, tts_audio_cache(id, text_preview, source_text, source_type, character_count), words(id, slug, hanzi, pinyin, vietnamese_meaning), word_examples(id, chinese_text, vietnamese_meaning)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -556,6 +620,11 @@ export async function listRecentPracticeActivity(
   return (data ?? []).map((row) => {
     const word = normalizeRelation(row.words);
     const sentence = normalizeRelation(row.word_examples);
+    const listening = normalizeRelation(row.tts_audio_cache);
+    const metadata =
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : null;
 
     return {
       id: row.id,
@@ -576,6 +645,16 @@ export async function listRecentPracticeActivity(
             id: sentence.id,
             chineseText: sentence.chinese_text,
             vietnameseMeaning: sentence.vietnamese_meaning,
+          }
+        : null,
+      listening: listening
+        ? {
+            id: listening.id,
+            chineseText: listening.source_text ?? listening.text_preview,
+            sourceType: (listening.source_type as "word" | "example" | "article" | "custom" | null) ?? "custom",
+            characterCount: listening.character_count,
+            score: typeof metadata?.score === "number" ? metadata.score : null,
+            hintUsed: metadata?.hintUsed === true,
           }
         : null,
     };

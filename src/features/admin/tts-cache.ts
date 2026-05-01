@@ -9,12 +9,30 @@ import { logger } from "@/lib/logger";
 const DEFAULT_UNUSED_DAYS = 30;
 const DEFAULT_UNUSED_LIMIT = 25;
 const MAX_PREGENERATION_ITEMS = 100;
+const MAX_BACKFILL_ROWS = 500;
 
 const preGenerateFormSchema = z.object({
   lessonId: z.string().uuid().optional(),
   wordEntries: z.array(z.string().min(1)).max(MAX_PREGENERATION_ITEMS),
   exampleEntries: z.array(z.string().min(1)).max(MAX_PREGENERATION_ITEMS),
 });
+
+const ttsCacheFilterSchema = z.object({
+  staleDays: z.number().int().positive().optional(),
+  staleLimit: z.number().int().positive().optional(),
+  sourceType: z.enum(["all", "word", "example", "article", "custom"]).default("all"),
+  languageCode: z.string().trim().max(32).optional(),
+  minCharacters: z.number().int().nonnegative().optional(),
+  maxCharacters: z.number().int().positive().optional(),
+  missingSourceTextOnly: z.boolean().optional(),
+});
+
+type TtsCacheSeedTarget = {
+  text: string;
+  sourceType: "word" | "example" | "article" | "custom";
+  sourceRefId: string | null;
+  sourceMetadata: Record<string, unknown> | null;
+};
 
 export interface TtsCacheAdminOverview {
   totalCachedFiles: number;
@@ -44,6 +62,9 @@ export interface TtsCacheAdminOverview {
     voice: string;
     languageCode: string;
     textPreview: string;
+    sourceText: string | null;
+    sourceType: "word" | "example" | "article" | "custom" | null;
+    sourceRefId: string | null;
     sizeBytes: number;
     characterCount: number;
     accessCount: number;
@@ -56,11 +77,21 @@ export interface TtsCacheAdminOverview {
     provider: "azure" | "google";
     voice: string;
     textPreview: string;
+    sourceText: string | null;
+    sourceType: "word" | "example" | "article" | "custom" | null;
     sizeBytes: number;
     accessCount: number;
     createdAt: string;
     lastAccessedAt: string | null;
   }>;
+  activeFilters: {
+    sourceType: "all" | "word" | "example" | "article" | "custom";
+    languageCode: string;
+    minCharacters: number | null;
+    maxCharacters: number | null;
+    missingSourceTextOnly: boolean;
+  };
+  backfillCandidateCount: number;
   staleDays: number;
   lessonOptions: Array<{
     id: string;
@@ -130,24 +161,63 @@ function buildExampleLookupSets(entries: string[]) {
 export async function getTtsCacheAdminOverview(params?: {
   staleDays?: number;
   staleLimit?: number;
+  sourceType?: "all" | "word" | "example" | "article" | "custom";
+  languageCode?: string;
+  minCharacters?: number;
+  maxCharacters?: number;
+  missingSourceTextOnly?: boolean;
 }): Promise<TtsCacheAdminOverview> {
-  const staleDays = Math.max(1, params?.staleDays ?? DEFAULT_UNUSED_DAYS);
-  const staleLimit = Math.max(1, Math.min(params?.staleLimit ?? DEFAULT_UNUSED_LIMIT, 100));
+  const parsedFilters = ttsCacheFilterSchema.parse({
+    staleDays: params?.staleDays,
+    staleLimit: params?.staleLimit,
+    sourceType: params?.sourceType,
+    languageCode: params?.languageCode,
+    minCharacters: params?.minCharacters,
+    maxCharacters: params?.maxCharacters,
+    missingSourceTextOnly: params?.missingSourceTextOnly,
+  });
+  const staleDays = Math.max(1, parsedFilters.staleDays ?? DEFAULT_UNUSED_DAYS);
+  const staleLimit = Math.max(1, Math.min(parsedFilters.staleLimit ?? DEFAULT_UNUSED_LIMIT, 100));
   const { supabase } = await requireAdminSupabase();
+  let cacheQuery = supabase
+    .from("tts_audio_cache")
+    .select(
+      "id, cache_key, provider, voice, language_code, text_preview, source_text, source_type, source_ref_id, size_bytes, character_count, access_count, created_at, last_accessed_at",
+    )
+    .order("created_at", { ascending: false });
 
-  const [{ data: cacheRows, error: cacheError }, { data: lessons, error: lessonsError }] = await Promise.all([
-    supabase
-      .from("tts_audio_cache")
-      .select(
-        "id, cache_key, provider, voice, language_code, text_preview, size_bytes, character_count, access_count, created_at, last_accessed_at",
-      )
-      .order("created_at", { ascending: false }),
+  if (parsedFilters.sourceType !== "all") {
+    cacheQuery = cacheQuery.eq("source_type", parsedFilters.sourceType);
+  }
+
+  if (parsedFilters.languageCode) {
+    cacheQuery = cacheQuery.eq("language_code", parsedFilters.languageCode);
+  }
+
+  if (typeof parsedFilters.minCharacters === "number") {
+    cacheQuery = cacheQuery.gte("character_count", parsedFilters.minCharacters);
+  }
+
+  if (typeof parsedFilters.maxCharacters === "number") {
+    cacheQuery = cacheQuery.lte("character_count", parsedFilters.maxCharacters);
+  }
+
+  if (parsedFilters.missingSourceTextOnly) {
+    cacheQuery = cacheQuery.is("source_text", null);
+  }
+
+  const [{ data: cacheRows, error: cacheError }, { data: lessons, error: lessonsError }, { count: backfillCandidateCount, error: backfillCountError }] = await Promise.all([
+    cacheQuery,
     supabase
       .from("lessons")
       .select("id, title, slug, is_published")
       .order("is_published", { ascending: false })
       .order("sort_order")
       .order("title"),
+    supabase
+      .from("tts_audio_cache")
+      .select("*", { count: "exact", head: true })
+      .is("source_text", null),
   ]);
 
   if (cacheError) {
@@ -156,6 +226,10 @@ export async function getTtsCacheAdminOverview(params?: {
 
   if (lessonsError) {
     throw lessonsError;
+  }
+
+  if (backfillCountError) {
+    throw backfillCountError;
   }
 
   const rows = cacheRows ?? [];
@@ -219,6 +293,9 @@ export async function getTtsCacheAdminOverview(params?: {
       provider: row.provider as "azure" | "google",
       voice: row.voice,
       textPreview: row.text_preview,
+      sourceText: row.source_text,
+      sourceType: (row.source_type as "word" | "example" | "article" | "custom" | null) ?? null,
+      sourceRefId: row.source_ref_id ?? null,
       sizeBytes: Number(row.size_bytes ?? 0),
       accessCount: row.access_count ?? 0,
       createdAt: row.created_at,
@@ -247,6 +324,9 @@ export async function getTtsCacheAdminOverview(params?: {
         voice: row.voice,
         languageCode: row.language_code,
         textPreview: row.text_preview,
+        sourceText: row.source_text,
+        sourceType: (row.source_type as "word" | "example" | "article" | "custom" | null) ?? null,
+        sourceRefId: row.source_ref_id ?? null,
         sizeBytes: Number(row.size_bytes ?? 0),
         characterCount: row.character_count ?? 0,
         accessCount: row.access_count ?? 0,
@@ -254,6 +334,14 @@ export async function getTtsCacheAdminOverview(params?: {
         lastAccessedAt: row.last_accessed_at,
       })),
     staleEntries,
+    activeFilters: {
+      sourceType: parsedFilters.sourceType,
+      languageCode: parsedFilters.languageCode ?? "",
+      minCharacters: parsedFilters.minCharacters ?? null,
+      maxCharacters: parsedFilters.maxCharacters ?? null,
+      missingSourceTextOnly: parsedFilters.missingSourceTextOnly ?? false,
+    },
+    backfillCandidateCount: backfillCandidateCount ?? 0,
     staleDays,
     lessonOptions: (lessons ?? []).map((lesson) => ({
       id: lesson.id,
@@ -270,7 +358,7 @@ async function collectLessonTexts(lessonId: string) {
     supabase.from("lessons").select("id, title").eq("id", lessonId).maybeSingle(),
     supabase
       .from("lesson_words")
-      .select("sort_order, words!inner(id, simplified, word_examples(id, chinese_text, sort_order))")
+      .select("sort_order, words!inner(id, slug, simplified, pinyin, vietnamese_meaning, word_examples(id, chinese_text, pinyin, vietnamese_meaning, sort_order))")
       .eq("lesson_id", lessonId)
       .order("sort_order"),
   ]);
@@ -287,7 +375,7 @@ async function collectLessonTexts(lessonId: string) {
     throw new Error("lesson_not_found");
   }
 
-  const texts = new Set<string>();
+  const targets = new Map<string, TtsCacheSeedTarget>();
 
   for (const row of lessonWords ?? []) {
     const word = Array.isArray(row.words) ? row.words[0] : row.words;
@@ -296,37 +384,65 @@ async function collectLessonTexts(lessonId: string) {
     }
 
     if (word.simplified?.trim()) {
-      texts.add(word.simplified.trim());
+      const text = word.simplified.trim();
+      targets.set(`word:${word.id}:${text}`, {
+        text,
+        sourceType: "word",
+        sourceRefId: word.id,
+        sourceMetadata: {
+          lessonId: lesson.id,
+          slug: word.slug,
+          pinyin: word.pinyin,
+          vietnameseMeaning: word.vietnamese_meaning,
+        },
+      });
     }
 
-    const examples = (word.word_examples ?? []) as Array<{ chinese_text: string | null }>;
+    const examples = (word.word_examples ?? []) as Array<{
+      id: string;
+      chinese_text: string | null;
+      pinyin: string | null;
+      vietnamese_meaning: string | null;
+    }>;
     for (const example of examples) {
       if (example.chinese_text?.trim()) {
-        texts.add(example.chinese_text.trim());
+        const text = example.chinese_text.trim();
+        targets.set(`example:${example.id}:${text}`, {
+          text,
+          sourceType: "example",
+          sourceRefId: example.id,
+          sourceMetadata: {
+            lessonId: lesson.id,
+            wordId: word.id,
+            wordSlug: word.slug,
+            pinyin: example.pinyin,
+            vietnameseMeaning: example.vietnamese_meaning,
+          },
+        });
       }
     }
   }
 
   return {
     label: lesson.title,
-    texts: [...texts],
+    targets: [...targets.values()],
   };
 }
 
 async function collectWordTexts(entries: string[]) {
   const { supabase } = await requireAdminSupabase();
   const lookup = buildWordLookupSets(entries);
-  const result = new Map<string, string>();
+  const result = new Map<string, TtsCacheSeedTarget>();
 
   const queries = [];
   if (lookup.ids.length > 0) {
-    queries.push(supabase.from("words").select("id, slug, simplified").in("id", lookup.ids));
+    queries.push(supabase.from("words").select("id, slug, simplified, pinyin, vietnamese_meaning").in("id", lookup.ids));
   }
   if (lookup.slugs.length > 0) {
-    queries.push(supabase.from("words").select("id, slug, simplified").in("slug", lookup.slugs));
+    queries.push(supabase.from("words").select("id, slug, simplified, pinyin, vietnamese_meaning").in("slug", lookup.slugs));
   }
   if (lookup.hanzi.length > 0) {
-    queries.push(supabase.from("words").select("id, slug, simplified").in("simplified", lookup.hanzi));
+    queries.push(supabase.from("words").select("id, slug, simplified, pinyin, vietnamese_meaning").in("simplified", lookup.hanzi));
   }
 
   const responses = await Promise.all(queries);
@@ -337,26 +453,45 @@ async function collectWordTexts(entries: string[]) {
 
     for (const word of response.data ?? []) {
       if (word.simplified?.trim()) {
-        result.set(word.id, word.simplified.trim());
+        const text = word.simplified.trim();
+        result.set(word.id, {
+          text,
+          sourceType: "word",
+          sourceRefId: word.id,
+          sourceMetadata: {
+            slug: word.slug,
+            pinyin: word.pinyin,
+            vietnameseMeaning: word.vietnamese_meaning,
+          },
+        });
       }
     }
   }
 
   return {
     label: "Selected words",
-    texts: [...result.values()],
+    targets: [...result.values()],
   };
 }
 
 async function collectExampleTexts(entries: string[]) {
   const { supabase } = await requireAdminSupabase();
   const lookup = buildExampleLookupSets(entries);
-  const result = new Set<string>(lookup.chineseTexts.map((item) => item.trim()).filter(Boolean));
+  const result = new Map<string, TtsCacheSeedTarget>();
+
+  for (const item of lookup.chineseTexts.map((value) => value.trim()).filter(Boolean)) {
+    result.set(`custom:${item}`, {
+      text: item,
+      sourceType: "custom",
+      sourceRefId: null,
+      sourceMetadata: null,
+    });
+  }
 
   if (lookup.ids.length > 0) {
     const { data, error } = await supabase
       .from("word_examples")
-      .select("id, chinese_text")
+      .select("id, chinese_text, pinyin, vietnamese_meaning, word_id")
       .in("id", lookup.ids);
 
     if (error) {
@@ -365,14 +500,24 @@ async function collectExampleTexts(entries: string[]) {
 
     for (const example of data ?? []) {
       if (example.chinese_text?.trim()) {
-        result.add(example.chinese_text.trim());
+        const text = example.chinese_text.trim();
+        result.set(`example:${example.id}:${text}`, {
+          text,
+          sourceType: "example",
+          sourceRefId: example.id,
+          sourceMetadata: {
+            wordId: example.word_id,
+            pinyin: example.pinyin,
+            vietnameseMeaning: example.vietnamese_meaning,
+          },
+        });
       }
     }
   }
 
   return {
     label: "Selected examples",
-    texts: [...result],
+    targets: [...result.values()],
   };
 }
 
@@ -384,44 +529,55 @@ export async function preGenerateTtsCacheAction(formData: FormData) {
     exampleEntries: parseMultilineInput(formData.get("exampleEntries")),
   });
 
-  const targets: string[] = [];
+  const targets: TtsCacheSeedTarget[] = [];
   const labels: string[] = [];
 
   if (parsed.lessonId) {
     const lessonTexts = await collectLessonTexts(parsed.lessonId);
     labels.push(lessonTexts.label);
-    targets.push(...lessonTexts.texts);
+    targets.push(...lessonTexts.targets);
   }
 
   if (parsed.wordEntries.length > 0) {
     const wordTexts = await collectWordTexts(parsed.wordEntries);
     labels.push(wordTexts.label);
-    targets.push(...wordTexts.texts);
+    targets.push(...wordTexts.targets);
   }
 
   if (parsed.exampleEntries.length > 0) {
     const exampleTexts = await collectExampleTexts(parsed.exampleEntries);
     labels.push(exampleTexts.label);
-    targets.push(...exampleTexts.texts);
+    targets.push(...exampleTexts.targets);
   }
 
-  const uniqueTexts = [...new Set(targets.map((item) => item.trim()).filter(Boolean))];
+  const uniqueTargets = [...new Map(
+    targets
+      .filter((item) => item.text.trim())
+      .map((item) => [`${item.sourceType}:${item.sourceRefId ?? "none"}:${item.text.trim()}`, {
+        ...item,
+        text: item.text.trim(),
+      } satisfies TtsCacheSeedTarget]),
+  ).values()];
 
-  if (uniqueTexts.length === 0) {
+  if (uniqueTargets.length === 0) {
     redirectTo("/admin/tts-cache?status=empty");
   }
 
-  if (uniqueTexts.length > MAX_PREGENERATION_ITEMS) {
-    redirectTo(`/admin/tts-cache?status=too-many&count=${uniqueTexts.length}`);
+  if (uniqueTargets.length > MAX_PREGENERATION_ITEMS) {
+    redirectTo(`/admin/tts-cache?status=too-many&count=${uniqueTargets.length}`);
   }
 
   let cacheHits = 0;
   let cacheMisses = 0;
 
-  for (const text of uniqueTexts) {
+  for (const target of uniqueTargets) {
     try {
       const resolved = await resolveTtsAudio({
-        text,
+        text: target.text,
+        sourceText: target.text,
+        sourceType: target.sourceType,
+        sourceRefId: target.sourceRefId,
+        sourceMetadata: target.sourceMetadata,
         languageCode: "zh-CN",
         scope: "lesson",
       });
@@ -433,7 +589,9 @@ export async function preGenerateTtsCacheAction(formData: FormData) {
       }
     } catch (error) {
       logger.error("tts_admin_pregeneration_failed", error, {
-        textPreview: text.slice(0, 48),
+        textPreview: target.text.slice(0, 48),
+        sourceType: target.sourceType,
+        sourceRefId: target.sourceRefId,
       });
       redirectTo("/admin/tts-cache?status=error");
     }
@@ -441,6 +599,39 @@ export async function preGenerateTtsCacheAction(formData: FormData) {
 
   revalidateAdminPaths(["/admin", "/admin/tts-cache"]);
   redirectTo(
-    `/admin/tts-cache?status=success&items=${uniqueTexts.length}&hits=${cacheHits}&misses=${cacheMisses}&label=${encodeURIComponent(labels.join(", "))}`,
+    `/admin/tts-cache?status=success&items=${uniqueTargets.length}&hits=${cacheHits}&misses=${cacheMisses}&label=${encodeURIComponent(labels.join(", "))}`,
   );
+}
+
+export async function backfillTtsCacheSourceMetadataAction() {
+  const { supabase } = await requireAdminSupabase();
+  const { data, error } = await supabase
+    .from("tts_audio_cache")
+    .select("id, text_preview")
+    .is("source_text", null)
+    .limit(MAX_BACKFILL_ROWS);
+
+  if (error) {
+    throw error;
+  }
+
+  const candidates = (data ?? []).filter((row) => row.text_preview?.trim());
+
+  for (const row of candidates) {
+    const { error: updateError } = await supabase
+      .from("tts_audio_cache")
+      .update({
+        source_text: row.text_preview.trim(),
+        source_type: "custom",
+      })
+      .eq("id", row.id)
+      .is("source_text", null);
+
+    if (updateError) {
+      throw updateError;
+    }
+  }
+
+  revalidateAdminPaths(["/admin", "/admin/tts-cache"]);
+  redirectTo(`/admin/tts-cache?status=backfill&items=${candidates.length}`);
 }

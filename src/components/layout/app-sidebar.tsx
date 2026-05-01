@@ -2,7 +2,7 @@
 
 import type { ComponentType } from "react";
 import Link from "next/link";
-import { BookOpen, ChevronLeft, ChevronRight, FileText, GraduationCap, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings2, Shield, Sparkles, Upload, Volume2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, FileText, GraduationCap, Headphones, LayoutDashboard, LibraryBig, PenTool, RotateCcw, Settings2, Shield, Sparkles, Upload, Volume2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { SidebarNavGroup } from "@/components/layout/sidebar-nav-group";
@@ -54,6 +54,7 @@ function getSidebarGroups(user: AuthUser | null, t: ReturnType<typeof useI18n>["
       items: [
         { href: "/review", label: t("navigation.review.label"), description: t("navigation.review.description"), icon: RotateCcw },
         { href: "/practice/reading", label: t("dashboard.ctaPracticeReading"), description: t("dashboard.ctaPracticeReadingBody"), icon: BookOpen },
+        { href: "/practice/listening", label: t("navigation.listening.label"), description: t("navigation.listening.description"), icon: Headphones },
         { href: "/practice/writing", label: t("dashboard.ctaPracticeWriting"), description: t("dashboard.ctaPracticeWritingBody"), icon: PenTool },
         { href: "/practice", label: t("navigation.practice.label"), description: t("navigation.practice.description"), icon: Sparkles },
       ],

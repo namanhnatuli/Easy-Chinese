@@ -32,9 +32,9 @@ export {
   type Sm2SchedulerConfig,
 } from "@/features/memory/scheduler-types";
 
-import type { PracticeEventResult, ReviewResult, SchedulerGrade } from "@/types/domain";
+import type { ReviewResult, SchedulerGrade } from "@/types/domain";
 
-export function mapMemoryGradeToPracticeResult(grade: SchedulerGrade): PracticeEventResult {
+export function mapMemoryGradeToPracticeResult(grade: SchedulerGrade): "completed" | "difficult" | "skipped" {
   switch (grade) {
     case "again":
       return "skipped";

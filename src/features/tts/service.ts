@@ -44,6 +44,10 @@ async function writeTtsCacheObject(params: {
   voice: string;
   languageCode: string;
   text: string;
+  sourceText: string;
+  sourceType: "word" | "example" | "article" | "custom";
+  sourceRefId: string | null;
+  sourceMetadata: Record<string, unknown> | null;
   textHash: string;
   textPreview: string;
   characterCount: number;
@@ -76,6 +80,10 @@ async function writeTtsCacheObject(params: {
       language_code: params.languageCode,
       text_hash: params.textHash,
       text_preview: buildTtsTextPreview(params.textPreview),
+      source_text: params.sourceText,
+      source_type: params.sourceType,
+      source_ref_id: params.sourceRefId,
+      source_metadata: params.sourceMetadata,
       storage_bucket: params.storageBucket,
       storage_path: params.storagePath,
       mime_type: params.mimeType,
@@ -85,7 +93,7 @@ async function writeTtsCacheObject(params: {
       last_accessed_at: new Date().toISOString(),
     })
     .select(
-      "id, cache_key, provider, voice, language_code, text_hash, text_preview, storage_bucket, storage_path, mime_type, size_bytes, character_count, access_count, created_by, created_at, updated_at, last_accessed_at",
+      "id, cache_key, provider, voice, language_code, text_hash, text_preview, source_text, source_type, source_ref_id, source_metadata, storage_bucket, storage_path, mime_type, size_bytes, character_count, access_count, created_by, created_at, updated_at, last_accessed_at",
     )
     .single();
 
@@ -178,6 +186,10 @@ export async function resolveTtsAudio(
     voice: request.voice,
     languageCode: request.languageCode,
     text: request.text,
+    sourceText: request.sourceText,
+    sourceType: request.sourceType,
+    sourceRefId: request.sourceRefId,
+    sourceMetadata: request.sourceMetadata,
     textHash: request.textHash,
     textPreview: request.textPreview,
     characterCount: request.characterCount,

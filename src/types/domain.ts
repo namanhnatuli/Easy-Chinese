@@ -8,11 +8,12 @@ export type SchedulerType = "sm2" | "fsrs";
 export type MemoryCardState = "new" | "learning" | "review" | "relearning";
 export type ReadingPracticeType = "word" | "sentence";
 export type PracticeProgressStatus = "new" | "practicing" | "completed" | "difficult";
-export type PracticeEventType = "reading_word" | "reading_sentence" | "writing_character";
-export type PracticeEventResult = "completed" | "difficult" | "skipped";
+export type PracticeEventType = "reading_word" | "reading_sentence" | "writing_character" | "listening_dictation";
+export type PracticeEventResult = "completed" | "difficult" | "skipped" | "correct" | "almost" | "incorrect";
 export type MemoryReviewResult = "correct" | "difficult" | "skipped";
 export type TtsProvider = "azure" | "google";
 export type TtsStorageAccess = "public" | "private";
+export type TtsSourceType = "word" | "example" | "article" | "custom";
 
 export type ProgressStatus = "new" | "learning" | "review" | "mastered";
 export type PreferredTheme = "light" | "dark" | "system";
@@ -202,6 +203,10 @@ export interface TtsAudioCache extends TimestampedEntity {
   languageCode: string;
   textHash: string;
   textPreview: string;
+  sourceText: string | null;
+  sourceType: TtsSourceType | null;
+  sourceRefId: string | null;
+  sourceMetadata: Record<string, unknown> | null;
   storageBucket: string;
   storagePath: string;
   mimeType: string;
@@ -233,13 +238,30 @@ export interface UserWritingProgress extends TimestampedEntity {
   lastPracticedAt: string | null;
 }
 
+export interface UserListeningProgress extends TimestampedEntity {
+  id: string;
+  userId: string;
+  ttsAudioCacheId: string;
+  status: PracticeProgressStatus;
+  attemptCount: number;
+  correctCount: number;
+  almostCount: number;
+  incorrectCount: number;
+  skippedCount: number;
+  bestScore: number;
+  lastInput: string | null;
+  lastPracticedAt: string | null;
+}
+
 export interface PracticeEvent {
   id: string;
   userId: string;
   wordId: string | null;
   exampleId: string | null;
+  ttsAudioCacheId?: string | null;
   practiceType: PracticeEventType;
   result: PracticeEventResult;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
 }
 

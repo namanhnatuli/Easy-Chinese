@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenText, Languages, PenTool, RotateCcw } from "lucide-react";
+import { BookOpenText, Headphones, Languages, PenTool, RotateCcw } from "lucide-react";
 
 import { HeaderActions, HeaderLinkButton, PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,13 @@ const modules = [
     icon: BookOpenText,
     titleKey: "practice.cards.readingSentences.title",
     descriptionKey: "practice.cards.readingSentences.description",
+    requiresAuth: false,
+  },
+  {
+    href: "/practice/listening",
+    icon: Headphones,
+    titleKey: "practice.cards.listening.title",
+    descriptionKey: "practice.cards.listening.description",
     requiresAuth: false,
   },
   {

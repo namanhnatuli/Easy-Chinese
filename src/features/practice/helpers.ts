@@ -1,4 +1,4 @@
-import type { PracticeEventResult, PracticeProgressStatus } from "@/types/domain";
+import type { PracticeProgressStatus } from "@/types/domain";
 
 import type {
   ReadingPracticeItem,
@@ -7,6 +7,7 @@ import type {
 } from "@/features/practice/types";
 
 const hanziCharacterPattern = /\p{Script=Han}/u;
+type PracticeProgressResult = "completed" | "difficult" | "skipped";
 
 function getStatusRank(status: PracticeProgressStatus | null | undefined) {
   if (!status) {
@@ -35,7 +36,7 @@ export function splitWordIntoHanziCharacters(value: string) {
 
 export function derivePracticeStatus(
   existingStatus: PracticeProgressStatus | null | undefined,
-  result: PracticeEventResult,
+  result: PracticeProgressResult,
 ) {
   if (result === "completed") {
     return "completed" satisfies PracticeProgressStatus;
@@ -54,7 +55,7 @@ export function derivePracticeStatus(
 
 export function buildPracticeProgressPatch(
   existing: ReadingProgressSnapshot | null,
-  result: PracticeEventResult,
+  result: PracticeProgressResult,
   now: Date,
 ) {
   return {

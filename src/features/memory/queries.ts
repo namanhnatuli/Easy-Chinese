@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { countSuccessfulLearningActivitiesToday } from "@/features/memory/activity";
 
 import type {
   DailyGoalProgress,
@@ -242,7 +243,7 @@ export async function getDailyGoalProgress(userId: string): Promise<DailyGoalPro
   const [
     dueMemoryWordIds,
     { data: statsRow, error: statsError },
-    { count: reviewCount, error: reviewError },
+    completedToday,
   ] = await Promise.all([
     listDueMemoryWordIds(userId, nowIso),
     supabase
@@ -250,24 +251,18 @@ export async function getDailyGoalProgress(userId: string): Promise<DailyGoalPro
       .select("streak_count, last_active_date, daily_goal, scheduler_type, desired_retention, maximum_interval_days")
       .eq("user_id", userId)
       .maybeSingle(),
-    supabase
-      .from("review_events")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("grade", ["hard", "good", "easy"])
-      .gte("reviewed_at", from)
-      .lt("reviewed_at", to),
+    countSuccessfulLearningActivitiesToday({
+      supabase,
+      userId,
+      from,
+      to,
+    }),
   ]);
 
   if (statsError) {
     throw statsError;
   }
 
-  if (reviewError) {
-    throw reviewError;
-  }
-
-  const completedToday = reviewCount ?? 0;
   const dailyGoal = statsRow?.daily_goal ?? getDefaultDailyGoal();
   const schedulerSettings = normalizeLearningSchedulerSettings({
     schedulerType: statsRow?.scheduler_type,

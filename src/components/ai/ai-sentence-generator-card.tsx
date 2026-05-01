@@ -89,6 +89,13 @@ export function AiSentenceGeneratorCard({
                 <p className="text-lg font-semibold text-foreground">{sentence.chinese}</p>
                 <PronunciationButton
                   text={sentence.chinese}
+                  sourceType="custom"
+                  sourceMetadata={{
+                    pinyin: sentence.pinyin,
+                    vietnameseMeaning: sentence.vietnameseMeaning,
+                    generatedBy: "ai",
+                    wordId,
+                  }}
                   variant="outline"
                   size="sm"
                   className="rounded-full"

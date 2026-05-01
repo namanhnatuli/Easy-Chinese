@@ -77,6 +77,10 @@
       "label": "练习",
       "description": "阅读与汉字书写"
     },
+    "listening": {
+      "label": "听力练习",
+      "description": "使用已缓存中文音频进行听写"
+    },
     "articles": {
       "label": "文章",
       "description": "学习笔记与对比说明"
@@ -829,7 +833,8 @@
     },
     "cta": {
       "reading": "练习阅读",
-      "writing": "练习书写"
+      "writing": "练习书写",
+      "listening": "练习听力"
     },
     "cards": {
       "review": {
@@ -847,6 +852,10 @@
       "writingHanzi": {
         "title": "书写汉字",
         "description": "在简单的书写画布上逐个练习汉字。"
+      },
+      "listening": {
+        "title": "听写练习",
+        "description": "重播已缓存的中文音频，输入你听到的汉字，并检查听写准确度。"
       }
     },
     "review": {
@@ -916,6 +925,56 @@
       "hideGrid": "隐藏米字格",
       "showGuide": "显示参考字",
       "hideGuide": "隐藏参考字"
+    },
+    "listening": {
+      "eyebrow": "听力练习",
+      "title": "使用已缓存中文音频进行听写",
+      "description": "聆听已缓存的中文音频片段，输入你听到的汉字，并在不生成新 TTS 的情况下训练听写准确度。",
+      "filters": {
+        "difficulty": "难度",
+        "allDifficulties": "全部难度",
+        "easy": "简单",
+        "medium": "中等",
+        "hard": "困难",
+        "sourceType": "来源",
+        "allSources": "全部来源",
+        "apply": "应用"
+      },
+      "sourceType": {
+        "word": "词汇",
+        "example": "例句",
+        "article": "文章",
+        "custom": "自定义"
+      },
+      "promptTitle": "音频提示",
+      "playAudio": "播放音频",
+      "replay": "重新播放",
+      "audioUnavailable": "这个听力音频无法播放。",
+      "typeWhatYouHear": "输入你听到的内容",
+      "answerPlaceholder": "输入你听到的汉字",
+      "checkAnswer": "检查答案",
+      "skip": "跳过",
+      "nextItem": "下一题",
+      "correct": "正确",
+      "almostCorrect": "基本正确",
+      "incorrect": "错误",
+      "skipped": "已跳过",
+      "correctAnswer": "正确答案",
+      "score": "匹配分数：{value}%",
+      "showFirstCharacter": "显示第一个字",
+      "showPinyinHint": "显示拼音提示",
+      "hintsTitle": "提示",
+      "characterCount": "字数：{count}",
+      "sourceTypeLabel": "来源",
+      "firstCharacter": "第一个字",
+      "hintAffectsScore": "使用提示后，即使完全正确，也会在评分和 XP 上按“基本正确”计算。",
+      "saveFailed": "无法保存听力练习进度。",
+      "emptyDescription": "暂时没有可用的已缓存中文音频。请先预缓存更多 TTS 音频。",
+      "cachedAudioBadge": "缓存音频",
+      "linkedArticle": "关联文章",
+      "pinyinLabel": "拼音",
+      "meaningLabel": "越南语释义",
+      "openSource": "打开来源"
     }
   },
   "dashboard": {
@@ -984,6 +1043,16 @@
     "bookmarkedArticlesDescription": "保存起来以后再看的笔记",
     "readingCompleted": "阅读已完成",
     "readingCompletedDescription": "已标记完成的阅读项目",
+    "listeningCompleted": "听力已完成",
+    "listeningCompletedDescription": "已完成的听写项目",
+    "listeningAttempts": "听力尝试次数",
+    "listeningAttemptsDescription": "基于缓存音频保存的听写尝试次数",
+    "listeningAccuracy": "听力准确率",
+    "listeningAccuracyDescription": "听写正确与基本正确相对于错误次数的比例",
+    "listeningDifficult": "听力困难项",
+    "listeningDifficultDescription": "仍需要重复练习的听力项目",
+    "listeningToday": "今日听力",
+    "listeningTodayDescription": "今天保存的听写练习次数",
     "difficultReading": "阅读困难项",
     "difficultReadingDescription": "被标记为困难的阅读项目",
     "writingCharacters": "已练习书写字符",
@@ -1015,6 +1084,7 @@
     "activityTypes": {
       "review": "复习",
       "reading": "阅读",
+      "listening": "听力",
       "writing": "书写",
       "article": "文章",
       "lesson": "课程"
@@ -1072,6 +1142,7 @@
     "skillsDescription": "快速汇总复习、阅读、书写、课程和文章活动。",
     "skillReviews": "复习",
     "skillReading": "阅读",
+    "skillListening": "听力",
     "skillWriting": "书写",
     "skillLessons": "课程",
     "skillArticles": "文章",
@@ -1085,6 +1156,8 @@
     "ctaContinueLessonsBody": "回到课程列表，继续推进结构化学习路径。",
     "ctaPracticeReading": "练习阅读",
     "ctaPracticeReadingBody": "用更轻的阅读练习增加汉字接触量。",
+    "ctaPracticeListening": "练习听力",
+    "ctaPracticeListeningBody": "复用已缓存的中文音频进行专注听写训练。",
     "ctaPracticeWriting": "练习书写",
     "ctaPracticeWritingBody": "通过专注书写练习强化字形记忆。",
     "ctaStatisticsDetail": "统计详情",
@@ -1133,18 +1206,22 @@
     "noReviewActivity": "还没有复习活动",
     "noReviewActivityDescription": "当你完成课程或清理复习队列后，复习事件会显示在这里。",
     "recentPracticeActivity": "最近练习活动",
-    "recentPracticeActivityDescription": "最近保存的阅读和书写练习动作。",
+    "recentPracticeActivityDescription": "最近保存的阅读、听力和书写练习动作。",
     "noPracticeActivity": "还没有练习活动",
     "noPracticeActivityDescription": "完成第一次阅读或书写练习后，这里就会显示记录。",
     "practiceType": {
       "reading_word": "阅读词汇",
       "reading_sentence": "阅读句子",
-      "writing_character": "书写汉字"
+      "writing_character": "书写汉字",
+      "listening_dictation": "听写练习"
     },
     "practiceResult": {
       "completed": "完成",
       "difficult": "困难",
-      "skipped": "跳过"
+      "skipped": "跳过",
+      "correct": "正确",
+      "almost": "基本正确",
+      "incorrect": "错误"
     }
   },
   "ai": {
@@ -1644,12 +1721,27 @@
         "topVoices": "热门语音",
         "voiceStatsLine": "{characters} 字符 · {hits} 次命中 · {size}"
       },
+      "filters": {
+        "sourceType": "来源类型",
+        "allSourceTypes": "全部来源类型",
+        "languageCode": "语言代码",
+        "minCharacters": "最少字符数",
+        "maxCharacters": "最多字符数",
+        "missingSourceTextOnly": "仅显示缺少 source text 的条目",
+        "apply": "应用筛选"
+      },
+      "backfill": {
+        "title": "回填缺失的来源元数据",
+        "description": "当前有 {count} 条缓存记录仍缺少规范 source text。",
+        "submit": "立即回填"
+      },
       "recent": {
         "title": "最近访问的缓存条目",
         "emptyTitle": "暂无缓存音频",
         "emptyDescription": "请先从学习页面或预生成工具生成发音音频。",
         "table": {
           "preview": "预览",
+          "sourceType": "来源",
           "provider": "服务商",
           "voice": "语音",
           "chars": "字符",
@@ -1672,7 +1764,8 @@
         "success": "{label}: 已预生成 {items} 个项目 ({hits} 命中, {misses} 未命中)。",
         "empty": "未提供课程、词汇或例句目标。",
         "tooMany": "预生成批次过大 ({count} 个项目)。请减少选择后重试。",
-        "error": "预生成失败。请检查服务器日志以获取服务商错误详情。"
+        "error": "预生成失败。请检查服务器日志以获取服务商错误详情。",
+        "backfill": "已为 {items} 条缓存记录回填来源元数据。"
       }
     }
   }

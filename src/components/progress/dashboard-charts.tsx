@@ -39,6 +39,7 @@ const CHART_COLORS = {
   newWords: "#ea580c",
   xp: "#2563eb",
   reading: "#0891b2",
+  listening: "#14b8a6",
   writing: "#ca8a04",
   lessons: "#7c3aed",
   correct: "#16a34a",
@@ -187,6 +188,7 @@ export function DashboardCharts({
         date: formatCompactDate(point.date, locale),
         reviews: point.reviews,
         reading: point.readingCompleted,
+        listening: point.listeningCompleted,
         writing: point.writingCompleted,
         lessons: point.lessonsCompleted,
       })),
@@ -239,6 +241,7 @@ export function DashboardCharts({
           acc.correct += point.correctReviews;
           acc.incorrect += point.incorrectReviews;
           acc.reading += point.readingCompleted;
+          acc.listening += point.listeningCompleted;
           acc.writing += point.writingCompleted;
           acc.lessons += point.lessonsCompleted;
           return acc;
@@ -250,6 +253,7 @@ export function DashboardCharts({
           correct: 0,
           incorrect: 0,
           reading: 0,
+          listening: 0,
           writing: 0,
           lessons: 0,
         },
@@ -262,7 +266,7 @@ export function DashboardCharts({
     answeredReviews > 0 ? Math.round((rangeTotals.correct / answeredReviews) * 100) : summary.accuracyRate;
   const previousPeriodLabel = messages.previousPeriodLabels[comparison.previousPeriodLabel];
   const activitySummaryText = `${messages.skillReviews}: ${rangeTotals.reviews}, ${messages.chartNewWords}: ${rangeTotals.newWords}, ${messages.chartXp}: ${rangeTotals.xpEarned}`;
-  const skillSummaryText = `${messages.skillReading}: ${rangeTotals.reading}, ${messages.skillWriting}: ${rangeTotals.writing}, ${messages.skillLessons}: ${rangeTotals.lessons}, ${messages.skillReviews}: ${rangeTotals.reviews}`;
+  const skillSummaryText = `${messages.skillReading}: ${rangeTotals.reading}, ${messages.skillListening}: ${rangeTotals.listening}, ${messages.skillWriting}: ${rangeTotals.writing}, ${messages.skillLessons}: ${rangeTotals.lessons}, ${messages.skillReviews}: ${rangeTotals.reviews}`;
   const accuracySummaryText = `${messages.chartCorrect}: ${rangeTotals.correct}, ${messages.chartIncorrect}: ${rangeTotals.incorrect}, ${messages.accuracyChartTitle}: ${rangeAccuracy}%`;
 
   return (
@@ -305,6 +309,13 @@ export function DashboardCharts({
             label={messages.skillReading}
             value={comparison.current.readingCompleted}
             metric={comparison.metrics.readingCompleted}
+            messages={messages}
+            previousPeriodLabel={previousPeriodLabel}
+          />
+          <ComparisonStat
+            label={messages.skillListening}
+            value={comparison.current.listeningCompleted}
+            metric={comparison.metrics.listeningCompleted}
             messages={messages}
             previousPeriodLabel={previousPeriodLabel}
           />
@@ -433,8 +444,9 @@ export function DashboardCharts({
                 previousPeriodLabel={previousPeriodLabel}
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <MetricSummary label={messages.skillReading} value={skillBreakdown.reading} />
+              <MetricSummary label={messages.skillListening} value={skillBreakdown.listening} />
               <MetricSummary label={messages.skillWriting} value={skillBreakdown.writing} />
               <MetricSummary label={messages.skillLessons} value={skillBreakdown.lessons} />
               <MetricSummary label={messages.skillReviews} value={skillBreakdown.reviews} />
@@ -451,6 +463,7 @@ export function DashboardCharts({
                     <Tooltip formatter={formatTooltipValue} />
                     <Bar dataKey="reviews" stackId="skills" fill={CHART_COLORS.reviews} name={messages.skillReviews} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="reading" stackId="skills" fill={CHART_COLORS.reading} name={messages.skillReading} />
+                    <Bar dataKey="listening" stackId="skills" fill={CHART_COLORS.listening} name={messages.skillListening} />
                     <Bar dataKey="writing" stackId="skills" fill={CHART_COLORS.writing} name={messages.skillWriting} />
                     <Bar dataKey="lessons" stackId="skills" fill={CHART_COLORS.lessons} name={messages.skillLessons} />
                   </BarChart>

@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Flame,
   GraduationCap,
+  Headphones,
   Medal,
   PenTool,
   RotateCcw,
@@ -290,6 +291,12 @@ export async function DashboardOverview({
                   icon={<BookOpenText className="size-4" />}
                 />
                 <QuickActionLink
+                  href={link("/practice/listening")}
+                  title={t("dashboard.ctaPracticeListening")}
+                  description={t("dashboard.ctaPracticeListeningBody")}
+                  icon={<Headphones className="size-4" />}
+                />
+                <QuickActionLink
                   href={link("/practice/writing")}
                   title={t("dashboard.ctaPracticeWriting")}
                   description={t("dashboard.ctaPracticeWritingBody")}
@@ -512,6 +519,8 @@ export async function DashboardOverview({
                             ? t("dashboard.activityTypes.review")
                             : item.type === "reading"
                               ? t("dashboard.activityTypes.reading")
+                              : item.type === "listening"
+                                ? t("dashboard.activityTypes.listening")
                               : item.type === "writing"
                                 ? t("dashboard.activityTypes.writing")
                                 : item.type === "article"
@@ -656,6 +665,7 @@ export async function DashboardOverview({
                     <div className="space-y-3">
                       <SectionMetricRow label={t("dashboard.skillReviews")} value={String(skills.reviews)} />
                       <SectionMetricRow label={t("dashboard.skillReading")} value={String(skills.reading)} />
+                      <SectionMetricRow label={t("dashboard.skillListening")} value={String(skills.listening)} />
                       <SectionMetricRow label={t("dashboard.skillWriting")} value={String(skills.writing)} />
                       <SectionMetricRow label={t("dashboard.skillLessons")} value={String(skills.lessons)} />
                       <SectionMetricRow label={t("dashboard.skillArticles")} value={String(skills.articles)} />

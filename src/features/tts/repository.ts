@@ -73,7 +73,7 @@ export async function findTtsCacheEntryByKey(
   const { data, error } = await supabase
     .from("tts_audio_cache")
     .select(
-      "id, cache_key, provider, voice, language_code, text_hash, text_preview, storage_bucket, storage_path, mime_type, size_bytes, character_count, access_count, created_by, created_at, updated_at, last_accessed_at",
+      "id, cache_key, provider, voice, language_code, text_hash, text_preview, source_text, source_type, source_ref_id, source_metadata, storage_bucket, storage_path, mime_type, size_bytes, character_count, access_count, created_by, created_at, updated_at, last_accessed_at",
     )
     .eq("cache_key", request.cacheKey)
     .maybeSingle();

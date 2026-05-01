@@ -68,6 +68,19 @@ export function getXpForWritingResult(result: "completed" | "difficult" | "skipp
   }
 }
 
+export function getXpForListeningResult(result: "correct" | "almost" | "incorrect" | "skipped") {
+  switch (result) {
+    case "correct":
+      return XP_VALUES.listeningCorrect;
+    case "almost":
+      return XP_VALUES.listeningAlmost;
+    case "incorrect":
+      return XP_VALUES.listeningIncorrect;
+    case "skipped":
+      return XP_VALUES.reviewSkipped;
+  }
+}
+
 export function isAchievementKey(value: string): value is AchievementKey {
   return (ACHIEVEMENT_KEYS as readonly string[]).includes(value);
 }

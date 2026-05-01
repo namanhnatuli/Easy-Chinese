@@ -2,13 +2,24 @@ import {
   buildTtsCacheKey,
   buildTtsStoragePath,
   buildTtsTextPreview,
+  normalizeTtsText,
 } from "@/features/tts/cache-key";
 import { getTtsProviderDefaults, isSupportedTtsVoice } from "@/features/tts/catalog";
 import { getTtsConfig, resolveConfiguredTtsProvider } from "@/features/tts/config";
-import { ttsResolveRequestSchema, type TtsProvider, type TtsResolveRequestInput } from "@/features/tts/schema";
+import {
+  ttsResolveRequestSchema,
+  type TtsProvider,
+  type TtsResolveRequestInput,
+  type TtsSourceMetadata,
+  type TtsSourceType,
+} from "@/features/tts/schema";
 
 export interface ResolvedTtsCacheRequest {
   text: string;
+  sourceText: string;
+  sourceType: TtsSourceType;
+  sourceRefId: string | null;
+  sourceMetadata: TtsSourceMetadata | null;
   provider: "azure" | "google";
   languageCode: string;
   voice: string;
@@ -38,6 +49,8 @@ export function resolveTtsCacheRequest(
   const voice = preferredVoice && isSupportedTtsVoice(provider, preferredVoice)
     ? preferredVoice
     : providerDefaults.defaultVoice;
+  const sourceText = normalizeTtsText(parsed.sourceText ?? parsed.text);
+  const sourceType = parsed.sourceType ?? "custom";
   const speakingRate = parsed.speakingRate ?? config.speakingRate;
   const pitch = parsed.pitch ?? config.pitch;
 
@@ -47,11 +60,15 @@ export function resolveTtsCacheRequest(
     voice,
     speakingRate,
     pitch,
-    text: parsed.text,
+    text: sourceText,
   });
 
   return {
     text: cacheKeyData.normalizedText,
+    sourceText,
+    sourceType,
+    sourceRefId: parsed.sourceRefId ?? null,
+    sourceMetadata: parsed.sourceMetadata ?? null,
     provider,
     languageCode,
     voice,

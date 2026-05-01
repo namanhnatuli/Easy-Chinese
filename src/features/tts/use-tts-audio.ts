@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 export interface TtsAudioRequestInput {
   text: string;
+  sourceText?: string;
+  sourceType?: "word" | "example" | "article" | "custom";
+  sourceRefId?: string | null;
+  sourceMetadata?: Record<string, unknown> | null;
   languageCode?: string;
   voice?: string;
   provider?: "azure" | "google";
@@ -28,6 +32,10 @@ const inflightAudioRequests = new Map<string, Promise<TtsAudioResponse>>();
 
 function buildRequestKey({
   text,
+  sourceText,
+  sourceType,
+  sourceRefId,
+  sourceMetadata,
   languageCode = "zh-CN",
   voice,
   provider,
@@ -36,6 +44,10 @@ function buildRequestKey({
 }: TtsAudioRequestInput) {
   return JSON.stringify({
     text: text.trim(),
+    sourceText: sourceText?.trim() ?? null,
+    sourceType: sourceType ?? null,
+    sourceRefId: sourceRefId ?? null,
+    sourceMetadata: sourceMetadata ?? null,
     languageCode,
     voice: voice ?? null,
     provider: provider ?? null,
@@ -74,6 +86,10 @@ async function fetchTtsAudio(input: TtsAudioRequestInput) {
       },
       body: JSON.stringify({
         text: trimmedText,
+        sourceText: input.sourceText?.trim(),
+        sourceType: input.sourceType,
+        sourceRefId: input.sourceRefId ?? undefined,
+        sourceMetadata: input.sourceMetadata ?? undefined,
         languageCode: input.languageCode ?? "zh-CN",
         voice: input.voice,
         provider: input.provider,

@@ -106,10 +106,13 @@ export function mapReviewResultToMemoryGrade(result: ReviewResult): SchedulerGra
 export function mapPracticeResultToMemoryGrade(result: PracticeEventResult): SchedulerGrade {
   switch (result) {
     case "completed":
+    case "correct":
       return "good";
     case "difficult":
+    case "almost":
       return "hard";
     case "skipped":
+    case "incorrect":
       return "again";
   }
 }

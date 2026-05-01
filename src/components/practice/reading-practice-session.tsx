@@ -265,6 +265,22 @@ export function ReadingPracticeSession({
               <PronunciationButton
                 ref={pronunciationButtonRef}
                 text={getSpeechText(currentItem)}
+                sourceType={currentItem.kind === "word" ? "word" : "example"}
+                sourceRefId={currentItem.id}
+                sourceMetadata={
+                  currentItem.kind === "word"
+                    ? {
+                        slug: currentItem.slug,
+                        pinyin: currentItem.pinyin,
+                        vietnameseMeaning: currentItem.vietnameseMeaning,
+                      }
+                    : {
+                        pinyin: currentItem.pinyin,
+                        vietnameseMeaning: currentItem.vietnameseMeaning,
+                        wordId: currentItem.linkedWord?.id ?? null,
+                        wordSlug: currentItem.linkedWord?.slug ?? null,
+                      }
+                }
                 lang="zh-CN"
                 rate={0.82}
                 variant="secondary"

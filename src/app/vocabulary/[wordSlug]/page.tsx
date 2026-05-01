@@ -127,6 +127,13 @@ export default async function VocabularyDetailPage({
                 <p className="text-pinyin">{word.pinyin}</p>
                 <PronunciationButton
                   text={word.simplified}
+                  sourceType="word"
+                  sourceRefId={word.id}
+                  sourceMetadata={{
+                    slug: word.slug,
+                    pinyin: word.pinyin,
+                    vietnameseMeaning: word.vietnameseMeaning,
+                  }}
                   label="Nghe từ"
                   className="rounded-full"
                 />
@@ -365,6 +372,14 @@ export default async function VocabularyDetailPage({
                       </p>
                       <PronunciationButton
                         text={example.chineseText}
+                        sourceType="example"
+                        sourceRefId={example.id}
+                        sourceMetadata={{
+                          wordId: word.id,
+                          wordSlug: word.slug,
+                          pinyin: example.pinyin,
+                          vietnameseMeaning: example.vietnameseMeaning,
+                        }}
                         label="Nghe câu"
                         className="rounded-full"
                       />

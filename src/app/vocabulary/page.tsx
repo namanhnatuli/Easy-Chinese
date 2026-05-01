@@ -208,6 +208,13 @@ export default async function VocabularyPage({
                       </p>
                       <PronunciationButton
                         text={word.simplified}
+                        sourceType="word"
+                        sourceRefId={word.id}
+                        sourceMetadata={{
+                          slug: word.slug,
+                          pinyin: word.pinyin,
+                          vietnameseMeaning: word.vietnameseMeaning,
+                        }}
                         lang="zh-CN"
                         rate={0.82}
                         className="shrink-0"

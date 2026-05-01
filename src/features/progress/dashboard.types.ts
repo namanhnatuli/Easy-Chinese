@@ -27,6 +27,7 @@ export interface UserVocabularyStatusBreakdown {
 export interface UserSkillBreakdown {
   reviews: number;
   reading: number;
+  listening: number;
   writing: number;
   articles: number;
   lessons: number;
@@ -40,6 +41,7 @@ export interface UserProgressTimeSeriesPoint {
   correctReviews: number;
   incorrectReviews: number;
   readingCompleted: number;
+  listeningCompleted: number;
   writingCompleted: number;
   lessonsCompleted: number;
   xpEarned: number;
@@ -61,6 +63,7 @@ export interface UserProgressPeriodTotals {
   incorrectReviews: number;
   accuracyRate: number;
   readingCompleted: number;
+  listeningCompleted: number;
   writingCompleted: number;
   lessonsCompleted: number;
   hasActivity: boolean;
@@ -87,6 +90,7 @@ export interface UserProgressPeriodComparison {
     xpEarned: UserProgressComparisonMetric;
     accuracyRate: UserProgressComparisonMetric;
     readingCompleted: UserProgressComparisonMetric;
+    listeningCompleted: UserProgressComparisonMetric;
     writingCompleted: UserProgressComparisonMetric;
     lessonsCompleted: UserProgressComparisonMetric;
   };
@@ -126,6 +130,17 @@ export type UserRecentActivityItem =
       href: string | null;
       meta: {
         practiceType: "writing_character";
+      };
+    }
+  | {
+      type: "listening";
+      occurredAt: string;
+      label: string;
+      detail: PracticeEventResult;
+      href: string;
+      meta: {
+        characterCount: number;
+        hintUsed: boolean;
       };
     }
   | {

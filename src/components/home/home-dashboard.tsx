@@ -6,6 +6,7 @@ import {
   BookText,
   Flame,
   GraduationCap,
+  Headphones,
   Newspaper,
   PenTool,
   RotateCcw,
@@ -324,6 +325,13 @@ export async function HomeDashboard({ data }: { data: HomePageData }) {
             ctaLabel={t("home.actions.readingCta")}
             icon={<BookOpen className="size-5" />}
           />
+          <ActionCard
+            title={t("practice.cards.listening.title")}
+            body={t("practice.cards.listening.description")}
+            href={link("/practice/listening")}
+            ctaLabel={t("navigation.listening.label")}
+            icon={<Headphones className="size-5" />}
+          />
         </div>
       </section>
 
@@ -468,6 +476,7 @@ export async function HomeDashboard({ data }: { data: HomePageData }) {
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <ShortcutCard title={t("common.review")} href={reviewHref} icon={<RotateCcw className="size-5" />} />
             <ShortcutCard title={t("navigation.practice.label")} href={link("/practice/reading")} icon={<BookOpen className="size-5" />} />
+            <ShortcutCard title={t("navigation.listening.label")} href={link("/practice/listening")} icon={<Headphones className="size-5" />} />
             <ShortcutCard title={t("home.actions.writingTitle")} href={link("/practice/writing")} icon={<PenTool className="size-5" />} />
             <ShortcutCard title={t("navigation.lessons.label")} href={link("/lessons")} icon={<GraduationCap className="size-5" />} />
             <ShortcutCard title={t("navigation.articles.label")} href={link("/articles")} icon={<Newspaper className="size-5" />} />

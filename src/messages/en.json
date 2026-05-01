@@ -77,6 +77,10 @@
       "label": "Practice",
       "description": "Reading and Hanzi writing"
     },
+    "listening": {
+      "label": "Listening",
+      "description": "Dictation with cached Chinese audio"
+    },
     "articles": {
       "label": "Articles",
       "description": "Study notes and comparisons"
@@ -829,7 +833,8 @@
     },
     "cta": {
       "reading": "Practice reading",
-      "writing": "Practice writing"
+      "writing": "Practice writing",
+      "listening": "Practice listening"
     },
     "cards": {
       "review": {
@@ -847,6 +852,10 @@
       "writingHanzi": {
         "title": "Writing Hanzi",
         "description": "Trace and repeat each Hanzi with a simple writing canvas."
+      },
+      "listening": {
+        "title": "Listening Dictation",
+        "description": "Replay cached Chinese audio, type the Hanzi you hear, and check your dictation accuracy."
       }
     },
     "review": {
@@ -916,6 +925,56 @@
       "hideGrid": "Hide grid",
       "showGuide": "Show guide",
       "hideGuide": "Hide guide"
+    },
+    "listening": {
+      "eyebrow": "Listening practice",
+      "title": "Listening dictation with cached Chinese audio",
+      "description": "Listen to cached Chinese clips, type the Hanzi you hear, and build dictation accuracy without generating new TTS.",
+      "filters": {
+        "difficulty": "Difficulty",
+        "allDifficulties": "All difficulties",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "sourceType": "Source",
+        "allSources": "All sources",
+        "apply": "Apply"
+      },
+      "sourceType": {
+        "word": "Word",
+        "example": "Example",
+        "article": "Article",
+        "custom": "Custom"
+      },
+      "promptTitle": "Audio prompt",
+      "playAudio": "Play audio",
+      "replay": "Replay",
+      "audioUnavailable": "This listening audio could not be played.",
+      "typeWhatYouHear": "Type what you hear",
+      "answerPlaceholder": "Enter the Hanzi you heard",
+      "checkAnswer": "Check answer",
+      "skip": "Skip",
+      "nextItem": "Next item",
+      "correct": "Correct",
+      "almostCorrect": "Almost correct",
+      "incorrect": "Incorrect",
+      "skipped": "Skipped",
+      "correctAnswer": "Correct answer",
+      "score": "Match score: {value}%",
+      "showFirstCharacter": "Show first character",
+      "showPinyinHint": "Show pinyin hint",
+      "hintsTitle": "Hints",
+      "characterCount": "Character count: {count}",
+      "sourceTypeLabel": "Source",
+      "firstCharacter": "First character",
+      "hintAffectsScore": "Using a hint lowers an exact answer to almost-correct for scoring and XP.",
+      "saveFailed": "Listening practice progress could not be saved.",
+      "emptyDescription": "Cached Chinese audio is not ready yet. Pre-cache more TTS audio first.",
+      "cachedAudioBadge": "Cached audio",
+      "linkedArticle": "Linked article",
+      "pinyinLabel": "Pinyin",
+      "meaningLabel": "Vietnamese meaning",
+      "openSource": "Open source"
     }
   },
   "dashboard": {
@@ -984,6 +1043,16 @@
     "bookmarkedArticlesDescription": "Saved notes to revisit later",
     "readingCompleted": "Reading completed",
     "readingCompletedDescription": "Reading items marked completed",
+    "listeningCompleted": "Listening completed",
+    "listeningCompletedDescription": "Listening dictation items marked completed",
+    "listeningAttempts": "Listening attempts",
+    "listeningAttemptsDescription": "Saved dictation attempts across cached audio items",
+    "listeningAccuracy": "Listening accuracy",
+    "listeningAccuracyDescription": "Correct and almost-correct dictation attempts versus incorrect ones",
+    "listeningDifficult": "Difficult listening",
+    "listeningDifficultDescription": "Listening items that still need more repetition",
+    "listeningToday": "Listening today",
+    "listeningTodayDescription": "Listening dictation attempts saved today",
     "difficultReading": "Difficult reading",
     "difficultReadingDescription": "Reading items flagged as difficult",
     "writingCharacters": "Writing characters",
@@ -1015,6 +1084,7 @@
     "activityTypes": {
       "review": "Review",
       "reading": "Reading",
+      "listening": "Listening",
       "writing": "Writing",
       "article": "Article",
       "lesson": "Lesson"
@@ -1072,6 +1142,7 @@
     "skillsDescription": "A compact rollup of review, reading, writing, lessons, and articles.",
     "skillReviews": "Reviews",
     "skillReading": "Reading",
+    "skillListening": "Listening",
     "skillWriting": "Writing",
     "skillLessons": "Lessons",
     "skillArticles": "Articles",
@@ -1085,6 +1156,8 @@
     "ctaContinueLessonsBody": "Return to the lesson list and keep the structured path moving.",
     "ctaPracticeReading": "Practice reading",
     "ctaPracticeReadingBody": "Add more Hanzi exposure with a lighter reading session.",
+    "ctaPracticeListening": "Practice listening",
+    "ctaPracticeListeningBody": "Reuse cached Chinese audio for focused dictation drills.",
     "ctaPracticeWriting": "Practice writing",
     "ctaPracticeWritingBody": "Reinforce character form with focused writing practice.",
     "ctaStatisticsDetail": "Statistics detail",
@@ -1131,7 +1204,7 @@
     "noRecommendedArticles": "No article recommendations yet",
     "noRecommendedArticlesDescription": "Read or bookmark an article first to improve article suggestions.",
     "recentPracticeActivity": "Recent practice activity",
-    "recentPracticeActivityDescription": "Latest saved reading and writing actions.",
+    "recentPracticeActivityDescription": "Latest saved reading, listening, and writing actions.",
     "noReviewActivity": "No review activity yet",
     "noReviewActivityDescription": "Review events will appear here after you finish a lesson or clear items from the review queue.",
     "noPracticeActivity": "No practice activity yet",
@@ -1139,12 +1212,16 @@
     "practiceType": {
       "reading_word": "Reading word",
       "reading_sentence": "Reading sentence",
-      "writing_character": "Writing character"
+      "writing_character": "Writing character",
+      "listening_dictation": "Listening dictation"
     },
     "practiceResult": {
       "completed": "completed",
       "difficult": "difficult",
-      "skipped": "skipped"
+      "skipped": "skipped",
+      "correct": "correct",
+      "almost": "almost correct",
+      "incorrect": "incorrect"
     }
   },
   "ai": {
@@ -1644,12 +1721,27 @@
         "topVoices": "Top voices",
         "voiceStatsLine": "{characters} characters · {hits} hits · {size}"
       },
+      "filters": {
+        "sourceType": "Source type",
+        "allSourceTypes": "All source types",
+        "languageCode": "Language code",
+        "minCharacters": "Min characters",
+        "maxCharacters": "Max characters",
+        "missingSourceTextOnly": "Only rows missing source text",
+        "apply": "Apply filters"
+      },
+      "backfill": {
+        "title": "Backfill missing source metadata",
+        "description": "{count} cache rows are still missing canonical source text.",
+        "submit": "Backfill now"
+      },
       "recent": {
         "title": "Recently accessed cache entries",
         "emptyTitle": "No cached audio yet",
         "emptyDescription": "Generate pronunciation audio from study surfaces or the pre-generation tool first.",
         "table": {
           "preview": "Preview",
+          "sourceType": "Source",
           "provider": "Provider",
           "voice": "Voice",
           "chars": "Chars",
@@ -1672,7 +1764,8 @@
         "success": "{label}: pre-generated {items} items ({hits} hits, {misses} misses).",
         "empty": "No lesson, word, or example targets were provided.",
         "tooMany": "Pre-generation batch too large ({count} items). Reduce the selection and try again.",
-        "error": "Pre-generation failed. Check server logs for the provider error details."
+        "error": "Pre-generation failed. Check server logs for the provider error details.",
+        "backfill": "Backfilled source metadata for {items} cache rows."
       }
     }
   }

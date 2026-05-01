@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getTtsCacheAdminOverview, preGenerateTtsCacheAction } from "@/features/admin/tts-cache";
+import { backfillTtsCacheSourceMetadataAction, getTtsCacheAdminOverview, preGenerateTtsCacheAction } from "@/features/admin/tts-cache";
 import { requireAdminUser } from "@/lib/auth";
 import { formatBytes } from "@/lib/utils";
 import { getServerI18n } from "@/i18n/server";
@@ -42,6 +42,11 @@ function getStatusMessage(searchParams: Record<string, string | string[] | undef
     return t("admin.ttsCache.statusMessages.error");
   }
 
+  if (status === "backfill") {
+    const items = typeof searchParams.items === "string" ? searchParams.items : "0";
+    return t("admin.ttsCache.statusMessages.backfill", { items });
+  }
+
   return null;
 }
 
@@ -55,7 +60,21 @@ export default async function AdminTtsCachePage({
   const resolvedSearchParams = await searchParams;
   const staleDays = parsePositiveInteger(resolvedSearchParams.staleDays, 30);
   const staleLimit = parsePositiveInteger(resolvedSearchParams.staleLimit, 25);
-  const overview = await getTtsCacheAdminOverview({ staleDays, staleLimit });
+  const minCharacters = typeof resolvedSearchParams.minCharacters === "string"
+    ? Number(resolvedSearchParams.minCharacters)
+    : undefined;
+  const maxCharacters = typeof resolvedSearchParams.maxCharacters === "string"
+    ? Number(resolvedSearchParams.maxCharacters)
+    : undefined;
+  const overview = await getTtsCacheAdminOverview({
+    staleDays,
+    staleLimit,
+    sourceType: typeof resolvedSearchParams.sourceType === "string" ? resolvedSearchParams.sourceType as "all" | "word" | "example" | "article" | "custom" : undefined,
+    languageCode: typeof resolvedSearchParams.languageCode === "string" ? resolvedSearchParams.languageCode : undefined,
+    minCharacters: Number.isFinite(minCharacters) ? minCharacters : undefined,
+    maxCharacters: Number.isFinite(maxCharacters) ? maxCharacters : undefined,
+    missingSourceTextOnly: resolvedSearchParams.missingSourceTextOnly === "true",
+  });
   const statusMessage = getStatusMessage(resolvedSearchParams, t);
 
   return (
@@ -189,6 +208,80 @@ export default async function AdminTtsCachePage({
             <CardTitle>{t("admin.ttsCache.usage.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
+            <form method="get" className="grid gap-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.filters.sourceType")}</span>
+                  <select
+                    name="sourceType"
+                    defaultValue={overview.activeFilters.sourceType}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="all">{t("admin.ttsCache.filters.allSourceTypes")}</option>
+                    <option value="word">{t("practice.listening.sourceType.word")}</option>
+                    <option value="example">{t("practice.listening.sourceType.example")}</option>
+                    <option value="article">{t("practice.listening.sourceType.article")}</option>
+                    <option value="custom">{t("practice.listening.sourceType.custom")}</option>
+                  </select>
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.filters.languageCode")}</span>
+                  <input
+                    type="text"
+                    name="languageCode"
+                    defaultValue={overview.activeFilters.languageCode}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.filters.minCharacters")}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="minCharacters"
+                    defaultValue={overview.activeFilters.minCharacters ?? ""}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">{t("admin.ttsCache.filters.maxCharacters")}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    name="maxCharacters"
+                    defaultValue={overview.activeFilters.maxCharacters ?? ""}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    name="missingSourceTextOnly"
+                    value="true"
+                    defaultChecked={overview.activeFilters.missingSourceTextOnly}
+                  />
+                  <span>{t("admin.ttsCache.filters.missingSourceTextOnly")}</span>
+                </label>
+                <Button type="submit" variant="outline">{t("admin.ttsCache.filters.apply")}</Button>
+              </div>
+            </form>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">{t("admin.ttsCache.backfill.title")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.ttsCache.backfill.description", { count: overview.backfillCandidateCount })}
+                </p>
+              </div>
+              <form action={backfillTtsCacheSourceMetadataAction}>
+                <Button type="submit" variant="outline" disabled={overview.backfillCandidateCount === 0}>
+                  {t("admin.ttsCache.backfill.submit")}
+                </Button>
+              </form>
+            </div>
+
             <div className="space-y-3">
               <p className="text-sm font-medium text-foreground">{t("admin.ttsCache.usage.providers")}</p>
               {overview.providers.map((provider) => (
@@ -255,6 +348,7 @@ export default async function AdminTtsCachePage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("admin.ttsCache.recent.table.preview")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.sourceType")}</TableHead>
                     <TableHead>{t("admin.ttsCache.recent.table.provider")}</TableHead>
                     <TableHead>{t("admin.ttsCache.recent.table.voice")}</TableHead>
                     <TableHead>{t("admin.ttsCache.recent.table.chars")}</TableHead>
@@ -268,9 +362,12 @@ export default async function AdminTtsCachePage({
                     <TableRow key={entry.id}>
                       <TableCell>
                         <div className="max-w-[18rem] truncate text-sm text-foreground font-medium">
-                          {entry.textPreview}
+                          {entry.sourceText ?? entry.textPreview}
                         </div>
                         <div className="text-xs text-muted-foreground uppercase">{entry.languageCode}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{entry.sourceType ?? "custom"}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{entry.provider}</Badge>
@@ -339,10 +436,13 @@ export default async function AdminTtsCachePage({
                 {overview.staleEntries.map((entry) => (
                   <div key={entry.id} className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <Badge variant="outline">{entry.provider}</Badge>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">{entry.provider}</Badge>
+                        <Badge variant="secondary">{entry.sourceType ?? "custom"}</Badge>
+                      </div>
                       <span className="text-xs text-muted-foreground">{formatBytes(entry.sizeBytes)}</span>
                     </div>
-                    <p className="mt-2 text-sm text-foreground line-clamp-2">{entry.textPreview}</p>
+                    <p className="mt-2 text-sm text-foreground line-clamp-2">{entry.sourceText ?? entry.textPreview}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {t("admin.ttsCache.stale.entryStats", {
                         voice: entry.voice,

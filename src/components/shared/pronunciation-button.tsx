@@ -11,6 +11,10 @@ import { useI18n } from "@/i18n/client";
 interface PronunciationButtonProps
   extends Omit<ComponentProps<typeof Button>, "onClick"> {
   text: string;
+  sourceText?: string;
+  sourceType?: "word" | "example" | "article" | "custom";
+  sourceRefId?: string | null;
+  sourceMetadata?: Record<string, unknown> | null;
   lang?: string;
   rate?: number;
   pitch?: number;
@@ -25,6 +29,10 @@ interface PronunciationButtonProps
 
 export const PronunciationButton = forwardRef<HTMLButtonElement, PronunciationButtonProps>(function PronunciationButton({
   text,
+  sourceText,
+  sourceType,
+  sourceRefId,
+  sourceMetadata,
   lang = "zh-CN",
   rate,
   pitch,
@@ -58,6 +66,10 @@ export const PronunciationButton = forwardRef<HTMLButtonElement, PronunciationBu
   const handleSpeak = async () => {
     const played = await play({
       text,
+      sourceText,
+      sourceType,
+      sourceRefId,
+      sourceMetadata,
       languageCode: lang,
       voice,
       provider,

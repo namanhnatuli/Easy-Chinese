@@ -12,6 +12,7 @@ import {
   applySchedulerGrade,
   resolveLearningSchedulerSettings,
 } from "@/features/memory/spaced-repetition";
+import { countSuccessfulLearningActivitiesToday } from "@/features/memory/activity";
 import { logger } from "@/lib/logger";
 import type { ReviewMode, SchedulerGrade } from "@/types/domain";
 
@@ -93,22 +94,12 @@ async function countCompletedToday(
 ) {
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-  const from = dayStart.toISOString();
-  const to = dayEnd.toISOString();
-
-  const { count, error } = await supabase
-    .from("review_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .in("grade", ["hard", "good", "easy"])
-    .gte("reviewed_at", from)
-    .lt("reviewed_at", to);
-
-  if (error) {
-    throw error;
-  }
-
-  return count ?? 0;
+  return countSuccessfulLearningActivitiesToday({
+    supabase,
+    userId,
+    from: dayStart.toISOString(),
+    to: dayEnd.toISOString(),
+  });
 }
 
 function getWordMemoryLogPayload(transition: SchedulerTransition, userId: string, wordId: string, grade: SchedulerGrade) {

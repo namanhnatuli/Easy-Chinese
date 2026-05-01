@@ -31,6 +31,7 @@ function buildEmptyTimeSeriesPoint(date: string): UserProgressTimeSeriesPoint {
     correctReviews: 0,
     incorrectReviews: 0,
     readingCompleted: 0,
+    listeningCompleted: 0,
     writingCompleted: 0,
     lessonsCompleted: 0,
     xpEarned: 0,
@@ -154,6 +155,7 @@ export function summarizeProgressTimeSeries(series: UserProgressTimeSeries): Use
       acc.correctReviews += point.correctReviews;
       acc.incorrectReviews += point.incorrectReviews;
       acc.readingCompleted += point.readingCompleted;
+      acc.listeningCompleted += point.listeningCompleted;
       acc.writingCompleted += point.writingCompleted;
       acc.lessonsCompleted += point.lessonsCompleted;
       return acc;
@@ -166,6 +168,7 @@ export function summarizeProgressTimeSeries(series: UserProgressTimeSeries): Use
       incorrectReviews: 0,
       accuracyRate: 0,
       readingCompleted: 0,
+      listeningCompleted: 0,
       writingCompleted: 0,
       lessonsCompleted: 0,
       hasActivity: false,
@@ -180,6 +183,7 @@ export function summarizeProgressTimeSeries(series: UserProgressTimeSeries): Use
     totals.correctReviews > 0 ||
     totals.incorrectReviews > 0 ||
     totals.readingCompleted > 0 ||
+    totals.listeningCompleted > 0 ||
     totals.writingCompleted > 0 ||
     totals.lessonsCompleted > 0;
 
