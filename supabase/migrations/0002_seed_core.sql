@@ -1,5 +1,5 @@
 -- ==========================================
--- 0002_SEED_CORE.SQL
+-- 002_SEED_DATA.SQL
 -- Consolidated core seed data
 -- ==========================================
 
@@ -102,7 +102,7 @@ on conflict (radical) do update set
   variant_forms = excluded.variant_forms,
   updated_at = timezone('utc', now());
 
--- 3. ADDITIONAL COMMON COMPONENTS (from archived 0010)
+-- 3. ADDITIONAL COMMON COMPONENTS
 insert into public.radicals (radical, display_label, han_viet_name, meaning_vi, stroke_count)
 values 
   ('电', 'Điện 电', 'Điện', 'Điện / Chớp / Sét', 5),

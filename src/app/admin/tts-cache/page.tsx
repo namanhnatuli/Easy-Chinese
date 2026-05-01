@@ -328,6 +328,29 @@ export default async function AdminTtsCachePage({
                 </div>
               ))}
             </div>
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">{t("admin.ttsCache.usage.sourceTypes")}</p>
+              {overview.sourceTypes.map((source) => (
+                <div key={source.type} className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{source.type}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {t("admin.ttsCache.usage.filesCount", { count: source.files })}
+                      </span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{formatBytes(source.storageBytes)}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t("admin.ttsCache.usage.voiceStatsLine", {
+                      characters: source.characters,
+                      hits: source.hits,
+                      size: formatBytes(source.storageBytes),
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -354,6 +377,7 @@ export default async function AdminTtsCachePage({
                     <TableHead>{t("admin.ttsCache.recent.table.chars")}</TableHead>
                     <TableHead>{t("admin.ttsCache.recent.table.hits")}</TableHead>
                     <TableHead>{t("admin.ttsCache.recent.table.size")}</TableHead>
+                    <TableHead>{t("admin.ttsCache.recent.table.metadata")}</TableHead>
                     <TableHead className="text-right">{t("admin.ttsCache.recent.table.lastAccessed")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -375,7 +399,19 @@ export default async function AdminTtsCachePage({
                       <TableCell className="text-sm text-muted-foreground">{entry.voice}</TableCell>
                       <TableCell className="text-sm">{entry.characterCount}</TableCell>
                       <TableCell className="text-sm">{entry.accessCount}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{formatBytes(entry.sizeBytes)}</TableCell>
+                       <TableCell className="text-sm text-muted-foreground">{formatBytes(entry.sizeBytes)}</TableCell>
+                      <TableCell>
+                        {entry.sourceMetadata ? (
+                          <details className="cursor-pointer text-[10px] text-muted-foreground">
+                            <summary className="hover:text-foreground">{t("admin.ttsCache.recent.table.viewMetadata")}</summary>
+                            <pre className="mt-1 max-w-[12rem] overflow-x-auto rounded bg-muted/50 p-1">
+                              {JSON.stringify(entry.sourceMetadata, null, 2)}
+                            </pre>
+                          </details>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="text-sm text-foreground">
                           {entry.lastAccessedAt ? new Date(entry.lastAccessedAt).toLocaleDateString() : t("admin.ttsCache.stale.neverAccessed")}

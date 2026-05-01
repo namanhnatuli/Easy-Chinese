@@ -143,7 +143,7 @@ Supabase setup:
 - create or keep the `tts-audio` bucket
 - prefer `public` bucket mode for non-sensitive reusable study audio
 - use `private` only if you need signed URLs and shorter-lived access
-- apply migrations `0003_tts_audio_cache.sql` and `0004_tts_cache_access_count.sql`
+- apply migration `001_init_database.sql`
 
 Provider notes:
 - Azure Speech Neural TTS is the preferred first provider for Chinese because of its monthly free-tier allowance
@@ -190,7 +190,7 @@ ADMIN_EMAILS=admin@example.com,second-admin@example.com
 ### Production
 1. Set `ADMIN_EMAILS` in your deployment environment.
 2. Set `SUPABASE_SERVICE_ROLE_KEY` in your deployment environment.
-3. Apply the current database migration set. The active path is now `supabase/migrations/0001_init_database.sql` followed by `supabase/migrations/0002_seed_core.sql`.
+3. Apply the current database migration set. The active path is now `supabase/migrations/001_init_database.sql` followed by `supabase/migrations/002_seed_data.sql`.
 4. Redeploy or restart the application.
 5. Have the target admin sign in again.
 
@@ -198,14 +198,14 @@ ADMIN_EMAILS=admin@example.com,second-admin@example.com
 
 This project now uses a clean active migration pair for fresh database setup:
 
-- schema migration: `supabase/migrations/0001_init_database.sql`
-- seed migration: `supabase/migrations/0002_seed_core.sql`
+- schema migration: `supabase/migrations/001_init_database.sql`
+- seed migration: `supabase/migrations/002_seed_data.sql`
 - archived iterative history: `supabase/migrations_archive/`
 
 What changed:
-- the old development-time migration chain was consolidated into a clean schema migration plus a separate seed migration
+- the development-time migration chain was consolidated into a clean schema migration plus a separate seed migration
 - the active migrations define the final schema and seed data directly instead of replaying historical `ALTER`/`DROP` steps
-- older active migrations were moved to `supabase/migrations_archive/` for reference only
+- older iterative migrations were moved to `supabase/migrations_archive/`
 
 ### Reset local database
 
@@ -398,7 +398,7 @@ Admin preview API:
 
 ## Deployment checklist
 Before launch:
-1. Apply the active Supabase migration set. Fresh installs should start from `supabase/migrations/0001_init_database.sql`.
+1. Apply the active Supabase migration set. Fresh installs should start from `supabase/migrations/001_init_database.sql`.
 2. Verify Google OAuth redirect URLs in Supabase for local and production environments.
 3. Confirm `ADMIN_EMAILS` and `SUPABASE_SERVICE_ROLE_KEY` are set in production.
 4. Run `npm test` and `npm run typecheck`.
@@ -421,7 +421,7 @@ Before launch:
    - admin word writes/imports
 
 ### Manual fallback
-If you need a direct database fallback, run the SQL in [supabase/manual-promote-admin.sql](/Users/trananh/Work/Projects/chinese-learning-app/supabase/manual-promote-admin.sql:1) after replacing the email value.
+If you need a direct database fallback, run the SQL in `supabase/migrations_archive/manual-promote-admin.sql` after replacing the email value.
 
 ### Why this is secure
 - clients cannot promote themselves by writing `profiles.role`

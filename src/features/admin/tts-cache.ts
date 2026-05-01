@@ -55,6 +55,13 @@ export interface TtsCacheAdminOverview {
     storageBytes: number;
     hits: number;
   }>;
+  sourceTypes: Array<{
+    type: "word" | "example" | "article" | "custom";
+    files: number;
+    characters: number;
+    storageBytes: number;
+    hits: number;
+  }>;
   recentEntries: Array<{
     id: string;
     cacheKey: string;
@@ -65,6 +72,7 @@ export interface TtsCacheAdminOverview {
     sourceText: string | null;
     sourceType: "word" | "example" | "article" | "custom" | null;
     sourceRefId: string | null;
+    sourceMetadata: Record<string, unknown> | null;
     sizeBytes: number;
     characterCount: number;
     accessCount: number;
@@ -182,7 +190,7 @@ export async function getTtsCacheAdminOverview(params?: {
   let cacheQuery = supabase
     .from("tts_audio_cache")
     .select(
-      "id, cache_key, provider, voice, language_code, text_preview, source_text, source_type, source_ref_id, size_bytes, character_count, access_count, created_at, last_accessed_at",
+      "id, cache_key, provider, voice, language_code, text_preview, source_text, source_type, source_ref_id, source_metadata, size_bytes, character_count, access_count, created_at, last_accessed_at",
     )
     .order("created_at", { ascending: false });
 
@@ -235,6 +243,7 @@ export async function getTtsCacheAdminOverview(params?: {
   const rows = cacheRows ?? [];
   const providerMap = new Map<"azure" | "google", TtsCacheAdminOverview["providers"][number]>();
   const voiceMap = new Map<string, TtsCacheAdminOverview["voices"][number]>();
+  const sourceTypeMap = new Map<string, TtsCacheAdminOverview["sourceTypes"][number]>();
   const staleThreshold = Date.now() - staleDays * 24 * 60 * 60 * 1000;
 
   let totalCharactersGenerated = 0;
@@ -274,6 +283,20 @@ export async function getTtsCacheAdminOverview(params?: {
     voiceEntry.storageBytes += Number(row.size_bytes ?? 0);
     voiceEntry.hits += row.access_count ?? 0;
     voiceMap.set(voiceKey, voiceEntry);
+    
+    const sourceTypeKey = row.source_type ?? "custom";
+    const sourceTypeEntry = sourceTypeMap.get(sourceTypeKey) ?? {
+      type: sourceTypeKey as any,
+      files: 0,
+      characters: 0,
+      storageBytes: 0,
+      hits: 0,
+    };
+    sourceTypeEntry.files += 1;
+    sourceTypeEntry.characters += row.character_count ?? 0;
+    sourceTypeEntry.storageBytes += Number(row.size_bytes ?? 0);
+    sourceTypeEntry.hits += row.access_count ?? 0;
+    sourceTypeMap.set(sourceTypeKey, sourceTypeEntry);
   }
 
   const staleEntries = rows
@@ -310,6 +333,7 @@ export async function getTtsCacheAdminOverview(params?: {
     estimatedTotalMisses: rows.length,
     providers: [...providerMap.values()].sort((left, right) => right.files - left.files),
     voices: [...voiceMap.values()].sort((left, right) => right.files - left.files).slice(0, 10),
+    sourceTypes: [...sourceTypeMap.values()].sort((left, right) => right.files - left.files),
     recentEntries: [...rows]
       .sort((left, right) => {
         const leftTime = left.last_accessed_at ? new Date(left.last_accessed_at).getTime() : new Date(left.created_at).getTime();
@@ -327,6 +351,7 @@ export async function getTtsCacheAdminOverview(params?: {
         sourceText: row.source_text,
         sourceType: (row.source_type as "word" | "example" | "article" | "custom" | null) ?? null,
         sourceRefId: row.source_ref_id ?? null,
+        sourceMetadata: row.source_metadata as Record<string, unknown> | null,
         sizeBytes: Number(row.size_bytes ?? 0),
         characterCount: row.character_count ?? 0,
         accessCount: row.access_count ?? 0,
@@ -616,19 +641,61 @@ export async function backfillTtsCacheSourceMetadataAction() {
   }
 
   const candidates = (data ?? []).filter((row) => row.text_preview?.trim());
+  if (candidates.length === 0) {
+    revalidateAdminPaths(["/admin", "/admin/tts-cache"]);
+    redirectTo("/admin/tts-cache?status=backfill&items=0");
+    return;
+  }
+
+  const texts = candidates.map((row) => row.text_preview.trim());
+  const [{ data: wordMatches }, { data: exampleMatches }] = await Promise.all([
+    supabase.from("words").select("id, hanzi, slug, pinyin, vietnamese_meaning").in("hanzi", texts),
+    supabase.from("word_examples").select("id, chinese_text, pinyin, vietnamese_meaning, word_id").in("chinese_text", texts),
+  ]);
+
+  const wordMap = new Map((wordMatches ?? []).map((w) => [w.hanzi, w]));
+  const exampleMap = new Map((exampleMatches ?? []).map((e) => [e.chinese_text, e]));
 
   for (const row of candidates) {
+    const text = row.text_preview.trim();
+    const word = wordMap.get(text);
+    const example = exampleMap.get(text);
+
+    let sourceType: "word" | "example" | "custom" = "custom";
+    let sourceRefId: string | null = null;
+    let sourceMetadata: Record<string, unknown> | null = null;
+
+    if (word) {
+      sourceType = "word";
+      sourceRefId = word.id;
+      sourceMetadata = {
+        slug: word.slug,
+        pinyin: word.pinyin,
+        vietnameseMeaning: word.vietnamese_meaning,
+      };
+    } else if (example) {
+      sourceType = "example";
+      sourceRefId = example.id;
+      sourceMetadata = {
+        wordId: example.word_id,
+        pinyin: example.pinyin,
+        vietnameseMeaning: example.vietnamese_meaning,
+      };
+    }
+
     const { error: updateError } = await supabase
       .from("tts_audio_cache")
       .update({
-        source_text: row.text_preview.trim(),
-        source_type: "custom",
+        source_text: text,
+        source_type: sourceType,
+        source_ref_id: sourceRefId,
+        source_metadata: sourceMetadata,
       })
       .eq("id", row.id)
       .is("source_text", null);
 
     if (updateError) {
-      throw updateError;
+      logger.error("tts_backfill_row_failed", updateError, { rowId: row.id });
     }
   }
 

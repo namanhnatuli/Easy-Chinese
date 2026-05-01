@@ -1286,7 +1286,7 @@
     "dailyGoal": "Mục tiêu hằng ngày",
     "dailyGoalHelp": "Số thao tác ôn tập bạn muốn hoàn thành mỗi ngày. Mục tiêu này được dùng cho streak và các nhắc nhở trên dashboard.",
     "dailyGoalBadge": "Mục tiêu {value}/ngày",
-    "dailyGoalCurrent": "Mục tiêu hằng ngày hiện tại: {value}",
+    "dailyGoalCurrent": "Mục tiêu hằng ngày",
     "schedulerTitle": "Thuật toán ôn tập",
     "schedulerDescription": "Chọn thuật toán quyết định khoảng cách ôn lại từ vựng theo thời gian.",
     "schedulerLabel": "Thuật toán ôn tập",
@@ -1300,7 +1300,7 @@
     "retentionBadge": "Ghi nhớ {value}",
     "maximumInterval": "Khoảng ôn tối đa (ngày)",
     "maximumIntervalHelp": "Giới hạn khoảng ôn dài nhất mà thuật toán có thể gán.",
-    "schedulerCurrent": "Thuật toán hiện tại: {value}",
+    "schedulerCurrent": "Thuật toán hiện tại",
     "liveSummary": "Tóm tắt trực tiếp",
     "liveSummaryDescription": "Các tuỳ chọn học và hiển thị đang có hiệu lực cho buổi học của bạn.",
     "previewCopy": "Đoạn xem trước",
@@ -1309,9 +1309,9 @@
     "accountDescription": "Thông tin hồ sơ được bảo vệ vẫn được lưu ở phía máy chủ.",
     "learnerFallback": "Người học",
     "unavailable": "Không có",
-    "signedInAs": "Đăng nhập với tên {name}",
-    "role": "Vai trò: {value}",
-    "email": "Email: {value}",
+    "signedInAs": "Đăng nhập với tên",
+    "role": "Vai trò",
+    "email": "Email",
     "light": "Sáng",
     "dark": "Tối",
     "system": "Theo hệ thống",
@@ -1719,7 +1719,8 @@
         "filesCount": "{count} file",
         "statsLine": "{characters} ký tự · {hits} lượt hit",
         "topVoices": "Giọng đọc phổ biến nhất",
-        "voiceStatsLine": "{characters} ký tự · {hits} lượt hit · {size}"
+        "voiceStatsLine": "{characters} ký tự · {hits} lượt hit · {size}",
+        "sourceTypes": "Loại nguồn dữ liệu"
       },
       "filters": {
         "sourceType": "Loại nguồn",
@@ -1747,6 +1748,8 @@
           "chars": "Ký tự",
           "hits": "Lượt hit",
           "size": "Dung lượng",
+          "metadata": "Metadata",
+          "viewMetadata": "Xem metadata",
           "lastAccessed": "Lượt truy cập cuối"
         }
       },

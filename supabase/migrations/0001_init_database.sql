@@ -1,13 +1,13 @@
 -- ==========================================
--- 0001_INIT_DATABASE.SQL
--- Clean init migration for Chinese Learning App
+-- 001_INIT_DATABASE.SQL
+-- Final consolidated schema for Chinese Learning App
 -- ==========================================
 
--- Extensions
+-- 1. Extensions
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
 
--- Enums / custom types
+-- 2. Enums / Custom Types
 create type public.app_role as enum ('user', 'admin');
 create type public.progress_status as enum ('new', 'learning', 'review', 'mastered');
 create type public.review_mode as enum ('flashcard', 'multiple_choice', 'typing');
@@ -23,14 +23,14 @@ create type public.article_progress_status as enum ('not_started', 'reading', 'c
 create type public.lesson_generation_source as enum ('manual', 'auto');
 create type public.practice_progress_status as enum ('new', 'practicing', 'completed', 'difficult');
 create type public.reading_practice_type as enum ('word', 'sentence');
-create type public.practice_event_type as enum ('reading_word', 'reading_sentence', 'writing_character');
-create type public.practice_event_result as enum ('completed', 'difficult', 'skipped');
+create type public.practice_event_type as enum ('reading_word', 'reading_sentence', 'writing_character', 'listening_dictation');
+create type public.practice_event_result as enum ('completed', 'difficult', 'skipped', 'correct', 'almost', 'incorrect');
 create type public.scheduler_type as enum ('sm2', 'fsrs');
 create type public.scheduler_state as enum ('new', 'learning', 'review', 'relearning');
 create type public.scheduler_grade as enum ('again', 'hard', 'good', 'easy');
 
--- Utility function
--- Allowed by project rules as a trivial timestamp helper.
+-- 3. Utility Functions
+-- Trivial utility for updated_at timestamps as allowed by project rules.
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -41,7 +41,8 @@ begin
 end;
 $$;
 
--- Tables
+-- 4. Tables
+
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -51,11 +52,14 @@ create table public.profiles (
   preferred_language text not null default 'en',
   preferred_theme text not null default 'system',
   preferred_font text not null default 'sans',
+  preferred_tts_provider text not null default 'google',
+  preferred_tts_voice text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   constraint profiles_preferred_language_check check (preferred_language in ('en', 'vi', 'zh')),
   constraint profiles_preferred_theme_check check (preferred_theme in ('light', 'dark', 'system')),
-  constraint profiles_preferred_font_check check (preferred_font in ('sans', 'serif', 'kai'))
+  constraint profiles_preferred_font_check check (preferred_font in ('sans', 'serif', 'kai')),
+  constraint profiles_preferred_tts_provider_check check (preferred_tts_provider in ('azure', 'google'))
 );
 
 create table public.topics (
@@ -64,16 +68,6 @@ create table public.topics (
   slug text not null unique,
   description text,
   tag_slugs text[] not null default '{}'::text[],
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
-);
-
-create table public.word_tags (
-  id uuid primary key default gen_random_uuid(),
-  slug text not null unique,
-  label text not null,
-  description text,
-  topic_id uuid references public.topics(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -131,6 +125,24 @@ create table public.words (
   last_source_updated_at timestamptz
 );
 
+create table public.word_tags (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  label text not null,
+  description text,
+  topic_id uuid references public.topics(id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table public.word_tag_links (
+  word_id uuid not null references public.words(id) on delete cascade,
+  word_tag_id uuid not null references public.word_tags(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  primary key (word_id, word_tag_id)
+);
+
 create table public.word_examples (
   id uuid primary key default gen_random_uuid(),
   word_id uuid not null references public.words(id) on delete cascade,
@@ -141,14 +153,6 @@ create table public.word_examples (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   constraint word_examples_word_sort_unique unique (word_id, sort_order)
-);
-
-create table public.word_tag_links (
-  word_id uuid not null references public.words(id) on delete cascade,
-  word_tag_id uuid not null references public.word_tags(id) on delete cascade,
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now()),
-  primary key (word_id, word_tag_id)
 );
 
 create table public.word_radicals (
@@ -445,23 +449,6 @@ create table public.review_events (
   created_at timestamptz not null default timezone('utc', now())
 );
 
-create table public.practice_events (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  word_id uuid references public.words(id) on delete cascade,
-  example_id uuid references public.word_examples(id) on delete cascade,
-  practice_type public.practice_event_type not null,
-  result public.practice_event_result not null,
-  created_at timestamptz not null default timezone('utc', now()),
-  constraint practice_events_target_check check (
-    (practice_type = 'reading_word' and word_id is not null and example_id is null)
-    or
-    (practice_type = 'reading_sentence' and example_id is not null and word_id is null)
-    or
-    (practice_type = 'writing_character' and word_id is not null and example_id is null)
-  )
-);
-
 create table public.user_xp (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   total_xp integer not null default 0 check (total_xp >= 0),
@@ -566,11 +553,80 @@ create table public.vocab_sync_apply_events (
   applied_at timestamptz not null default timezone('utc', now())
 );
 
--- Constraints and foreign keys
--- All primary keys, unique constraints, checks, and foreign keys are defined inline
--- above so the schema is correct from the first create.
+create table public.tts_audio_cache (
+  id uuid primary key default gen_random_uuid(),
+  cache_key text not null,
+  provider text not null,
+  voice text not null,
+  language_code text not null,
+  text_hash text not null,
+  text_preview text not null,
+  source_text text,
+  source_type text,
+  source_ref_id uuid,
+  source_metadata jsonb,
+  storage_bucket text not null default 'tts-audio',
+  storage_path text not null,
+  mime_type text not null,
+  size_bytes bigint not null default 0 check (size_bytes >= 0),
+  character_count integer not null check (character_count >= 0),
+  access_count integer not null default 0 check (access_count >= 0),
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  last_accessed_at timestamptz,
+  constraint tts_audio_cache_cache_key_unique unique (cache_key),
+  constraint tts_audio_cache_provider_check check (provider in ('azure', 'google')),
+  constraint tts_audio_cache_storage_bucket_check check (storage_bucket = 'tts-audio'),
+  constraint tts_audio_cache_storage_path_unique unique (storage_bucket, storage_path),
+  constraint tts_audio_cache_text_preview_length_check check (char_length(text_preview) <= 160),
+  constraint tts_audio_cache_mime_type_check check (mime_type in ('audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm')),
+  constraint tts_audio_cache_source_type_check check (
+    source_type is null
+    or source_type in ('word', 'example', 'article', 'custom')
+  )
+);
 
--- Indexes
+create table public.practice_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  word_id uuid references public.words(id) on delete cascade,
+  example_id uuid references public.word_examples(id) on delete cascade,
+  tts_audio_cache_id uuid references public.tts_audio_cache(id) on delete cascade,
+  practice_type public.practice_event_type not null,
+  result public.practice_event_result not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint practice_events_target_check check (
+    (practice_type = 'reading_word' and word_id is not null and example_id is null and tts_audio_cache_id is null)
+    or
+    (practice_type = 'reading_sentence' and example_id is not null and word_id is null and tts_audio_cache_id is null)
+    or
+    (practice_type = 'writing_character' and word_id is not null and example_id is null and tts_audio_cache_id is null)
+    or
+    (practice_type = 'listening_dictation' and tts_audio_cache_id is not null and word_id is null and example_id is null)
+  )
+);
+
+create table public.user_listening_progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  tts_audio_cache_id uuid not null references public.tts_audio_cache(id) on delete cascade,
+  status public.practice_progress_status not null default 'new',
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  correct_count integer not null default 0 check (correct_count >= 0),
+  almost_count integer not null default 0 check (almost_count >= 0),
+  incorrect_count integer not null default 0 check (incorrect_count >= 0),
+  skipped_count integer not null default 0 check (skipped_count >= 0),
+  best_score numeric(6,4) not null default 0 check (best_score >= 0 and best_score <= 1),
+  last_input text,
+  last_practiced_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint user_listening_progress_user_audio_unique unique (user_id, tts_audio_cache_id)
+);
+
+-- 5. Indexes
 create index profiles_role_idx on public.profiles(role);
 create index topics_tag_slugs_idx on public.topics using gin(tag_slugs);
 create index words_hsk_level_idx on public.words(hsk_level);
@@ -663,8 +719,22 @@ create index vocab_sync_rows_match_result_idx on public.vocab_sync_rows(match_re
 create unique index vocab_sync_rows_batch_source_row_number_unique_idx
   on public.vocab_sync_rows(batch_id, source_row_number)
   where source_row_number is not null;
+create index tts_audio_cache_cache_key_idx on public.tts_audio_cache(cache_key);
+create index tts_audio_cache_language_code_idx on public.tts_audio_cache(language_code);
+create index tts_audio_cache_provider_idx on public.tts_audio_cache(provider);
+create index tts_audio_cache_created_at_idx on public.tts_audio_cache(created_at desc);
+create index tts_audio_cache_last_accessed_at_idx on public.tts_audio_cache(last_accessed_at desc nulls last);
+create index tts_audio_cache_source_type_idx on public.tts_audio_cache(source_type);
+create index tts_audio_cache_source_ref_id_idx on public.tts_audio_cache(source_ref_id);
+create index user_listening_progress_user_status_idx
+  on public.user_listening_progress(user_id, status, last_practiced_at desc nulls last);
+create index user_listening_progress_audio_idx
+  on public.user_listening_progress(tts_audio_cache_id);
+create index practice_events_listening_created_idx
+  on public.practice_events(user_id, created_at desc)
+  where practice_type = 'listening_dictation';
 
--- Triggers
+-- 6. Triggers
 create trigger profiles_set_updated_at before update on public.profiles for each row execute function public.set_updated_at();
 create trigger topics_set_updated_at before update on public.topics for each row execute function public.set_updated_at();
 create trigger word_tags_set_updated_at before update on public.word_tags for each row execute function public.set_updated_at();
@@ -691,8 +761,10 @@ create trigger user_level_set_updated_at before update on public.user_level for 
 create trigger user_achievements_set_updated_at before update on public.user_achievements for each row execute function public.set_updated_at();
 create trigger vocab_sync_batches_set_updated_at before update on public.vocab_sync_batches for each row execute function public.set_updated_at();
 create trigger vocab_sync_rows_set_updated_at before update on public.vocab_sync_rows for each row execute function public.set_updated_at();
+create trigger tts_audio_cache_set_updated_at before update on public.tts_audio_cache for each row execute function public.set_updated_at();
+create trigger user_listening_progress_set_updated_at before update on public.user_listening_progress for each row execute function public.set_updated_at();
 
--- Row Level Security
+-- 7. RLS Enablement
 alter table public.profiles enable row level security;
 alter table public.topics enable row level security;
 alter table public.word_tags enable row level security;
@@ -729,469 +801,105 @@ alter table public.user_xp_events enable row level security;
 alter table public.vocab_sync_batches enable row level security;
 alter table public.vocab_sync_rows enable row level security;
 alter table public.vocab_sync_apply_events enable row level security;
+alter table public.tts_audio_cache enable row level security;
+alter table public.user_listening_progress enable row level security;
 
--- Policies
-create policy "profiles_select_own"
-  on public.profiles
-  for select
-  to authenticated
-  using (auth.uid() = id);
+-- 8. Policies
 
-create policy "topics_read"
-  on public.topics
-  for select
-  to public
-  using (true);
+-- Profiles
+create policy "profiles_select_own" on public.profiles for select to authenticated using (auth.uid() = id);
 
-create policy "topics_admin"
-  on public.topics
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Topics
+create policy "topics_read" on public.topics for select to public using (true);
+create policy "topics_admin" on public.topics for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_tags_read"
-  on public.word_tags
-  for select
-  to public
-  using (true);
+-- Word Tags
+create policy "word_tags_read" on public.word_tags for select to public using (true);
+create policy "word_tags_admin" on public.word_tags for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_tags_admin"
-  on public.word_tags
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Radicals
+create policy "radicals_read" on public.radicals for select to public using (true);
+create policy "radicals_admin" on public.radicals for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "radicals_read"
-  on public.radicals
-  for select
-  to public
-  using (true);
+-- Words
+create policy "words_read" on public.words for select to public using (is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "words_admin" on public.words for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "radicals_admin"
-  on public.radicals
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Word Examples
+create policy "word_examples_read" on public.word_examples for select to public using (exists (select 1 from public.words w where w.id = word_examples.word_id and (w.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "word_examples_admin" on public.word_examples for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "words_read"
-  on public.words
-  for select
-  to public
-  using (
-    is_published
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+-- Word Tag Links
+create policy "word_tag_links_read" on public.word_tag_links for select to public using (exists (select 1 from public.words w where w.id = word_tag_links.word_id and (w.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "word_tag_links_admin" on public.word_tag_links for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "words_admin"
-  on public.words
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Word Radicals
+create policy "word_radicals_read" on public.word_radicals for select to public using (exists (select 1 from public.words w where w.id = word_radicals.word_id and (w.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "word_radicals_admin" on public.word_radicals for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_examples_read"
-  on public.word_examples
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.words w
-      where w.id = word_examples.word_id
-        and (
-          w.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
+-- Grammar Points
+create policy "grammar_points_read" on public.grammar_points for select to public using (is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "grammar_points_admin" on public.grammar_points for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_examples_admin"
-  on public.word_examples
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Grammar Examples
+create policy "grammar_examples_read" on public.grammar_examples for select to public using (exists (select 1 from public.grammar_points gp where gp.id = grammar_examples.grammar_point_id and (gp.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "grammar_examples_admin" on public.grammar_examples for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_tag_links_read"
-  on public.word_tag_links
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.words w
-      where w.id = word_tag_links.word_id
-        and (
-          w.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
+-- Lessons
+create policy "lessons_read" on public.lessons for select to public using (is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "lessons_admin" on public.lessons for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_tag_links_admin"
-  on public.word_tag_links
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Lesson Words
+create policy "lesson_words_read" on public.lesson_words for select to public using (exists (select 1 from public.lessons l join public.words w on w.id = lesson_words.word_id where l.id = lesson_words.lesson_id and (l.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) and (w.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "lesson_words_admin" on public.lesson_words for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_radicals_read"
-  on public.word_radicals
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.words w
-      where w.id = word_radicals.word_id
-        and (
-          w.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
+-- Lesson Grammar Points
+create policy "lesson_grammar_points_read" on public.lesson_grammar_points for select to public using (exists (select 1 from public.lessons l join public.grammar_points gp on gp.id = lesson_grammar_points.grammar_point_id where l.id = lesson_grammar_points.lesson_id and (l.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) and (gp.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "lesson_grammar_points_admin" on public.lesson_grammar_points for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "word_radicals_admin"
-  on public.word_radicals
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Generation Runs/Candidates
+create policy "lesson_generation_runs_admin" on public.lesson_generation_runs for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "lesson_generation_candidates_admin" on public.lesson_generation_candidates for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "grammar_points_read"
-  on public.grammar_points
-  for select
-  to public
-  using (
-    is_published
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+-- Learning Articles
+create policy "learning_articles_read" on public.learning_articles for select to public using (is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "learning_articles_admin" on public.learning_articles for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "learning_article_tags_read" on public.learning_article_tags for select to public using (true);
+create policy "learning_article_tags_admin" on public.learning_article_tags for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "learning_article_tag_links_read" on public.learning_article_tag_links for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_tag_links.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "learning_article_tag_links_admin" on public.learning_article_tag_links for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "learning_article_words_read" on public.learning_article_words for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_words.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "learning_article_words_admin" on public.learning_article_words for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "learning_article_grammar_points_read" on public.learning_article_grammar_points for select to public using (exists (select 1 from public.learning_articles a where a.id = learning_article_grammar_points.article_id and (a.is_published or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))));
+create policy "learning_article_grammar_points_admin" on public.learning_article_grammar_points for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "grammar_points_admin"
-  on public.grammar_points
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- User Progress (Own)
+create policy "user_word_progress_own" on public.user_word_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_lesson_progress_own" on public.user_lesson_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_article_progress_own" on public.user_article_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_word_memory_own" on public.user_word_memory for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_learning_stats_own" on public.user_learning_stats for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_reading_progress_own" on public.user_reading_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_writing_progress_own" on public.user_writing_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_listening_progress_own" on public.user_listening_progress for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy "grammar_examples_read"
-  on public.grammar_examples
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.grammar_points gp
-      where gp.id = grammar_examples.grammar_point_id
-        and (
-          gp.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
+-- Events & Gamification (Own)
+create policy "review_events_own" on public.review_events for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "practice_events_own" on public.practice_events for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_xp_own" on public.user_xp for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_level_own" on public.user_level for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_achievements_own" on public.user_achievements for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user_xp_events_own" on public.user_xp_events for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy "grammar_examples_admin"
-  on public.grammar_examples
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- Sync (Admin)
+create policy "vocab_sync_batches_admin" on public.vocab_sync_batches for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "vocab_sync_rows_admin" on public.vocab_sync_rows for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "vocab_sync_apply_events_admin" on public.vocab_sync_apply_events for all to authenticated using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')) with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
 
-create policy "lessons_read"
-  on public.lessons
-  for select
-  to public
-  using (
-    is_published
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+-- TTS Cache
+create policy "tts_audio_cache_read" on public.tts_audio_cache for select to public using (storage_bucket = 'tts-audio');
 
-create policy "lessons_admin"
-  on public.lessons
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "lesson_words_read"
-  on public.lesson_words
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.lessons l
-      join public.words w on w.id = lesson_words.word_id
-      where l.id = lesson_words.lesson_id
-        and (
-          l.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-        and (
-          w.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
-
-create policy "lesson_words_admin"
-  on public.lesson_words
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "lesson_grammar_points_read"
-  on public.lesson_grammar_points
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.lessons l
-      join public.grammar_points gp on gp.id = lesson_grammar_points.grammar_point_id
-      where l.id = lesson_grammar_points.lesson_id
-        and (
-          l.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-        and (
-          gp.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
-
-create policy "lesson_grammar_points_admin"
-  on public.lesson_grammar_points
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "lesson_generation_runs_admin"
-  on public.lesson_generation_runs
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "lesson_generation_candidates_admin"
-  on public.lesson_generation_candidates
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "learning_articles_read"
-  on public.learning_articles
-  for select
-  to public
-  using (
-    is_published
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
-
-create policy "learning_articles_admin"
-  on public.learning_articles
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "learning_article_tags_read"
-  on public.learning_article_tags
-  for select
-  to public
-  using (true);
-
-create policy "learning_article_tags_admin"
-  on public.learning_article_tags
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "learning_article_tag_links_read"
-  on public.learning_article_tag_links
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.learning_articles a
-      where a.id = learning_article_tag_links.article_id
-        and (
-          a.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
-
-create policy "learning_article_tag_links_admin"
-  on public.learning_article_tag_links
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "learning_article_words_read"
-  on public.learning_article_words
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.learning_articles a
-      where a.id = learning_article_words.article_id
-        and (
-          a.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
-
-create policy "learning_article_words_admin"
-  on public.learning_article_words
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "learning_article_grammar_points_read"
-  on public.learning_article_grammar_points
-  for select
-  to public
-  using (
-    exists (
-      select 1
-      from public.learning_articles a
-      where a.id = learning_article_grammar_points.article_id
-        and (
-          a.is_published
-          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-        )
-    )
-  );
-
-create policy "learning_article_grammar_points_admin"
-  on public.learning_article_grammar_points
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "user_word_progress_own"
-  on public.user_word_progress
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_lesson_progress_own"
-  on public.user_lesson_progress
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_article_progress_own"
-  on public.user_article_progress
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_word_memory_own"
-  on public.user_word_memory
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_learning_stats_own"
-  on public.user_learning_stats
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_reading_progress_own"
-  on public.user_reading_progress
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_writing_progress_own"
-  on public.user_writing_progress
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "review_events_own"
-  on public.review_events
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "practice_events_own"
-  on public.practice_events
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_xp_own"
-  on public.user_xp
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_level_own"
-  on public.user_level
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_achievements_own"
-  on public.user_achievements
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "user_xp_events_own"
-  on public.user_xp_events
-  for all
-  to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-create policy "vocab_sync_batches_admin"
-  on public.vocab_sync_batches
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "vocab_sync_rows_admin"
-  on public.vocab_sync_rows
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
-
-create policy "vocab_sync_apply_events_admin"
-  on public.vocab_sync_apply_events
-  for all
-  to authenticated
-  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+-- 9. Storage
+insert into storage.buckets (id, name, public)
+values ('tts-audio', 'tts-audio', true)
+on conflict (id) do nothing;

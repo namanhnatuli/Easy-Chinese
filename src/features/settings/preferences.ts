@@ -32,7 +32,7 @@ export function normalizeFontPreference(
 export function normalizeTtsProviderPreference(
   value: string | null | undefined,
 ): TtsProvider {
-  return value === "google" ? "google" : "azure";
+  return value === "azure" ? "azure" : "google";
 }
 
 export function normalizeTtsVoicePreference(

@@ -1286,7 +1286,7 @@
     "dailyGoal": "Daily goal",
     "dailyGoalHelp": "How many review actions you want to complete each day. This goal is used for streaks and dashboard reminders.",
     "dailyGoalBadge": "Goal {value}/day",
-    "dailyGoalCurrent": "Current daily goal: {value}",
+    "dailyGoalCurrent": "Daily goal",
     "schedulerTitle": "Learning scheduler",
     "schedulerDescription": "Choose the review algorithm that spaces your vocabulary over time.",
     "schedulerLabel": "Scheduler",
@@ -1300,7 +1300,7 @@
     "retentionBadge": "Retention {value}",
     "maximumInterval": "Maximum interval (days)",
     "maximumIntervalHelp": "Caps the longest review interval the scheduler can assign.",
-    "schedulerCurrent": "Current scheduler: {value}",
+    "schedulerCurrent": "Learning scheduler",
     "liveSummary": "Live summary",
     "liveSummaryDescription": "The study and display preferences currently shaping your learning surfaces.",
     "previewCopy": "Preview copy",
@@ -1309,9 +1309,9 @@
     "accountDescription": "Protected profile information remains server-backed.",
     "learnerFallback": "Learner",
     "unavailable": "Unavailable",
-    "signedInAs": "Signed in as {name}",
-    "role": "Role: {value}",
-    "email": "Email: {value}",
+    "signedInAs": "Signed in as",
+    "role": "Role",
+    "email": "Email",
     "light": "Light",
     "dark": "Dark",
     "system": "System",
@@ -1719,7 +1719,8 @@
         "filesCount": "{count} files",
         "statsLine": "{characters} characters · {hits} hits",
         "topVoices": "Top voices",
-        "voiceStatsLine": "{characters} characters · {hits} hits · {size}"
+        "voiceStatsLine": "{characters} characters · {hits} hits · {size}",
+        "sourceTypes": "Source types"
       },
       "filters": {
         "sourceType": "Source type",
@@ -1747,6 +1748,8 @@
           "chars": "Chars",
           "hits": "Hits",
           "size": "Size",
+          "metadata": "Metadata",
+          "viewMetadata": "View metadata",
           "lastAccessed": "Last accessed"
         }
       },

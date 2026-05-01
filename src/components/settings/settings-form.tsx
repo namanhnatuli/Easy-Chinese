@@ -367,24 +367,22 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                {t("settings.signedInAs", {
-                  name: profile.displayName ?? profile.email ?? t("settings.learnerFallback"),
-                })}{" "}
+                {t("settings.signedInAs")}:{" "}
                 <span className="font-medium text-foreground">{profile.displayName ?? profile.email ?? t("settings.learnerFallback")}</span>
               </p>
               <p>
-                {t("settings.role", { value: profile.role })} <span className="font-medium text-foreground">{profile.role}</span>
+                {t("settings.role")}: <span className="font-medium text-foreground">{profile.role}</span>
               </p>
               <p>
-                {t("settings.email", { value: profile.email ?? t("settings.unavailable") })}{" "}
+                {t("settings.email")}:{" "}
                 <span className="font-medium text-foreground">{profile.email ?? t("settings.unavailable")}</span>
               </p>
               <p>
-                {t("settings.dailyGoalCurrent", { value: values.dailyGoal })}{" "}
+                {t("settings.dailyGoalCurrent")}:{" "}
                 <span className="font-medium text-foreground">{values.dailyGoal}</span>
               </p>
               <p>
-                {t("settings.schedulerCurrent", { value: getSchedulerLabel(values.schedulerType) })}{" "}
+                {t("settings.schedulerCurrent")}:{" "}
                 <span className="font-medium text-foreground">{getSchedulerLabel(values.schedulerType)}</span>
               </p>
             </CardContent>
