@@ -1509,7 +1509,9 @@
         "previousPage": "Trước",
         "nextPage": "Sau",
         "selectedCount": "Đã chọn {count}",
-        "clearAll": "Bỏ chọn tất cả"
+        "clearAll": "Bỏ chọn tất cả",
+        "summaryTitle": "Thứ tự đã chọn",
+        "summaryGridTitle": "Danh sách đã chọn theo thứ tự"
       },
       "create": {
         "title": "Bài học mới",

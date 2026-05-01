@@ -1509,7 +1509,9 @@
         "previousPage": "Previous",
         "nextPage": "Next",
         "selectedCount": "{count} selected",
-        "clearAll": "Clear all"
+        "clearAll": "Clear all",
+        "summaryTitle": "Selected Order",
+        "summaryGridTitle": "Selected Items in Order"
       },
       "create": {
         "title": "New lesson",

@@ -45,6 +45,8 @@ export interface AdminLessonEditor {
   };
   selectedWordIds: Record<string, number>;
   selectedGrammarIds: Record<string, number>;
+  initialWords: LessonCompositionOption[];
+  initialGrammar: LessonCompositionOption[];
 }
 
 export interface LessonCompositionOption {
@@ -79,15 +81,39 @@ export async function getLessonEditor(id: string): Promise<AdminLessonEditor | n
 
   const [{ data: lessonWords, error: wordsError }, { data: lessonGrammar, error: grammarError }] =
     await Promise.all([
-      supabase.from("lesson_words").select("word_id, sort_order").eq("lesson_id", id),
+      supabase
+        .from("lesson_words")
+        .select("word_id, sort_order, words(id, hanzi, pinyin, hsk_level)")
+        .eq("lesson_id", id),
       supabase
         .from("lesson_grammar_points")
-        .select("grammar_point_id, sort_order")
+        .select("grammar_point_id, sort_order, grammar_points(id, title)")
         .eq("lesson_id", id),
     ]);
 
   if (wordsError) throw wordsError;
   if (grammarError) throw grammarError;
+
+  const initialWords: LessonCompositionOption[] = (lessonWords ?? []).flatMap((item: any) => {
+    if (!item.words) return [];
+    return [
+      {
+        id: item.words.id,
+        label: `${item.words.hanzi} - ${item.words.pinyin}`,
+        hskLevel: item.words.hsk_level,
+      },
+    ];
+  });
+
+  const initialGrammar: LessonCompositionOption[] = (lessonGrammar ?? []).flatMap((item: any) => {
+    if (!item.grammar_points) return [];
+    return [
+      {
+        id: item.grammar_points.id,
+        label: item.grammar_points.title,
+      },
+    ];
+  });
 
   return {
     lesson,
@@ -97,6 +123,8 @@ export async function getLessonEditor(id: string): Promise<AdminLessonEditor | n
     selectedGrammarIds: Object.fromEntries(
       (lessonGrammar ?? []).map((item) => [item.grammar_point_id, item.sort_order]),
     ),
+    initialWords,
+    initialGrammar,
   };
 }
 
@@ -112,8 +140,8 @@ export async function listLessonFormOptions(): Promise<{
     { data: grammarPoints, error: grammarError },
   ] = await Promise.all([
     supabase.from("topics").select("id, name").order("name"),
-    supabase.from("words").select("id, hanzi, pinyin, hsk_level, word_tag_links(word_tags(slug, label))").order("hanzi"),
-    supabase.from("grammar_points").select("id, title").order("title"),
+    supabase.from("words").select("id, hanzi, pinyin, hsk_level, word_tag_links(word_tags(slug, label))").order("hanzi").limit(5000),
+    supabase.from("grammar_points").select("id, title").order("title").limit(1000),
   ]);
 
   if (topicsError) throw topicsError;
@@ -276,4 +304,58 @@ export async function deleteLessonAction(formData: FormData) {
 
   revalidateAdminPaths(["/admin", "/admin/lessons"]);
   redirectTo("/admin/lessons");
+}
+
+export async function searchLessonCompositionOptionsAction(
+  prefix: "word" | "grammar",
+  searchQuery: string,
+  filterHsk: string,
+  filterTag: string,
+): Promise<LessonCompositionOption[]> {
+  const { supabase } = await requireAdminSupabase();
+
+  if (prefix === "word") {
+    let query = supabase
+      .from("words")
+      .select("id, hanzi, pinyin, hsk_level, word_tag_links(word_tags(slug, label))")
+      .order("hanzi")
+      .limit(200);
+
+    if (searchQuery.trim()) {
+      const q = `%${searchQuery}%`;
+      query = query.or(`hanzi.ilike.${q},pinyin.ilike.${q}`);
+    }
+
+    if (filterHsk !== "all") {
+      query = query.eq("hsk_level", parseInt(filterHsk, 10));
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let result: LessonCompositionOption[] = (data ?? []).map((word: any) => {
+      const tags =
+        word.word_tag_links?.map((link: any) => link.word_tags).filter(Boolean) || [];
+      return {
+        id: word.id,
+        label: `${word.hanzi} - ${word.pinyin}`,
+        hskLevel: word.hsk_level,
+        tags,
+      };
+    });
+
+    if (filterTag !== "all") {
+      result = result.filter((r) => r.tags?.some((t) => t.slug === filterTag));
+    }
+
+    return result;
+  } else {
+    let query = supabase.from("grammar_points").select("id, title").order("title").limit(200);
+    if (searchQuery.trim()) {
+      query = query.ilike("title", `%${searchQuery}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []).map((p) => ({ id: p.id, label: p.title }));
+  }
 }

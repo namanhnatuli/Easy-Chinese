@@ -1,9 +1,13 @@
 import Link from "next/link";
 
-import { ClientSelectionGrid } from "@/components/admin/client-selection-grid";
+import { LessonCompositionEditor } from "@/components/admin/lesson-composition-editor";
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
 import { buttonVariants } from "@/components/ui/button";
-import type { AdminLessonEditor, LessonCompositionOption } from "@/features/admin/lessons";
+import { 
+  AdminLessonEditor, 
+  LessonCompositionOption, 
+  searchLessonCompositionOptionsAction 
+} from "@/features/admin/lessons";
 import { getServerI18n } from "@/i18n/server";
 
 // Server component SelectionGrid removed.
@@ -25,6 +29,18 @@ export async function LessonForm({
 }) {
   const { t, link } = await getServerI18n();
   const lesson = initialValue?.lesson;
+
+  const allWords = [...words];
+  const wordIds = new Set(words.map((w) => w.id));
+  initialValue?.initialWords?.forEach((w) => {
+    if (!wordIds.has(w.id)) allWords.push(w);
+  });
+
+  const allGrammar = [...grammarPoints];
+  const grammarIds = new Set(grammarPoints.map((g) => g.id));
+  initialValue?.initialGrammar?.forEach((g) => {
+    if (!grammarIds.has(g.id)) allGrammar.push(g);
+  });
 
   return (
     <form action={action} className="space-y-6">
@@ -108,28 +124,25 @@ export async function LessonForm({
         />
       </AdminFormCard>
 
-      <ClientSelectionGrid
-        title={t("admin.lessons.form.orderedWords")}
-        prefix="word"
-        options={words}
-        initialSelectedMap={initialValue?.selectedWordIds ?? {}}
-        searchPlaceholder={t("admin.lessons.form.searchOptions")}
-        previousLabel={t("admin.lessons.form.previousPage")}
-        nextLabel={t("admin.lessons.form.nextPage")}
-        selectedCountTemplate={t("admin.lessons.form.selectedCount")}
-        clearAllLabel={t("admin.lessons.form.clearAll")}
-      />
-
-      <ClientSelectionGrid
-        title={t("admin.lessons.form.orderedGrammar")}
-        prefix="grammar"
-        options={grammarPoints}
-        initialSelectedMap={initialValue?.selectedGrammarIds ?? {}}
-        searchPlaceholder={t("admin.lessons.form.searchOptions")}
-        previousLabel={t("admin.lessons.form.previousPage")}
-        nextLabel={t("admin.lessons.form.nextPage")}
-        selectedCountTemplate={t("admin.lessons.form.selectedCount")}
-        clearAllLabel={t("admin.lessons.form.clearAll")}
+      <LessonCompositionEditor
+        allWords={allWords}
+        initialWordSelectedMap={initialValue?.selectedWordIds ?? {}}
+        allGrammar={allGrammar}
+        initialGrammarSelectedMap={initialValue?.selectedGrammarIds ?? {}}
+        onSearchAction={async (type, query, hsk, tag) => {
+          "use server";
+          return searchLessonCompositionOptionsAction(type, query, hsk, tag);
+        }}
+        labels={{
+          summaryTitle: t("admin.lessons.form.summaryTitle"),
+          orderedWords: t("admin.lessons.form.orderedWords"),
+          orderedGrammar: t("admin.lessons.form.orderedGrammar"),
+          searchOptions: t("admin.lessons.form.searchOptions"),
+          previousPage: t("admin.lessons.form.previousPage"),
+          nextPage: t("admin.lessons.form.nextPage"),
+          selectedCount: t("admin.lessons.form.selectedCount"),
+          clearAll: t("admin.lessons.form.clearAll"),
+        }}
       />
     </form>
   );
