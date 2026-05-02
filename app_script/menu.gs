@@ -8,12 +8,14 @@ function onOpen() {
     .addItem('Approve current row', 'approveCurrentRow')
     .addItem('Mark current row needs review', 'markCurrentRowNeedsReview')
     .addItem('Mark current row pending', 'markCurrentRowPending')
+    .addSeparator()
     .addItem('Preview parsed examples', 'previewParsedExamples')
+    .addItem('Preview parsed senses_json', 'previewParsedSenses')
     .addSeparator()
     .addItem('Install all triggers', 'installAllTriggers')
     .addItem('Reset all triggers', 'resetAllTriggers')
     .addItem('Create/reset worker triggers', 'resetWorkerTriggers')
-    .addItem('Create/reset recovery trigger', 'createRecoveryTrigger')
+    .addItem('Create/reset recovery trigger', 'resetRecoveryTrigger')
     .addItem('List project triggers', 'listProjectTriggersInfo')
     .addSeparator()
     .addItem('Validate header/config', 'validateProjectSetup')
@@ -21,70 +23,46 @@ function onOpen() {
 }
 
 function processCurrentRow() {
-  ensureProjectSetup_();
-
   const { sheet } = getActiveSupportedSheet_();
   const row = sheet.getActiveRange().getRow();
   if (row <= CONFIG.HEADER_ROW) return;
-
-  processInputRow_(sheet, row, false);
+  processInputRow(sheet, row, false);
 }
 
 function rebuildCurrentRow() {
-  ensureProjectSetup_();
-
   const { sheet, kind } = getActiveSupportedSheet_();
   const row = sheet.getActiveRange().getRow();
   if (row <= CONFIG.HEADER_ROW) return;
 
   if (kind === 'hanzi') {
-    const inputText = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
-    if (!inputText) return;
-    clearCacheForInput_(inputText);
-    markRowPending_(sheet, row);
-  } else {
-    const sourcePayload = getGrammarSourcePayload_(sheet, row);
-    if (!sourcePayload.row_key) return;
-    markGrammarRowPending_(sheet, row);
+    const input = safeString_(sheet.getRange(row, CONFIG.COL_INPUT_TEXT).getValue());
+    if (input) clearCacheForInput_(input);
   }
-
-  processInputRow_(sheet, row, true);
+  markRowPending_(sheet, row);
+  processInputRow(sheet, row, true);
 }
 
 function approveCurrentRow() {
-  const { sheet, kind } = getActiveSupportedSheet_();
-  const row = sheet.getActiveRange().getRow();
-  if (row <= CONFIG.HEADER_ROW) return;
-  if (kind === 'hanzi') {
-    setReviewStatusForRow_(row, 'approved');
-  } else {
-    setGrammarReviewStatusForRow_(row, 'approved');
-  }
+  setReviewStatusForRow_(REVIEW_STATUS.APPROVED);
 }
 
 function markCurrentRowNeedsReview() {
-  const { sheet, kind } = getActiveSupportedSheet_();
-  const row = sheet.getActiveRange().getRow();
-  if (row <= CONFIG.HEADER_ROW) return;
-  if (kind === 'hanzi') {
-    setReviewStatusForRow_(row, 'needs_review');
-  } else {
-    setGrammarReviewStatusForRow_(row, 'needs_review');
-  }
+  setReviewStatusForRow_(REVIEW_STATUS.NEEDS_REVIEW);
 }
 
 function markCurrentRowPending() {
+  setReviewStatusForRow_(REVIEW_STATUS.PENDING);
+}
+
+function setReviewStatusForRow_(status) {
   const { sheet, kind } = getActiveSupportedSheet_();
   const row = sheet.getActiveRange().getRow();
   if (row <= CONFIG.HEADER_ROW) return;
 
-  if (kind === 'hanzi') {
-    setReviewStatusForRow_(row, 'pending');
-    markRowPending_(sheet, row);
-  } else {
-    setGrammarReviewStatusForRow_(row, 'pending');
-    markGrammarRowPending_(sheet, row);
-  }
+  const col = kind === 'grammar' ? GRAMMAR_COL.REVIEW_STATUS : CONFIG.COL_REVIEW_STATUS;
+  const currentAiStatus = safeString_(sheet.getRange(row, kind === 'grammar' ? GRAMMAR_COL.AI_STATUS : CONFIG.COL_AI_STATUS).getValue());
+  
+  sheet.getRange(row, col, 1, 3).setValues([[status, currentAiStatus, now_()]]);
 }
 
 function previewParsedExamples() {
@@ -92,22 +70,38 @@ function previewParsedExamples() {
   const row = sheet.getActiveRange().getRow();
   if (row <= CONFIG.HEADER_ROW) return;
 
-  const examplesText = kind === 'hanzi'
-    ? safeString_(sheet.getRange(row, CONFIG.COL_EXAMPLES).getValue())
-    : safeString_(sheet.getRange(row, GRAMMAR_COL.EXAMPLES_STRUCTURED).getValue());
-  const parsed = parseExamples_(examplesText);
+  const col = kind === 'hanzi' ? CONFIG.COL_EXAMPLES : GRAMMAR_COL.EXAMPLES_STRUCTURED;
+  const text = safeString_(sheet.getRange(row, col).getValue());
+  const parsed = parseExamples_(text);
+  SpreadsheetApp.getUi().alert(parsed.length ? JSON.stringify(parsed, null, 2) : 'No examples found.');
+}
 
-  SpreadsheetApp.getUi().alert(
-    parsed.length ? JSON.stringify(parsed, null, 2) : 'No examples found or invalid format.'
-  );
+function previewParsedSenses() {
+  const { sheet, kind } = getActiveSupportedSheet_();
+  if (kind !== 'hanzi') {
+    SpreadsheetApp.getUi().alert('Only available for Hanzi sheet.');
+    return;
+  }
+  const row = sheet.getActiveRange().getRow();
+  if (row <= CONFIG.HEADER_ROW) return;
+
+  const text = safeString_(sheet.getRange(row, CONFIG.COL_SENSES_JSON).getValue());
+  if (!text) {
+    SpreadsheetApp.getUi().alert('No senses_json found.');
+    return;
+  }
+  try {
+    SpreadsheetApp.getUi().alert(JSON.stringify(JSON.parse(text), null, 2));
+  } catch (e) {
+    SpreadsheetApp.getUi().alert('Invalid JSON in senses_json column.');
+  }
 }
 
 function validateProjectSetup() {
-  ensureProjectSetup_();
-  SpreadsheetApp.getUi().alert('Header and config validation passed.');
-}
-
-function ensureProjectSetup_() {
-  validateConfig_();
-  validateHeader_();
+  try {
+    validateHeader_();
+    SpreadsheetApp.getUi().alert('Header and config validation passed.');
+  } catch (e) {
+    SpreadsheetApp.getUi().alert('Validation failed: ' + e.message);
+  }
 }

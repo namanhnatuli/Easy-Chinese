@@ -486,62 +486,143 @@ export async function generateLessonPreview(
 
 export async function getLessonGenerationCoverageSummary(): Promise<LessonGeneratorCoverageSummary> {
   const { supabase } = await requireAdminSupabase();
-  const [{ data: words, error: wordsError }, { data: lessonWordLinks, error: lessonWordError }] =
-    await Promise.all([
-      supabase.from("words").select("id, hsk_level, review_status, is_published").neq("review_status", "rejected"),
-      supabase.from("lesson_words").select("word_id"),
-    ]);
 
-  if (wordsError) {
-    throw wordsError;
+  // 1. Get total eligible words count
+  const { count: totalEligibleCount, error: totalError } = await supabase
+    .from("words")
+    .select("*", { count: "exact", head: true })
+    .neq("review_status", "rejected")
+    .or("is_published.eq.true,review_status.eq.approved");
+
+  if (totalError) throw totalError;
+
+  // 2. Get words without lessons (unused)
+  // Logic: words that are NOT in lesson_words table
+  // Since we can't do complex NOT IN in PostgREST easily for large sets, 
+  // we use the fact that we only need the count.
+  // We'll fetch all used word IDs from lesson_words (might be > 1000)
+  
+  let allUsedWordIds = new Set<string>();
+  let hasMore = true;
+  let offset = 0;
+  const LIMIT = 1000;
+
+  while (hasMore) {
+    const { data: usedBatch, error: usedError } = await supabase
+      .from("lesson_words")
+      .select("word_id")
+      .range(offset, offset + LIMIT - 1);
+
+    if (usedError) throw usedError;
+    if (!usedBatch || usedBatch.length === 0) {
+      hasMore = false;
+    } else {
+      usedBatch.forEach(row => allUsedWordIds.add(row.word_id));
+      offset += LIMIT;
+      if (usedBatch.length < LIMIT) hasMore = false;
+    }
   }
 
-  if (lessonWordError) {
-    throw lessonWordError;
+  // 3. To get accurate coverage by HSK and Tag, we actually DO need to iterate or do multiple counts.
+  // Given the rule "No SQL logic", we fetch the essential fields for all eligible words.
+  // We'll fetch in batches to avoid the 1000 limit.
+  
+  const eligibleWords: Array<{ id: string; hsk_level: number }> = [];
+  offset = 0;
+  hasMore = true;
+  while (hasMore) {
+    const { data: wordBatch, error: wordError } = await supabase
+      .from("words")
+      .select("id, hsk_level")
+      .neq("review_status", "rejected")
+      .or("is_published.eq.true,review_status.eq.approved")
+      .range(offset, offset + LIMIT - 1);
+
+    if (wordError) throw wordError;
+    if (!wordBatch || wordBatch.length === 0) {
+      hasMore = false;
+    } else {
+      eligibleWords.push(...wordBatch);
+      offset += LIMIT;
+      if (wordBatch.length < LIMIT) hasMore = false;
+    }
   }
 
-  const eligibleWords = (words ?? []).filter((word) => word.is_published || word.review_status === "approved");
+  // 4. Calculate stats from memory (now we have ALL eligible words)
   const usageCountByWordId = new Map<string, number>();
-  for (const row of lessonWordLinks ?? []) {
-    usageCountByWordId.set(row.word_id, (usageCountByWordId.get(row.word_id) ?? 0) + 1);
+  // We already have allUsedWordIds set, but we might want frequency for "multiple lessons"
+  // Let's re-count if we need frequency.
+  // Actually, for multiple lessons, we need the full list.
+  
+  const frequencyMap = new Map<string, number>();
+  // We can't re-fetch everything efficiently if it's huge, 
+  // but let's assume lesson_words is manageable for now or we fetch it properly.
+  // Optimization: use the already fetched allUsedWordIds for "without lessons"
+  
+  // To find "multiple lessons", we need to fetch lesson_words count per word.
+  // Let's fetch the counts grouped by word_id if possible, or just re-process.
+  // Re-processing the allData from step 2 (if we kept it)
+  // Let's refine step 2 to keep counts.
+  const wordFrequencyMap = new Map<string, number>();
+  offset = 0;
+  hasMore = true;
+  while (hasMore) {
+    const { data: linkBatch, error: linkError } = await supabase
+      .from("lesson_words")
+      .select("word_id")
+      .range(offset, offset + LIMIT - 1);
+    if (linkError) throw linkError;
+    if (!linkBatch || linkBatch.length === 0) {
+      hasMore = false;
+    } else {
+      linkBatch.forEach(row => {
+        wordFrequencyMap.set(row.word_id, (wordFrequencyMap.get(row.word_id) ?? 0) + 1);
+      });
+      offset += LIMIT;
+      if (linkBatch.length < LIMIT) hasMore = false;
+    }
   }
 
-  const wordIds = eligibleWords.map((word) => word.id);
-  const tagsByWordId = await listWordTagsByWordId(wordIds);
-  const tagStats = new Map<string, { slug: string; label: string; totalWords: number; usedWords: number }>();
   const coverageByHsk = new Map<number, { totalWords: number; usedWords: number }>();
+  const wordsWithoutLessons = eligibleWords.filter(w => !wordFrequencyMap.has(w.id)).length;
+  const wordsUsedInMultipleLessons = eligibleWords.filter(w => (wordFrequencyMap.get(w.id) ?? 0) > 1).length;
 
   for (const word of eligibleWords) {
-    const usageCount = usageCountByWordId.get(word.id) ?? 0;
-    const hskLevel = word.hsk_level;
-    const hskEntry = coverageByHsk.get(hskLevel) ?? { totalWords: 0, usedWords: 0 };
-    hskEntry.totalWords += 1;
-    if (usageCount > 0) {
-      hskEntry.usedWords += 1;
+    const hsk = word.hsk_level;
+    const stats = coverageByHsk.get(hsk) ?? { totalWords: 0, usedWords: 0 };
+    stats.totalWords += 1;
+    if (wordFrequencyMap.has(word.id)) {
+      stats.usedWords += 1;
     }
-    coverageByHsk.set(hskLevel, hskEntry);
+    coverageByHsk.set(hsk, stats);
+  }
 
-    for (const tag of tagsByWordId.get(word.id) ?? []) {
-      const current = tagStats.get(tag.slug) ?? {
-        slug: tag.slug,
-        label: tag.label,
-        totalWords: 0,
-        usedWords: 0,
-      };
-      current.totalWords += 1;
-      if (usageCount > 0) {
-        current.usedWords += 1;
+  // 5. Coverage by Tag
+  // This is expensive because of the many-to-many.
+  // We'll fetch all tag links for eligible words.
+  const wordIds = eligibleWords.map(w => w.id);
+  const tagsByWordId = await listWordTagsByWordId(wordIds);
+  const tagStats = new Map<string, { slug: string; label: string; totalWords: number; usedWords: number }>();
+
+  for (const word of eligibleWords) {
+    const tags = tagsByWordId.get(word.id) ?? [];
+    const isUsed = wordFrequencyMap.has(word.id);
+    for (const tag of tags) {
+      const stats = tagStats.get(tag.slug) ?? { slug: tag.slug, label: tag.label, totalWords: 0, usedWords: 0 };
+      stats.totalWords += 1;
+      if (isUsed) {
+        stats.usedWords += 1;
       }
-      tagStats.set(tag.slug, current);
+      tagStats.set(tag.slug, stats);
     }
   }
 
   return {
-    totalEligibleWords: eligibleWords.length,
-    wordsWithoutLessons: eligibleWords.filter((word) => (usageCountByWordId.get(word.id) ?? 0) === 0).length,
-    wordsUsedInMultipleLessons: eligibleWords.filter((word) => (usageCountByWordId.get(word.id) ?? 0) > 1).length,
+    totalEligibleWords: totalEligibleCount ?? eligibleWords.length,
+    wordsWithoutLessons,
+    wordsUsedInMultipleLessons,
     coverageByHsk: Array.from(coverageByHsk.entries())
-      .sort((left, right) => left[0] - right[0])
+      .sort((a, b) => a[0] - b[0])
       .map(([hskLevel, stats]) => ({
         hskLevel,
         totalWords: stats.totalWords,
@@ -549,7 +630,7 @@ export async function getLessonGenerationCoverageSummary(): Promise<LessonGenera
         unusedWords: stats.totalWords - stats.usedWords,
       })),
     coverageByTag: Array.from(tagStats.values())
-      .sort((left, right) => right.totalWords - left.totalWords || left.label.localeCompare(right.label))
+      .sort((a, b) => b.totalWords - a.totalWords || a.label.localeCompare(b.label))
       .slice(0, 8),
   };
 }
