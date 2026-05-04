@@ -542,6 +542,28 @@ async function upsertWordSenses(params: {
     });
   }
 
+  const resolvedSenseIds = new Set(resolved.map((sense) => sense.id));
+  const staleSenseIds = (existingSenses ?? [])
+    .map((sense) => sense.id)
+    .filter((senseId) => !resolvedSenseIds.has(senseId));
+
+  if (staleSenseIds.length > 0) {
+    // Keep historical sense rows and any linked learner data, but remove them from the
+    // current published/source-of-truth set for this synced word.
+    const { error: retireError } = await supabase
+      .from("word_senses")
+      .update({
+        is_primary: false,
+        is_published: false,
+      })
+      .eq("word_id", wordId)
+      .in("id", staleSenseIds);
+
+    if (retireError) {
+      throw retireError;
+    }
+  }
+
   return resolved;
 }
 
