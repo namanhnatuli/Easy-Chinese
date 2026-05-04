@@ -249,6 +249,9 @@ async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyn
           ? basePayload.inputText
           : null,
       componentBreakdownJson: basePayload.componentBreakdownJson ?? null,
+      senses: Array.isArray(basePayload.senses) ? basePayload.senses : [],
+      senseSourceKeys: Array.isArray(basePayload.senseSourceKeys) ? basePayload.senseSourceKeys : [],
+      senseContentHashes: Array.isArray(basePayload.senseContentHashes) ? basePayload.senseContentHashes : [],
       ...parsed,
     };
   } catch (error) {

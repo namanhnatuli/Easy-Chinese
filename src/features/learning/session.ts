@@ -13,14 +13,30 @@ function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
+function buildSenseMeaningPrompt(word: LessonStudyWord) {
+  if (word.promptExample?.chineseText) {
+    return `${word.hanzi} (${word.pinyin}) trong cau ${word.promptExample.chineseText} nghia la gi?`;
+  }
+
+  return `${word.hanzi} (${word.pinyin}) nghia la gi?`;
+}
+
+function buildSenseHanziPrompt(word: LessonStudyWord) {
+  if (word.promptExample?.chineseText) {
+    return `${word.vietnameseMeaning} trong cau ${word.promptExample.chineseText} la chu nao?`;
+  }
+
+  return `${word.vietnameseMeaning} la chu nao?`;
+}
+
 export function buildFlashcardPrompt(word: LessonStudyWord, index: number): FlashcardPrompt {
   // Alternate between Hanzi -> Meaning and Meaning -> Hanzi/Sound
   const isHanziFront = index % 2 === 0;
   
   return {
     mode: "flashcard",
-    frontLabel: isHanziFront ? "Hanzi" : "Meaning",
-    frontText: isHanziFront ? word.hanzi : word.vietnameseMeaning,
+    frontLabel: isHanziFront ? "Word" : "Meaning",
+    frontText: isHanziFront ? buildSenseMeaningPrompt(word) : buildSenseHanziPrompt(word),
     back: {
       hanzi: word.hanzi,
       simplified: word.simplified,
@@ -67,14 +83,14 @@ export function buildMultipleChoiceQuestion(
     variant,
     prompt:
       variant === "hanzi_to_meaning"
-        ? word.hanzi
-        : word.vietnameseMeaning,
+        ? buildSenseMeaningPrompt(word)
+        : buildSenseHanziPrompt(word),
     choices,
     correctChoice,
     explanation:
       variant === "hanzi_to_meaning"
-        ? `${word.hanzi} means “${word.vietnameseMeaning}”.`
-        : `“${word.vietnameseMeaning}” is ${word.hanzi}.`,
+        ? `${word.hanzi} (${word.pinyin}) means "${word.vietnameseMeaning}".`
+        : `"${word.vietnameseMeaning}" is ${word.hanzi} (${word.pinyin}).`,
     detailedAnswer: {
       hanzi: word.hanzi,
       simplified: word.simplified,
@@ -102,7 +118,12 @@ export function buildTypingQuestion(
   return {
     mode: "typing",
     variant,
-    prompt: variant === "meaning_to_hanzi" ? word.vietnameseMeaning : word.pinyin,
+    prompt:
+      variant === "meaning_to_hanzi"
+        ? buildSenseHanziPrompt(word)
+        : word.promptExample?.chineseText
+          ? `Chon dung am doc cho cau ${word.promptExample.chineseText}`
+          : `Nhap chu cho cach doc ${word.pinyin}`,
     acceptedAnswers: uniqueStrings([
       word.simplified,
       word.hanzi,

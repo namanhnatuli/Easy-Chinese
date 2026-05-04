@@ -12,6 +12,8 @@ import type { PracticeDashboardSummary, RecentPracticeActivityItem } from "@/fea
 
 export interface DueReviewItem {
   id: string;
+  wordId: string;
+  senseId: string | null;
   slug: string;
   simplified: string;
   traditional: string | null;
@@ -20,6 +22,15 @@ export interface DueReviewItem {
   hanViet: string | null;
   vietnameseMeaning: string;
   sortOrder: number;
+  partOfSpeech: string | null;
+  promptExample:
+    | {
+        id: string;
+        chineseText: string;
+        pinyin: string | null;
+        vietnameseMeaning: string;
+      }
+    | null;
   status: ProgressStatus;
   memoryState: MemoryCardState;
   schedulerType: SchedulerType;
@@ -50,6 +61,9 @@ export interface ProgressSummary {
   masteredCount: number;
   dueTodayCount: number;
   overdueCount: number;
+  knownSenses: number;
+  difficultSenses: number;
+  partiallyLearnedMultiSenseWords: number;
 }
 
 export interface LessonProgressSummary {
@@ -69,6 +83,7 @@ export interface RecentReviewActivityItem {
   reviewedAt: string;
   result: ReviewResult;
   mode: ReviewMode;
+  senseId: string | null;
   word: {
     id: string;
     slug: string;
@@ -76,6 +91,11 @@ export interface RecentReviewActivityItem {
     pinyin: string;
     vietnameseMeaning: string;
   };
+  sense: {
+    id: string;
+    pinyin: string;
+    meaningVi: string;
+  } | null;
 }
 
 export interface DailyActivitySummary {

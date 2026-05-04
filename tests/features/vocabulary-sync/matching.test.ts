@@ -40,6 +40,7 @@ function createBaseWord(overrides: Partial<ExistingWordPreviewSnapshot> = {}): E
     sourceConfidence: "high",
     mainRadicals: ["扌", "电", "舌"],
     topicTags: ["giao_tiep", "cong_nghe", "pho_bien"],
+    senses: [],
     examples: [
       {
         chineseText: "我在打电话。",

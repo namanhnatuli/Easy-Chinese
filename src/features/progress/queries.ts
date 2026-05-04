@@ -46,7 +46,7 @@ export async function listRecentReviewActivity(
   const { data, error } = await supabase
     .from("review_events")
     .select(
-      "id, reviewed_at, result, mode, words!inner(id, slug, hanzi, pinyin, vietnamese_meaning, is_published)",
+      "id, reviewed_at, result, mode, sense_id, words!inner(id, slug, hanzi, pinyin, vietnamese_meaning, is_published), word_senses(id, pinyin, meaning_vi)",
     )
     .eq("user_id", userId)
     .not("mode", "is", null)
@@ -70,6 +70,7 @@ export async function listRecentReviewActivity(
         reviewedAt: row.reviewed_at,
         result: row.result,
         mode: row.mode,
+        senseId: row.sense_id,
         word: {
           id: word.id,
           slug: word.slug,
@@ -77,6 +78,13 @@ export async function listRecentReviewActivity(
           pinyin: word.pinyin,
           vietnameseMeaning: word.vietnamese_meaning,
         },
+        sense: normalizeRelation(row.word_senses)
+          ? {
+              id: normalizeRelation(row.word_senses)!.id,
+              pinyin: normalizeRelation(row.word_senses)!.pinyin,
+              meaningVi: normalizeRelation(row.word_senses)!.meaning_vi,
+            }
+          : null,
       } satisfies RecentReviewActivityItem;
     })
     .filter((item): item is RecentReviewActivityItem => item !== null);
@@ -208,7 +216,7 @@ export async function getDashboardData(
   ] = await Promise.all([
     supabase
       .from("user_word_memory")
-      .select("word_id, state, interval_days, due_at")
+      .select("word_id, sense_id, state, interval_days, due_at, lapses")
       .eq("user_id", userId),
     supabase
       .from("user_lesson_progress")
@@ -240,6 +248,30 @@ export async function getDashboardData(
 
   if (dailyActivityError) {
     throw dailyActivityError;
+  }
+
+  const wordsWithSenseProgress = Array.from(
+    new Set(
+      (memoryRows ?? [])
+        .filter((row) => row.sense_id)
+        .map((row) => row.word_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  let publishedSenseRows: Array<{ word_id: string }> = [];
+  if (wordsWithSenseProgress.length > 0) {
+    const { data: senseRows, error: publishedSenseError } = await supabase
+      .from("word_senses")
+      .select("word_id")
+      .eq("is_published", true)
+      .in("word_id", wordsWithSenseProgress);
+
+    if (publishedSenseError) {
+      throw publishedSenseError;
+    }
+
+    publishedSenseRows = senseRows ?? [];
   }
 
   const [
@@ -311,6 +343,26 @@ export async function getDashboardData(
     })),
     now,
   );
+  const senseMemoryRows = (memoryRows ?? []).filter((row) => row.sense_id);
+  const knownSenses = senseMemoryRows.filter((row) => row.state !== "new").length;
+  const difficultSenses = senseMemoryRows.filter((row) => (row.lapses ?? 0) > 0).length;
+  const learnedSenseCountsByWordId = new Map<string, number>();
+  for (const row of senseMemoryRows) {
+    if (!learnedSenseCountsByWordId.has(row.word_id)) {
+      learnedSenseCountsByWordId.set(row.word_id, 0);
+    }
+    learnedSenseCountsByWordId.set(row.word_id, (learnedSenseCountsByWordId.get(row.word_id) ?? 0) + 1);
+  }
+  const publishedSenseCountsByWordId = new Map<string, number>();
+  for (const row of publishedSenseRows) {
+    publishedSenseCountsByWordId.set(row.word_id, (publishedSenseCountsByWordId.get(row.word_id) ?? 0) + 1);
+  }
+  const partiallyLearnedMultiSenseWords = Array.from(learnedSenseCountsByWordId.entries()).filter(
+    ([wordId, learnedCount]) => {
+      const totalPublished = publishedSenseCountsByWordId.get(wordId) ?? 0;
+      return totalPublished > 1 && learnedCount > 0 && learnedCount < totalPublished;
+    },
+  ).length;
   const completedLessonsCount = (lessonRows ?? []).filter(
     (row) => row.completed_at || Number(row.completion_percent) >= 100,
   ).length;
@@ -322,7 +374,12 @@ export async function getDashboardData(
   const bookmarkedArticlesCount = (articleRows ?? []).filter((row) => row.bookmarked).length;
 
   return {
-    summary,
+    summary: {
+      ...summary,
+      knownSenses,
+      difficultSenses,
+      partiallyLearnedMultiSenseWords,
+    },
     progressSummary,
     progressTimeSeries: progressAnalytics.timeSeries,
     progressComparison: progressAnalytics.comparison,

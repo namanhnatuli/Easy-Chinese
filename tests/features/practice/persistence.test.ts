@@ -10,7 +10,8 @@ function createSupabaseStub() {
     readingInserts: [] as Array<Record<string, unknown>>,
     writingUpdates: [] as Array<Record<string, unknown>>,
     writingInserts: [] as Array<Record<string, unknown>>,
-    wordMemory: [] as Array<Record<string, unknown>>,
+    wordMemoryInserts: [] as Array<Record<string, unknown>>,
+    wordMemoryUpdates: [] as Array<Record<string, unknown>>,
     learningStats: [] as Array<Record<string, unknown>>,
     xp: [] as Array<Record<string, unknown>>,
     levels: [] as Array<Record<string, unknown>>,
@@ -53,6 +54,51 @@ function createSupabaseStub() {
                 hanzi: "学习",
                 simplified: "学习",
                 is_published: true,
+              },
+              error: null,
+            };
+          },
+        };
+
+        return builder;
+      }
+
+      if (table === "word_senses") {
+        const builder: {
+          id?: string;
+          word_id?: string;
+          select: () => typeof builder;
+          eq: (column: string, value: string | boolean) => typeof builder;
+          maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: null }>;
+        } = {
+          select() {
+            return this;
+          },
+          eq(column: string, value: string | boolean) {
+            if (column === "id") {
+              this.id = value as string;
+            }
+
+            if (column === "word_id") {
+              this.word_id = value as string;
+            }
+
+            return this;
+          },
+          async maybeSingle() {
+            if (this.id === "missing-sense") {
+              return { data: null, error: null };
+            }
+
+            return {
+              data: {
+                id: this.id ?? "sense-1",
+                word_id: this.word_id ?? "word-1",
+                is_published: true,
+                words: {
+                  id: this.word_id ?? "word-1",
+                  is_published: true,
+                },
               },
               error: null,
             };
@@ -107,6 +153,9 @@ function createSupabaseStub() {
             return this;
           },
           eq() {
+            return this;
+          },
+          is() {
             return this;
           },
           maybeSingle: async () => ({ data: null, error: null }),
@@ -173,6 +222,9 @@ function createSupabaseStub() {
           lt() {
             return Promise.resolve({ count: 0, error: null });
           },
+          in() {
+            return this;
+          },
           insert: async (payload: Record<string, unknown>) => {
             operations.practiceEvents.push(payload);
             return { error: null };
@@ -222,9 +274,24 @@ function createSupabaseStub() {
           eq() {
             return this;
           },
+          is() {
+            return this;
+          },
           maybeSingle: async () => ({ data: null, error: null }),
+          insert: async (payload: Record<string, unknown>) => {
+            operations.wordMemoryInserts.push(payload);
+            return { error: null };
+          },
+          update(payload: Record<string, unknown>) {
+            operations.wordMemoryUpdates.push(payload);
+            return {
+              eq() {
+                return this;
+              },
+            };
+          },
           upsert: async (payload: Record<string, unknown>) => {
-            operations.wordMemory.push(payload);
+            operations.wordMemoryInserts.push(payload);
             return { error: null };
           },
         };
@@ -343,13 +410,14 @@ test("persistReadingPracticeOutcome inserts sentence reading progress and event"
 
   assert.equal(operations.practiceEvents.length, 1);
   assert.equal(operations.readingInserts.length, 1);
-  assert.equal(operations.wordMemory.length, 1);
+  assert.equal(operations.wordMemoryInserts.length + operations.wordMemoryUpdates.length, 1);
   assert.equal(operations.learningStats.length, 1);
   assert.equal(operations.xp.length >= 1, true);
   assert.equal(operations.levels.length >= 1, true);
   assert.equal(operations.readingInserts[0].practice_type, "sentence");
   assert.equal(operations.readingInserts[0].status, "completed");
   assert.equal(operations.readingInserts[0].example_id, "example-1");
+  assert.equal(operations.practiceEvents[0].sense_id, null);
 });
 
 test("persistWritingPracticeOutcome inserts character writing progress and event", async () => {
@@ -367,10 +435,32 @@ test("persistWritingPracticeOutcome inserts character writing progress and event
 
   assert.equal(operations.practiceEvents.length, 1);
   assert.equal(operations.writingInserts.length, 1);
-  assert.equal(operations.wordMemory.length, 1);
+  assert.equal(operations.wordMemoryInserts.length + operations.wordMemoryUpdates.length, 1);
   assert.equal(operations.learningStats.length, 1);
   assert.equal(operations.xp.length >= 1, true);
   assert.equal(operations.levels.length >= 1, true);
   assert.equal(operations.writingInserts[0].character, "学");
   assert.equal(operations.writingInserts[0].status, "difficult");
+});
+
+test("persistReadingPracticeOutcome stores senseId for word reading practice", async () => {
+  const { supabase, operations } = createSupabaseStub();
+
+  await persistReadingPracticeOutcome({
+    supabase: supabase as never,
+    userId: "user-1",
+    input: {
+      practiceType: "word",
+      wordId: "word-1",
+      senseId: "sense-1",
+      grade: "good",
+    },
+  });
+
+  assert.equal(operations.practiceEvents.length, 1);
+  assert.equal(operations.readingInserts.length, 1);
+  assert.equal(operations.practiceEvents[0].sense_id, "sense-1");
+  assert.equal(operations.readingInserts[0].sense_id, "sense-1");
+  const savedMemory = operations.wordMemoryInserts[0] ?? operations.wordMemoryUpdates[0];
+  assert.equal(savedMemory.sense_id, "sense-1");
 });

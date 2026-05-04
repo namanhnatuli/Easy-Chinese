@@ -50,7 +50,20 @@ export default async function LearnLessonPage({
             slug: lesson.slug,
             title: lesson.title,
           }}
-          words={lesson.words}
+          words={lesson.words.map((word) => ({
+            ...word,
+            wordId: word.id,
+            senseId: null,
+            partOfSpeech: null,
+            promptExample: word.examples?.[0]
+              ? {
+                  id: word.examples[0].id,
+                  chineseText: word.examples[0].chineseText,
+                  pinyin: word.examples[0].pinyin,
+                  vietnameseMeaning: word.examples[0].vietnameseMeaning,
+                }
+              : null,
+          }))}
           isAuthenticated={Boolean(user)}
           signInHref={signInHref}
           schedulerSettings={schedulerSettings}

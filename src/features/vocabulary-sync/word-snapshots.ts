@@ -63,6 +63,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
         lastSourceUpdatedAt: row.last_source_updated_at,
         mainRadicals: [],
         topicTags: [],
+        senses: [],
         examples: [],
       });
     }
@@ -119,6 +120,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
   const examples: any[] = [];
   const tagLinks: any[] = [];
   const radicalLinks: any[] = [];
+  const senseRows: any[] = [];
 
   for (let i = 0; i < wordIds.length; i += CHUNK_SIZE) {
     const chunk = wordIds.slice(i, i + CHUNK_SIZE);
@@ -126,6 +128,7 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
       { data: exData, error: exError },
       { data: tlData, error: tlError },
       { data: rlData, error: rlError },
+      { data: wsData, error: wsError },
     ] = await Promise.all([
       supabase
         .from("word_examples")
@@ -139,15 +142,21 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
         .from("word_radicals")
         .select("word_id, radicals(radical), sort_order")
         .in("word_id", chunk),
+      supabase
+        .from("word_senses")
+        .select("id, word_id, pinyin, part_of_speech, content_hash, sense_order, is_primary")
+        .in("word_id", chunk),
     ]);
 
     if (exError) throw exError;
     if (tlError) throw tlError;
     if (rlError) throw rlError;
+    if (wsError) throw wsError;
 
     if (exData) examples.push(...exData);
     if (tlData) tagLinks.push(...tlData);
     if (rlData) radicalLinks.push(...rlData);
+    if (wsData) senseRows.push(...wsData);
   }
 
   for (const example of examples ?? []) {
@@ -193,10 +202,27 @@ export async function fetchExistingWordCandidates(rows: ParsedVocabSyncRow[]) {
     target.mainRadicals.push(radical);
   }
 
+  for (const sense of senseRows ?? []) {
+    const target = wordMap.get(sense.word_id);
+    if (!target) {
+      continue;
+    }
+
+    target.senses.push({
+      id: sense.id,
+      pinyin: sense.pinyin,
+      partOfSpeech: sense.part_of_speech,
+      contentHash: sense.content_hash,
+      senseOrder: sense.sense_order,
+      isPrimary: sense.is_primary,
+    });
+  }
+
   return [...wordMap.values()].map((word) => ({
     ...word,
     topicTags: [...new Set(word.topicTags)],
     mainRadicals: [...new Set(word.mainRadicals)],
+    senses: [...word.senses].sort((left, right) => left.senseOrder - right.senseOrder),
     examples: [...word.examples].sort((left, right) => left.sortOrder - right.sortOrder),
   }));
 }

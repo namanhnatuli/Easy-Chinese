@@ -28,18 +28,65 @@ async function readExistingReadingProgress(
   userId: string,
   input: ReadingPracticeMutationInput,
 ): Promise<ReadingProgressSnapshot | null> {
-  let query = supabase
-    .from("user_reading_progress")
-    .select("id, status, attempt_count, last_practiced_at")
-    .eq("user_id", userId)
-    .eq("practice_type", input.practiceType);
+  const selectColumns = "id, status, attempt_count, last_practiced_at";
+  let data: { id: string; status: "new" | "practicing" | "completed" | "difficult"; attempt_count: number; last_practiced_at: string | null } | null = null;
+  let error: unknown = null;
 
-  query =
-    input.practiceType === "word"
-      ? query.eq("word_id", input.wordId!)
-      : query.eq("example_id", input.exampleId!);
+  if (input.practiceType === "word") {
+    if (input.senseId) {
+      const exact = await supabase
+        .from("user_reading_progress")
+        .select(selectColumns)
+        .eq("user_id", userId)
+        .eq("practice_type", "word")
+        .eq("word_id", input.wordId!)
+        .eq("sense_id", input.senseId)
+        .maybeSingle();
 
-  const { data, error } = await query.maybeSingle();
+      if (exact.error) {
+        throw exact.error;
+      }
+
+      data = exact.data;
+
+      if (!data) {
+        const legacy = await supabase
+          .from("user_reading_progress")
+          .select(selectColumns)
+          .eq("user_id", userId)
+          .eq("practice_type", "word")
+          .eq("word_id", input.wordId!)
+          .is("sense_id", null)
+          .maybeSingle();
+
+        data = legacy.data;
+        error = legacy.error;
+      }
+    } else {
+      const result = await supabase
+        .from("user_reading_progress")
+        .select(selectColumns)
+        .eq("user_id", userId)
+        .eq("practice_type", "word")
+        .eq("word_id", input.wordId!)
+        .is("sense_id", null)
+        .maybeSingle();
+
+      data = result.data;
+      error = result.error;
+    }
+  } else {
+    const result = await supabase
+      .from("user_reading_progress")
+      .select(selectColumns)
+      .eq("user_id", userId)
+      .eq("practice_type", "sentence")
+      .eq("example_id", input.exampleId!)
+      .maybeSingle();
+
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     throw error;
@@ -62,6 +109,30 @@ async function validateReadingTarget(
   input: ReadingPracticeMutationInput,
 ) {
   if (input.practiceType === "word") {
+    if (input.senseId) {
+      const { data, error } = await supabase
+        .from("word_senses")
+        .select("id, word_id, is_published, words!inner(id, is_published)")
+        .eq("id", input.senseId)
+        .eq("word_id", input.wordId!)
+        .eq("is_published", true)
+        .eq("words.is_published", true)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Reading practice sense is not available.");
+      }
+
+      return {
+        wordId: input.wordId ?? null,
+        senseId: input.senseId ?? null,
+      };
+    }
+
     const { data, error } = await supabase
       .from("words")
       .select("id, is_published")
@@ -77,12 +148,15 @@ async function validateReadingTarget(
       throw new Error("Reading practice word is not available.");
     }
 
-    return input.wordId ?? null;
+    return {
+      wordId: input.wordId ?? null,
+      senseId: null,
+    };
   }
 
   const { data, error } = await supabase
     .from("word_examples")
-    .select("id, word_id, words!inner(id, is_published)")
+    .select("id, word_id, sense_id, words!inner(id, is_published)")
     .eq("id", input.exampleId!)
     .eq("words.is_published", true)
     .maybeSingle();
@@ -95,7 +169,10 @@ async function validateReadingTarget(
     throw new Error("Reading practice sentence is not available.");
   }
 
-  return data.word_id ?? null;
+  return {
+    wordId: data.word_id ?? null,
+    senseId: data.sense_id ?? null,
+  };
 }
 
 async function insertPracticeEvent(
@@ -103,6 +180,7 @@ async function insertPracticeEvent(
   payload: {
     user_id: string;
     word_id: string | null;
+    sense_id: string | null;
     example_id: string | null;
     practice_type: "reading_word" | "reading_sentence" | "writing_character";
     result: "completed" | "difficult" | "skipped";
@@ -135,6 +213,7 @@ export async function persistReadingPracticeOutcome({
     userId,
     practiceType: input.practiceType,
     wordId: input.wordId ?? null,
+    senseId: input.senseId ?? null,
     exampleId: input.exampleId ?? null,
     grade: input.grade,
   });
@@ -142,17 +221,19 @@ export async function persistReadingPracticeOutcome({
   await insertPracticeEvent(supabase, {
     user_id: userId,
     word_id: input.practiceType === "word" ? input.wordId ?? null : null,
+    sense_id: linkedWordId.senseId,
     example_id: input.practiceType === "sentence" ? input.exampleId ?? null : null,
     practice_type: input.practiceType === "word" ? "reading_word" : "reading_sentence",
     result: practiceResult,
     created_at: now.toISOString(),
   });
 
-  if (linkedWordId) {
+  if (linkedWordId.wordId) {
     await persistWordMemoryGrade({
       supabase,
       userId,
-      wordId: linkedWordId,
+      wordId: linkedWordId.wordId,
+      senseId: linkedWordId.senseId,
       grade: input.grade,
       now,
       practiceType: input.practiceType === "word" ? "reading_word" : "reading_sentence",
@@ -173,6 +254,7 @@ export async function persistReadingPracticeOutcome({
     const { error } = await supabase.from("user_reading_progress").insert({
       user_id: userId,
       word_id: input.practiceType === "word" ? input.wordId ?? null : null,
+      sense_id: linkedWordId.senseId,
       example_id: input.practiceType === "sentence" ? input.exampleId ?? null : null,
       practice_type: input.practiceType,
       ...patch,
@@ -196,7 +278,7 @@ export async function persistReadingPracticeOutcome({
     reason: `practice:reading:${input.practiceType}:${practiceResult}`,
     sourceKey:
       input.practiceType === "word"
-        ? `practice:reading-word:${input.wordId}:${getUtcDateKey(now)}`
+        ? `practice:reading-word:${input.wordId}:${input.senseId ?? "word"}:${getUtcDateKey(now)}`
         : `practice:reading-sentence:${input.exampleId}:${getUtcDateKey(now)}`,
   });
 
@@ -286,6 +368,7 @@ export async function persistWritingPracticeOutcome({
   await insertPracticeEvent(supabase, {
     user_id: userId,
     word_id: input.wordId,
+    sense_id: null,
     example_id: null,
     practice_type: "writing_character",
     result: practiceResult,

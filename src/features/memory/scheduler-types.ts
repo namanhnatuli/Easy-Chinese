@@ -29,6 +29,8 @@ export interface LearningSchedulerSettings {
 }
 
 export interface ExistingWordMemorySnapshot {
+  id?: string;
+  senseId?: string | null;
   schedulerType?: SchedulerType;
   state: MemoryCardState;
   easeFactor: number;

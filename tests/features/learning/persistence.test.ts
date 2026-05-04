@@ -16,12 +16,16 @@ function createQueryBuilder({
     eq() {
       return this;
     },
+    is() {
+      return this;
+    },
     select() {
       return this;
     },
     maybeSingle: async () => maybeSingleResult ?? { data: null, error: null },
     insert: async () => ({ error: insertError }),
     upsert: async () => ({ error: upsertError }),
+    update: async () => ({ error: null }),
   };
 }
 
@@ -36,9 +40,11 @@ function createSupabaseStub({
 }) {
   const operations = {
     reviewEvents: [] as Array<Record<string, unknown>>,
-    wordProgress: [] as Array<Record<string, unknown>>,
+    wordProgressInserts: [] as Array<Record<string, unknown>>,
+    wordProgressUpdates: [] as Array<Record<string, unknown>>,
     lessonProgress: [] as Array<Record<string, unknown>>,
-    wordMemory: [] as Array<Record<string, unknown>>,
+    wordMemoryInserts: [] as Array<Record<string, unknown>>,
+    wordMemoryUpdates: [] as Array<Record<string, unknown>>,
     learningStats: [] as Array<Record<string, unknown>>,
     xp: [] as Array<Record<string, unknown>>,
     levels: [] as Array<Record<string, unknown>>,
@@ -55,8 +61,20 @@ function createSupabaseStub({
 
         return {
           ...readBuilder,
+          insert: async (payload: Record<string, unknown>) => {
+            operations.wordProgressInserts.push(payload);
+            return { error: null };
+          },
+          update: (payload: Record<string, unknown>) => {
+            operations.wordProgressUpdates.push(payload);
+            return {
+              eq() {
+                return this;
+              },
+            };
+          },
           upsert: async (payload: Record<string, unknown>) => {
-            operations.wordProgress.push(payload);
+            operations.wordProgressInserts.push(payload);
             return { error: null };
           },
         };
@@ -100,6 +118,9 @@ function createSupabaseStub({
           eq() {
             return this;
           },
+          in() {
+            return this;
+          },
           gte() {
             return this;
           },
@@ -128,9 +149,24 @@ function createSupabaseStub({
           eq() {
             return this;
           },
+          is() {
+            return this;
+          },
           maybeSingle: async () => ({ data: existingMemory, error: null }),
+          insert: async (payload: Record<string, unknown>) => {
+            operations.wordMemoryInserts.push(payload);
+            return { error: null };
+          },
+          update(payload: Record<string, unknown>) {
+            operations.wordMemoryUpdates.push(payload);
+            return {
+              eq() {
+                return this;
+              },
+            };
+          },
           upsert: async (payload: Record<string, unknown>) => {
-            operations.wordMemory.push(payload);
+            operations.wordMemoryInserts.push(payload);
             return { error: null };
           },
         };
@@ -286,17 +322,19 @@ test("persistStudyOutcome writes review event, word progress, and lesson progres
   });
 
   assert.equal(operations.reviewEvents.length, 1);
-  assert.equal(operations.wordProgress.length, 1);
+  assert.equal(operations.wordProgressInserts.length + operations.wordProgressUpdates.length, 1);
   assert.equal(operations.lessonProgress.length, 1);
-  assert.equal(operations.wordMemory.length, 1);
+  assert.equal(operations.wordMemoryInserts.length + operations.wordMemoryUpdates.length, 1);
   assert.equal(operations.learningStats.length, 1);
   assert.equal(operations.xp.length >= 1, true);
   assert.equal(operations.levels.length >= 1, true);
   assert.equal(operations.reviewEvents[0].user_id, "user-1");
-  assert.equal(operations.wordProgress[0].status, "learning");
-  assert.equal(operations.wordProgress[0].interval_days, 7);
-  assert.equal(operations.wordProgress[0].next_review_at, null);
-  assert.equal(operations.wordMemory[0].word_id, "word-1");
+  const savedWordProgress = operations.wordProgressInserts[0] ?? operations.wordProgressUpdates[0];
+  const savedWordMemory = operations.wordMemoryInserts[0] ?? operations.wordMemoryUpdates[0];
+  assert.equal(savedWordProgress.status, "learning");
+  assert.equal(savedWordProgress.interval_days, 7);
+  assert.equal(savedWordProgress.next_review_at, null);
+  assert.equal(savedWordMemory.word_id, "word-1");
   assert.equal(operations.lessonProgress[0].completion_percent, 100);
   assert.ok(typeof operations.lessonProgress[0].completed_at === "string");
 });
@@ -323,9 +361,9 @@ test("persistStudyOutcome rejects lesson submissions when the word is not in tha
   );
 
   assert.equal(operations.reviewEvents.length, 0);
-  assert.equal(operations.wordProgress.length, 0);
+  assert.equal(operations.wordProgressInserts.length + operations.wordProgressUpdates.length, 0);
   assert.equal(operations.lessonProgress.length, 0);
-  assert.equal(operations.wordMemory.length, 0);
+  assert.equal(operations.wordMemoryInserts.length + operations.wordMemoryUpdates.length, 0);
   assert.equal(operations.learningStats.length, 0);
 });
 
@@ -333,13 +371,20 @@ test("persistStudyOutcome accepts queue reviews based on due memory rows", async
   const { supabase, operations } = createSupabaseStub({
     existingProgress: null,
     existingMemory: {
+      id: "memory-1",
       due_at: "2026-04-18T00:00:00.000Z",
       state: "review",
+      scheduler_type: "fsrs",
       ease_factor: 2.5,
       interval_days: 7,
       reps: 3,
       lapses: 0,
       learning_step_index: 0,
+      fsrs_stability: 3.2,
+      fsrs_difficulty: 4.5,
+      fsrs_retrievability: 0.9,
+      scheduled_days: 7,
+      elapsed_days: 7,
       last_reviewed_at: "2026-04-17T00:00:00.000Z",
       last_grade: "good",
     },
@@ -356,7 +401,7 @@ test("persistStudyOutcome accepts queue reviews based on due memory rows", async
     },
   });
 
-  assert.equal(operations.wordMemory.length, 1);
-  assert.equal(operations.wordProgress.length, 1);
+  assert.equal(operations.wordMemoryInserts.length + operations.wordMemoryUpdates.length, 1);
+  assert.equal(operations.wordProgressInserts.length + operations.wordProgressUpdates.length, 1);
   assert.equal(operations.reviewEvents.length, 1);
 });

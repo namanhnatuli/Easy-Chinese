@@ -8,6 +8,7 @@ const readingPracticeSchema = z
   .object({
     practiceType: z.enum(["word", "sentence"]),
     wordId: z.string().uuid().optional(),
+    senseId: z.string().uuid().nullable().optional(),
     exampleId: z.string().uuid().optional(),
     grade: z.enum(["again", "hard", "good", "easy"]),
   })

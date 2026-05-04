@@ -115,6 +115,28 @@ export interface Word extends TimestampedEntity {
   lastSourceUpdatedAt: string | null;
   isPublished: boolean;
   createdBy: string | null;
+  senses?: WordSense[];
+}
+
+export interface WordSense extends TimestampedEntity {
+  id: string;
+  wordId: string;
+  slug: string | null;
+  pinyin: string;
+  pinyinPlain: string | null;
+  pinyinNumbered: string | null;
+  partOfSpeech: string | null;
+  meaningVi: string;
+  meaningEn: string | null;
+  usageNote: string | null;
+  grammarRole: string | null;
+  commonCollocations: unknown;
+  senseOrder: number;
+  isPrimary: boolean;
+  sourceConfidence: SourceConfidenceLevel | null;
+  reviewStatus: WordReviewStatus;
+  contentHash: string | null;
+  isPublished: boolean;
 }
 
 export interface WordTag extends TimestampedEntity {
@@ -189,6 +211,7 @@ export interface VocabSyncRow extends TimestampedEntity {
 export interface WordExample extends TimestampedEntity {
   id: string;
   wordId: string;
+  senseId: string | null;
   chineseText: string;
   pinyin: string | null;
   vietnameseMeaning: string;
@@ -221,6 +244,7 @@ export interface UserReadingProgress extends TimestampedEntity {
   id: string;
   userId: string;
   wordId: string | null;
+  senseId: string | null;
   exampleId: string | null;
   practiceType: ReadingPracticeType;
   status: PracticeProgressStatus;
@@ -257,6 +281,7 @@ export interface PracticeEvent {
   id: string;
   userId: string;
   wordId: string | null;
+  senseId: string | null;
   exampleId: string | null;
   ttsAudioCacheId?: string | null;
   practiceType: PracticeEventType;
@@ -269,6 +294,7 @@ export interface UserWordMemory extends TimestampedEntity {
   id: string;
   userId: string;
   wordId: string;
+  senseId: string | null;
   schedulerType: SchedulerType;
   state: MemoryCardState;
   easeFactor: number;
@@ -319,6 +345,7 @@ export interface ReviewEvent {
   id: string;
   userId: string;
   wordId: string;
+  senseId: string | null;
   mode: ReviewMode | null;
   result: ReviewResult | null;
   schedulerType: SchedulerType;
@@ -381,6 +408,7 @@ export interface Lesson extends TimestampedEntity {
 export interface LessonWord {
   lessonId: string;
   wordId: string;
+  senseId: string | null;
   sortOrder: number;
   difficultyScore: number | null;
   relevanceScore: number | null;
@@ -478,6 +506,7 @@ export interface UserWordProgress extends TimestampedEntity {
   id: string;
   userId: string;
   wordId: string;
+  senseId: string | null;
   status: ProgressStatus;
   correctCount: number;
   incorrectCount: number;

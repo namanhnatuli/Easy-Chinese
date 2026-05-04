@@ -2,6 +2,8 @@ import type { ReviewMode, ReviewResult, SchedulerGrade } from "@/types/domain";
 
 export interface LessonStudyWord {
   id: string;
+  wordId: string;
+  senseId?: string | null;
   slug: string;
   simplified: string;
   traditional: string | null;
@@ -10,8 +12,15 @@ export interface LessonStudyWord {
   hanViet: string | null;
   vietnameseMeaning: string;
   sortOrder: number;
+  partOfSpeech?: string | null;
   notes?: string | null;
   mnemonic?: string | null;
+  promptExample?: {
+    id: string;
+    chineseText: string;
+    pinyin: string | null;
+    vietnameseMeaning: string;
+  } | null;
   examples?: Array<{
     id: string;
     chineseText: string;
@@ -65,6 +74,7 @@ export interface TypingStudyQuestion {
 export interface StudyOutcomeSubmission {
   lessonId?: string;
   wordId: string;
+  senseId?: string | null;
   mode: ReviewMode;
   result: ReviewResult;
   grade?: SchedulerGrade;

@@ -8,6 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 const reviewSubmissionSchema = z.object({
   lessonId: z.string().uuid().optional(),
   wordId: z.string().uuid(),
+  senseId: z.string().uuid().nullable().optional(),
   mode: z.enum(["flashcard", "multiple_choice", "typing"]),
   result: z.enum(["correct", "incorrect", "skipped"]),
   grade: z.enum(["again", "hard", "good", "easy"]).optional(),
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
     logger.info("review_submission_succeeded", {
       userId: user.id,
       wordId: payload.wordId,
+      senseId: payload.senseId ?? null,
       lessonId: payload.lessonId ?? null,
       mode: payload.mode,
       result: payload.result,
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
     logger.error("review_submission_failed", error, {
       userId: user.id,
       wordId: payload.wordId,
+      senseId: payload.senseId ?? null,
       lessonId: payload.lessonId ?? null,
       mode: payload.mode,
       result: payload.result,

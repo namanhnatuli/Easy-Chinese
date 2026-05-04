@@ -27,6 +27,25 @@ export interface PublicWordTag {
   label: string;
 }
 
+export interface PublicWordSense {
+  id: string;
+  slug: string | null;
+  pinyin: string;
+  pinyinPlain: string | null;
+  pinyinNumbered: string | null;
+  partOfSpeech: string | null;
+  meaningVi: string;
+  meaningEn: string | null;
+  usageNote: string | null;
+  grammarRole: string | null;
+  commonCollocations: unknown;
+  senseOrder: number;
+  isPrimary: boolean;
+  sourceConfidence: "low" | "medium" | "high" | null;
+  reviewStatus: "pending" | "needs_review" | "approved" | "rejected" | "applied";
+  isPublished: boolean;
+}
+
 export interface VocabularyFilters {
   q?: string;
   hsk?: number;
@@ -72,8 +91,23 @@ export interface PublicWordDetail extends PublicWordListItem {
   structureExplanation: string | null;
   ambiguityNote: string | null;
   readingCandidates: string | null;
+  senses: PublicWordSense[];
+  resolvedSenses: Array<
+    PublicWordSense & {
+      shortMeaning: string;
+      examples: Array<{
+        id: string;
+        senseId: string | null;
+        chineseText: string;
+        pinyin: string | null;
+        vietnameseMeaning: string;
+        sortOrder: number;
+      }>;
+    }
+  >;
   examples: Array<{
     id: string;
+    senseId: string | null;
     chineseText: string;
     pinyin: string | null;
     vietnameseMeaning: string;
@@ -115,6 +149,67 @@ function parsePipeDelimitedText(value: string | null) {
 
 function getHumanLabel(value: string) {
   return TAG_LABELS[value] ?? value;
+}
+
+function summarizeMeaning(value: string, maxLength = 32) {
+  const normalized = value.trim();
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+function createLegacyFallbackSense(word: {
+  id: string;
+  pinyin: string;
+  part_of_speech: string | null;
+  vietnamese_meaning: string;
+  english_meaning: string | null;
+  notes: string | null;
+  source_confidence: "low" | "medium" | "high" | null;
+}) {
+  return {
+    id: `legacy-${word.id}`,
+    slug: null,
+    pinyin: word.pinyin,
+    pinyinPlain: null,
+    pinyinNumbered: null,
+    partOfSpeech: word.part_of_speech,
+    meaningVi: word.vietnamese_meaning,
+    meaningEn: word.english_meaning,
+    usageNote: word.notes,
+    grammarRole: null,
+    commonCollocations: null,
+    senseOrder: 1,
+    isPrimary: true,
+    sourceConfidence: word.source_confidence,
+    reviewStatus: "approved" as const,
+    isPublished: true,
+  } satisfies PublicWordSense;
+}
+
+function buildResolvedSenses(input: {
+  senses: PublicWordSense[];
+  examples: Array<{
+    id: string;
+    senseId: string | null;
+    chineseText: string;
+    pinyin: string | null;
+    vietnameseMeaning: string;
+    sortOrder: number;
+  }>;
+}) {
+  const fallbackSenseId = input.senses.find((sense) => sense.isPrimary)?.id ?? input.senses[0]?.id ?? null;
+
+  return input.senses.map((sense) => ({
+    ...sense,
+    shortMeaning: summarizeMeaning(sense.meaningVi),
+    examples: input.examples.filter((example) =>
+      example.senseId === sense.id || (example.senseId === null && fallbackSenseId === sense.id),
+    ),
+  }));
 }
 
 function mapWordListItem(row: {
@@ -446,12 +541,26 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
 
   const { data: examples, error: examplesError } = await supabase
     .from("word_examples")
-    .select("id, chinese_text, pinyin, vietnamese_meaning, sort_order")
+    .select("id, sense_id, chinese_text, pinyin, vietnamese_meaning, sort_order")
     .eq("word_id", word.id)
     .order("sort_order");
 
   if (examplesError) {
     throw examplesError;
+  }
+
+  const { data: senses, error: sensesError } = await supabase
+    .from("word_senses")
+    .select(
+      "id, slug, pinyin, pinyin_plain, pinyin_numbered, part_of_speech, meaning_vi, meaning_en, usage_note, grammar_role, common_collocations, sense_order, is_primary, source_confidence, review_status, is_published",
+    )
+    .eq("word_id", word.id)
+    .eq("is_published", true)
+    .order("sense_order")
+    .order("created_at");
+
+  if (sensesError) {
+    throw sensesError;
   }
 
   const mapped = mapWordListItem({
@@ -481,6 +590,47 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
   ]);
   const [wordWithRelations] = attachWordRelations([mapped], radicalsByWordId, tagsByWordId);
 
+  const resolvedExamples = (examples ?? []).map((example) => ({
+    id: example.id,
+    senseId: example.sense_id ?? ((senses ?? []).length > 0 ? null : `legacy-${word.id}`),
+    chineseText: example.chinese_text,
+    pinyin: example.pinyin,
+    vietnameseMeaning: example.vietnamese_meaning,
+    sortOrder: example.sort_order,
+  }));
+
+  const resolvedWordSenses =
+    (senses ?? []).length > 0
+      ? (senses ?? []).map((sense) => ({
+          id: sense.id,
+          slug: sense.slug,
+          pinyin: sense.pinyin,
+          pinyinPlain: sense.pinyin_plain,
+          pinyinNumbered: sense.pinyin_numbered,
+          partOfSpeech: sense.part_of_speech,
+          meaningVi: sense.meaning_vi,
+          meaningEn: sense.meaning_en,
+          usageNote: sense.usage_note,
+          grammarRole: sense.grammar_role,
+          commonCollocations: sense.common_collocations,
+          senseOrder: sense.sense_order,
+          isPrimary: sense.is_primary,
+          sourceConfidence: sense.source_confidence,
+          reviewStatus: sense.review_status,
+          isPublished: sense.is_published,
+        }))
+      : [
+          createLegacyFallbackSense({
+            id: word.id,
+            pinyin: word.pinyin,
+            part_of_speech: word.part_of_speech,
+            vietnamese_meaning: word.vietnamese_meaning,
+            english_meaning: word.english_meaning,
+            notes: word.notes,
+            source_confidence: word.source_confidence,
+          }),
+        ];
+
   return {
     ...wordWithRelations,
     normalizedText: word.normalized_text,
@@ -489,14 +639,13 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
     structureExplanation: word.structure_explanation,
     ambiguityNote: word.ambiguity_note,
     readingCandidates: word.reading_candidates,
-    examples: (examples ?? []).map((example) => ({
-      id: example.id,
-      chineseText: example.chinese_text,
-      pinyin: example.pinyin,
-      vietnameseMeaning: example.vietnamese_meaning,
-      sortOrder: example.sort_order,
-    })),
-  };
+    senses: resolvedWordSenses,
+    examples: resolvedExamples,
+    resolvedSenses: buildResolvedSenses({
+      senses: resolvedWordSenses,
+      examples: resolvedExamples,
+    }),
+  } satisfies PublicWordDetail;
 }
 
 export function formatPublicPartOfSpeech(value: string | null) {

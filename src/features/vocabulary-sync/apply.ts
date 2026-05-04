@@ -6,6 +6,11 @@ import { z } from "zod";
 import { requireAdminSupabase } from "@/features/admin/shared";
 import { buildWordSlugBase } from "@/features/vocabulary-sync/apply-slug";
 import { resolveEffectiveInputTextForApply } from "@/features/vocabulary-sync/apply-payload";
+import {
+  buildSenseSourceKeyForApply,
+  resolveApplySenses,
+  type ApplyResolvedSense,
+} from "@/features/vocabulary-sync/apply-senses";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { resolveVocabSyncMatch } from "@/features/vocabulary-sync/matching";
 import {
@@ -32,6 +37,22 @@ const normalizedExampleSchema = z.object({
   sortOrder: z.number().int().positive(),
 });
 
+const normalizedSenseExampleSchema = z.object({
+  cn: z.string().trim().min(1),
+  py: z.string().trim().nullable(),
+  vi: z.string().trim().min(1),
+});
+
+const normalizedSenseSchema = z.object({
+  pinyin: z.string().trim().min(1),
+  partOfSpeech: z.string().trim().nullable(),
+  meaningVi: z.string().trim().min(1),
+  usageNote: z.string().trim().nullable(),
+  senseOrder: z.number().int().positive(),
+  isPrimary: z.boolean(),
+  examples: z.array(normalizedSenseExampleSchema).default([]),
+});
+
 const effectivePayloadSchema = z.object({
   externalId: z.string().trim().nullable().optional(),
   inputText: z.string().trim().nullable().optional(),
@@ -56,6 +77,9 @@ const effectivePayloadSchema = z.object({
   ambiguityFlag: z.boolean().default(false),
   ambiguityNote: z.string().trim().nullable().optional(),
   readingCandidates: z.string().trim().nullable().optional(),
+  senses: z.array(normalizedSenseSchema).default([]),
+  senseSourceKeys: z.array(z.string().trim().min(1)).default([]),
+  senseContentHashes: z.array(z.string().trim().min(1)).default([]),
   reviewStatus: z.enum(["pending", "needs_review", "approved", "rejected", "applied"]).default("approved"),
   aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]).default("pending"),
   sourceUpdatedAt: z.string().trim().nullable().optional(),
@@ -76,6 +100,10 @@ export interface ApplyVocabSyncRowsResult {
   failed: number;
   skipped: number;
   results: ApplyVocabSyncRowResult[];
+}
+
+interface ApplyResolvedSenseWithId extends ApplyResolvedSense {
+  id: string;
 }
 
 async function normalizePayloadMainRadicals(payload: NormalizedVocabSyncPayload) {
@@ -123,6 +151,36 @@ async function buildUniqueWordSlug(payload: Pick<NormalizedVocabSyncPayload, "no
   return `${baseSlug}-${suffix}`;
 }
 
+function isPublishedReviewStatus(reviewStatus: NormalizedVocabSyncPayload["reviewStatus"]) {
+  return reviewStatus === "approved" || reviewStatus === "applied";
+}
+
+function getPrimaryMeaningVi(payload: NormalizedVocabSyncPayload) {
+  const primarySense = payload.senses.find((sense) => sense.isPrimary) ?? payload.senses[0] ?? null;
+  return primarySense?.meaningVi ?? payload.meaningsVi;
+}
+
+function doesExistingWordMatchSenseState(
+  matchedWord: Awaited<ReturnType<typeof fetchExistingWordCandidates>>[number],
+  senses: ApplyResolvedSense[],
+) {
+  const existing = (matchedWord.senses ?? [])
+    .map(
+      (sense) =>
+        `${buildSenseSourceKeyForApply({
+          normalizedText: matchedWord.normalizedText ?? matchedWord.simplified ?? matchedWord.hanzi,
+          pinyin: sense.pinyin,
+          partOfSpeech: sense.partOfSpeech,
+        })}::${sense.contentHash ?? ""}`,
+    )
+    .sort();
+  const expected = senses
+    .map((sense) => `${sense.sourceKey}::${sense.contentHash}`)
+    .sort();
+
+  return JSON.stringify(existing) === JSON.stringify(expected);
+}
+
 function getEffectivePayload(row: VocabSyncRow): NormalizedVocabSyncPayload {
   const rawPayload = row.adminEditedPayload ?? row.normalizedPayload;
   const parsed = effectivePayloadSchema.parse(rawPayload);
@@ -155,6 +213,9 @@ function getEffectivePayload(row: VocabSyncRow): NormalizedVocabSyncPayload {
     ambiguityFlag: parsed.ambiguityFlag,
     ambiguityNote: parsed.ambiguityNote ?? null,
     readingCandidates: parsed.readingCandidates ?? null,
+    senses: parsed.senses,
+    senseSourceKeys: parsed.senseSourceKeys,
+    senseContentHashes: parsed.senseContentHashes,
     reviewStatus: parsed.reviewStatus,
     aiStatus: parsed.aiStatus,
     sourceUpdatedAt: parsed.sourceUpdatedAt ?? row.sourceUpdatedAt ?? null,
@@ -313,13 +374,14 @@ async function upsertAppliedWord(params: {
     topicId,
   } = params;
   const now = new Date().toISOString();
+  const published = isPublishedReviewStatus(payload.reviewStatus);
   const basePayload = {
     simplified: payload.inputText,
     traditional: payload.traditionalVariant,
     hanzi: payload.inputText,
     pinyin: payload.pinyin,
     han_viet: payload.hanViet,
-    vietnamese_meaning: payload.meaningsVi,
+    vietnamese_meaning: getPrimaryMeaningVi(payload),
     external_source: row.externalSource,
     external_id: row.externalId,
     source_row_key: row.sourceRowKey,
@@ -337,13 +399,13 @@ async function upsertAppliedWord(params: {
     ambiguity_flag: payload.ambiguityFlag,
     ambiguity_note: payload.ambiguityNote,
     reading_candidates: payload.readingCandidates,
-    review_status: "applied" as const,
+    review_status: payload.reviewStatus,
     ai_status: payload.aiStatus,
     source_confidence: payload.sourceConfidence,
     content_hash: contentHash,
     last_synced_at: now,
     last_source_updated_at: payload.sourceUpdatedAt,
-    is_published: true,
+    is_published: published,
     radical_id: mainRadicalId,
     topic_id: topicId,
   };
@@ -388,30 +450,153 @@ async function upsertAppliedWord(params: {
   };
 }
 
-async function replaceWordExamples(params: {
+async function upsertWordSenses(params: {
   supabase: SupabaseClient;
   wordId: string;
-  examples: NormalizedVocabSyncPayload["examples"];
+  payload: NormalizedVocabSyncPayload;
 }) {
-  const { supabase, wordId, examples } = params;
-  const { error: deleteError } = await supabase.from("word_examples").delete().eq("word_id", wordId);
+  const { supabase, wordId, payload } = params;
+  const senses = resolveApplySenses(payload);
+  const { data: existingSenses, error: selectError } = await supabase
+    .from("word_senses")
+    .select("id, pinyin, part_of_speech")
+    .eq("word_id", wordId);
+
+  if (selectError) {
+    throw selectError;
+  }
+
+  const existingSenseByKey = new Map<string, { id: string; pinyin: string; part_of_speech: string | null }>();
+
+  for (const sense of existingSenses ?? []) {
+    const key = buildSenseSourceKeyForApply({
+      normalizedText: payload.normalizedText,
+      pinyin: sense.pinyin,
+      partOfSpeech: sense.part_of_speech,
+    });
+
+    if (existingSenseByKey.has(key)) {
+      throw new Error(`Duplicate existing word_senses found for ${key}.`);
+    }
+
+    existingSenseByKey.set(key, sense);
+  }
+
+  const published = isPublishedReviewStatus(payload.reviewStatus);
+  const resolved: ApplyResolvedSenseWithId[] = [];
+
+  for (const sense of senses) {
+    const updatePayload = {
+      pinyin: sense.pinyin,
+      part_of_speech: sense.partOfSpeech,
+      meaning_vi: sense.meaningVi,
+      usage_note: sense.usageNote,
+      sense_order: sense.senseOrder,
+      is_primary: sense.isPrimary,
+      source_confidence: payload.sourceConfidence,
+      review_status: payload.reviewStatus,
+      content_hash: sense.contentHash,
+      is_published: published,
+    };
+    const existing = existingSenseByKey.get(sense.sourceKey);
+
+    if (existing) {
+      const { error } = await supabase
+        .from("word_senses")
+        .update(updatePayload)
+        .eq("id", existing.id);
+
+      if (error) {
+        throw error;
+      }
+
+      resolved.push({
+        ...sense,
+        id: existing.id,
+      });
+      continue;
+    }
+
+    const { data, error } = await supabase
+      .from("word_senses")
+      .insert({
+        word_id: wordId,
+        slug: null,
+        pinyin_plain: null,
+        pinyin_numbered: null,
+        meaning_en: null,
+        grammar_role: null,
+        common_collocations: null,
+        ...updatePayload,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    resolved.push({
+      ...sense,
+      id: data.id,
+    });
+  }
+
+  return resolved;
+}
+
+async function replaceManagedSenseExamples(params: {
+  supabase: SupabaseClient;
+  wordId: string;
+  senses: ApplyResolvedSenseWithId[];
+}) {
+  const { supabase, wordId, senses } = params;
+  const managedSenseIds = senses.map((sense) => sense.id);
+
+  if (managedSenseIds.length === 0) {
+    return;
+  }
+
+  const { data: existingExamples, error: existingExamplesError } = await supabase
+    .from("word_examples")
+    .select("sense_id, sort_order")
+    .eq("word_id", wordId);
+
+  if (existingExamplesError) {
+    throw existingExamplesError;
+  }
+
+  const { error: deleteError } = await supabase
+    .from("word_examples")
+    .delete()
+    .eq("word_id", wordId)
+    .in("sense_id", managedSenseIds);
+
   if (deleteError) {
     throw deleteError;
   }
 
-  if (examples.length === 0) {
+  const preservedMaxSortOrder = (existingExamples ?? [])
+    .filter((example) => !managedSenseIds.includes(example.sense_id))
+    .reduce((max, example) => Math.max(max, example.sort_order), 0);
+
+  let nextSortOrder = preservedMaxSortOrder + 1;
+  const examplesToInsert = senses.flatMap((sense) =>
+    sense.examples.map((example) => ({
+      word_id: wordId,
+      sense_id: sense.id,
+      chinese_text: example.cn,
+      pinyin: example.py,
+      vietnamese_meaning: example.vi,
+      sort_order: nextSortOrder++,
+    })),
+  );
+
+  if (examplesToInsert.length === 0) {
     return;
   }
 
-  const { error: insertError } = await supabase.from("word_examples").insert(
-    examples.map((example) => ({
-      word_id: wordId,
-      chinese_text: example.chineseText,
-      pinyin: example.pinyin,
-      vietnamese_meaning: example.vietnameseMeaning,
-      sort_order: example.sortOrder,
-    })),
-  );
+  const { error: insertError } = await supabase.from("word_examples").insert(examplesToInsert);
 
   if (insertError) {
     throw insertError;
@@ -628,8 +813,13 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
   }
 
   const matchedWord = resolvedMatch.candidates[0] ?? null;
+  const resolvedSenses = resolveApplySenses(payload);
 
-  if (matchedWord && buildExistingWordHash(matchedWord) === parsedRow.contentHash) {
+  if (
+    matchedWord &&
+    buildExistingWordHash(matchedWord) === parsedRow.contentHash &&
+    doesExistingWordMatchSenseState(matchedWord, resolvedSenses)
+  ) {
     const appliedAt = new Date().toISOString();
     const { auth } = await requireAdminSupabase();
 
@@ -642,7 +832,7 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
       errorMessage: null,
       reviewNote:
         row.reviewNote ??
-        "Skipped during apply because the approved payload already matches the current production word.",
+        "Skipped during apply because the approved payload already matches the current production word and sense state.",
     });
 
     return {
@@ -699,10 +889,15 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
       topicId: topicAssignments.primaryTopicId,
     });
 
-    await replaceWordExamples({
+    const appliedSenses = await upsertWordSenses({
       supabase,
       wordId,
-      examples: payload.examples,
+      payload,
+    });
+    await replaceManagedSenseExamples({
+      supabase,
+      wordId,
+      senses: appliedSenses,
     });
     await replaceWordTagLinks({
       supabase,

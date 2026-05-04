@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
 import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
 import { HanziWriterAnimator } from "@/components/shared/hanzi-writer-animator";
 import { PronunciationButton } from "@/components/shared/pronunciation-button";
@@ -10,6 +9,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { WordSensesPanel } from "@/components/vocabulary/word-senses-panel";
 import {
   formatPublicPartOfSpeech,
   formatPublicStructureType,
@@ -39,10 +39,13 @@ export async function generateMetadata({
 
 export default async function VocabularyDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ wordSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { wordSlug } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const word = await getPublicWordBySlug(wordSlug);
   const { t, link } = await getServerI18n();
 
@@ -50,19 +53,17 @@ export default async function VocabularyDetailPage({
     notFound();
   }
 
+  const requestedSenseId = Array.isArray(resolvedSearchParams.sense)
+    ? resolvedSearchParams.sense[0]
+    : resolvedSearchParams.sense;
+  const primarySense = word.resolvedSenses.find((sense) => sense.isPrimary) ?? word.resolvedSenses[0] ?? null;
   const displayedHanzi =
     word.traditionalVariant && word.traditionalVariant !== word.simplified
       ? `${word.simplified} [${word.traditionalVariant}]`
       : word.simplified;
   const wordCharacters = Array.from(word.simplified);
   const shouldShowWordComposition = wordCharacters.length > 1;
-  const shouldShowLearningDetails = Boolean(
-    word.hanViet ||
-    word.meaningsVi ||
-    word.readingCandidates ||
-    word.mnemonic ||
-    word.notes,
-  );
+  const shouldShowStudyNotes = Boolean(word.hanViet || word.meaningsVi || word.readingCandidates || word.notes);
 
   return (
     <div className="page-shell">
@@ -74,21 +75,10 @@ export default async function VocabularyDetailPage({
         actions={
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="outline">
-              <Link href={link(`/practice/reading/words?word=${word.id}`)}>
-                {t("practice.cta.reading")}
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
               <Link href={link(`/practice/writing/${word.id}`)}>
                 {t("practice.cta.writing")}
               </Link>
             </Button>
-            <AiExplanationCard
-              payload={{ kind: "word", wordId: word.id }}
-              title={t("ai.explanation.wordTitle", { value: word.hanzi })}
-              description={t("ai.explanation.wordDescription")}
-              triggerLabel={t("ai.explanation.open")}
-            />
             <Button asChild>
               <Link href={link("/vocabulary")}>
                 {t("common.backToVocabulary")}
@@ -124,14 +114,14 @@ export default async function VocabularyDetailPage({
 
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-3 justify-between">
-                <p className="text-pinyin">{word.pinyin}</p>
+                <p className="text-pinyin">{primarySense?.pinyin ?? word.pinyin}</p>
                 <PronunciationButton
                   text={word.simplified}
                   sourceType="word"
                   sourceRefId={word.id}
                   sourceMetadata={{
                     slug: word.slug,
-                    pinyin: word.pinyin,
+                    pinyin: primarySense?.pinyin ?? word.pinyin,
                     vietnameseMeaning: word.vietnameseMeaning,
                   }}
                   label="Nghe từ"
@@ -177,64 +167,6 @@ export default async function VocabularyDetailPage({
               </div>
             </div>
 
-            {shouldShowLearningDetails ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-muted/35 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("vocabulary.meanings")}
-                  </p>
-                  <div className="mt-3 space-y-2 text-sm text-foreground">
-                    {word.hanViet ? (
-                      <p>{t("vocabulary.hanViet", { value: word.hanViet })}</p>
-                    ) : null}
-                    {word.meaningsVi ? (
-                      <p>
-                        {t("vocabulary.meaningsVi", { value: word.meaningsVi })}
-                      </p>
-                    ) : null}
-                    {word.readingCandidates ? (
-                      <p>
-                        {t("vocabulary.readingCandidates", {
-                          value: word.readingCandidates,
-                        })}
-                      </p>
-                    ) : null}
-                    {word.mnemonic ? (
-                      <p>
-                        <span className="font-semibold text-foreground">
-                          {t("vocabulary.mnemonic")}:{" "}
-                        </span>
-                        {word.mnemonic}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-muted/35 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Ghi chú học từ
-                  </p>
-                  <div className="mt-3 space-y-3 text-sm text-foreground">
-                    {word.notes ? (
-                      <p className="leading-6">{word.notes}</p>
-                    ) : null}
-                    {word.normalizedText ? (
-                      <p className="text-muted-foreground">
-                        {t("vocabulary.normalizedText", {
-                          value: word.normalizedText,
-                        })}
-                      </p>
-                    ) : null}
-                    {!word.notes && !word.normalizedText ? (
-                      <p className="text-muted-foreground">
-                        {t("common.notAvailable")}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
             {shouldShowWordComposition || word.structureExplanation ? (
               <div className="rounded-2xl border border-border/70 bg-background p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -264,16 +196,12 @@ export default async function VocabularyDetailPage({
                 ) : null}
               </div>
             ) : null}
-
-            {word.ambiguityFlag && word.ambiguityNote ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                {word.ambiguityNote}
-              </div>
-            ) : null}
           </CardContent>
         </Card>
 
         <div className="space-y-4">
+          <WordSensesPanel word={word} initialSenseId={requestedSenseId} />
+
           <Card className="border-border/80 bg-card/95">
             <CardHeader>
               <CardTitle>{t("vocabulary.wordProfile")}</CardTitle>
@@ -296,6 +224,15 @@ export default async function VocabularyDetailPage({
                   ) : (
                     <Badge variant="outline">{t("common.notAvailable")}</Badge>
                   )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("filters.hskLevel")}
+                </p>
+                <div className="mt-3">
+                  <Badge variant="secondary">HSK {word.hskLevel}</Badge>
                 </div>
               </div>
 
@@ -351,50 +288,46 @@ export default async function VocabularyDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="border-border/80 bg-card/95">
-            <CardHeader>
-              <CardTitle>{t("vocabulary.examples")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {word.examples.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("vocabulary.noExamples")}
-                </p>
-              ) : (
-                word.examples.map((example) => (
-                  <div
-                    key={example.id}
-                    className="rounded-[1.5rem] bg-muted/50 p-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <p className="text-lg font-semibold text-foreground">
-                        {example.chineseText}
-                      </p>
-                      <PronunciationButton
-                        text={example.chineseText}
-                        sourceType="example"
-                        sourceRefId={example.id}
-                        sourceMetadata={{
-                          wordId: word.id,
-                          wordSlug: word.slug,
-                          pinyin: example.pinyin,
-                          vietnameseMeaning: example.vietnameseMeaning,
-                        }}
-                        label="Nghe câu"
-                        className="rounded-full"
-                      />
-                    </div>
-                    {example.pinyin ? (
-                      <p className="mt-2 text-pinyin">{example.pinyin}</p>
+          {shouldShowStudyNotes || word.mnemonic || word.normalizedText || word.ambiguityFlag ? (
+            <Card className="border-border/80 bg-card/95">
+              <CardHeader>
+                <CardTitle>{t("vocabulary.meanings")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                {shouldShowStudyNotes ? (
+                  <div className="space-y-2 text-foreground">
+                    {word.hanViet ? <p>{t("vocabulary.hanViet", { value: word.hanViet })}</p> : null}
+                    {word.meaningsVi ? (
+                      <p>{t("vocabulary.meaningsVi", { value: word.meaningsVi })}</p>
                     ) : null}
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {example.vietnameseMeaning}
-                    </p>
+                    {word.readingCandidates ? (
+                      <p>{t("vocabulary.readingCandidates", { value: word.readingCandidates })}</p>
+                    ) : null}
+                    {word.notes ? <p className="leading-6">{word.notes}</p> : null}
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                ) : null}
+
+                {word.mnemonic ? (
+                  <div className="rounded-2xl bg-muted/35 p-4 text-foreground">
+                    <span className="font-semibold">{t("vocabulary.mnemonic")}: </span>
+                    {word.mnemonic}
+                  </div>
+                ) : null}
+
+                {word.normalizedText ? (
+                  <p className="text-muted-foreground">
+                    {t("vocabulary.normalizedText", { value: word.normalizedText })}
+                  </p>
+                ) : null}
+
+                {word.ambiguityFlag && word.ambiguityNote ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                    {word.ambiguityNote}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </section>
 

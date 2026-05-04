@@ -25,12 +25,23 @@ export interface WritingProgressSnapshot {
 export interface ReadingPracticeWordItem {
   kind: "word";
   id: string;
+  wordId: string;
+  senseId: string | null;
   slug: string;
   hanzi: string;
   simplified: string;
   pinyin: string;
   vietnameseMeaning: string;
   hskLevel: number;
+  partOfSpeech: string | null;
+  promptExample:
+    | {
+        id: string;
+        chineseText: string;
+        pinyin: string | null;
+        vietnameseMeaning: string;
+      }
+    | null;
   progress: ReadingProgressSnapshot | null;
   memory: {
     schedulerType: SchedulerType;
@@ -54,6 +65,8 @@ export interface ReadingPracticeWordItem {
 export interface ReadingPracticeSentenceItem {
   kind: "sentence";
   id: string;
+  wordId: string | null;
+  senseId: string | null;
   chineseText: string;
   pinyin: string | null;
   vietnameseMeaning: string;
@@ -123,12 +136,18 @@ export interface RecentPracticeActivityItem {
   createdAt: string;
   practiceType: PracticeEventType;
   result: PracticeEventResult;
+  senseId: string | null;
   word: {
     id: string;
     slug: string;
     hanzi: string;
     pinyin: string;
     vietnameseMeaning: string;
+  } | null;
+  sense: {
+    id: string;
+    pinyin: string;
+    meaningVi: string;
   } | null;
   sentence: {
     id: string;
@@ -148,6 +167,7 @@ export interface RecentPracticeActivityItem {
 export interface ReadingPracticeMutationInput {
   practiceType: ReadingPracticeType;
   wordId?: string;
+  senseId?: string | null;
   exampleId?: string;
   grade: SchedulerGrade;
 }

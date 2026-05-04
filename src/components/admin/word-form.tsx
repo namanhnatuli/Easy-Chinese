@@ -1,14 +1,13 @@
 import Link from "next/link";
 
 import { AdminFormCard, AdminSubmitRow, Field, inputClassName, textareaClassName } from "@/components/admin/form-primitives";
-import { WordExamplesEditor } from "@/components/admin/word-examples-editor";
 import { SearchableMultiSelect } from "@/components/admin/searchable-multi-select";
+import { WordSensesEditor } from "@/components/admin/word-senses-editor";
 import { buttonVariants } from "@/components/ui/button";
 import type { AdminSelectOption, AdminWordEditor } from "@/features/admin/words";
 import {
   ALLOWED_TOPIC_TAGS,
   CHARACTER_STRUCTURE_LIST,
-  PART_OF_SPEECH_LIST,
   TAG_LABELS,
 } from "@/features/vocabulary-sync/constants";
 import { getServerI18n } from "@/i18n/server";
@@ -34,19 +33,10 @@ export async function WordForm({
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="id" defaultValue={word?.id ?? ""} />
-      <input
-        type="hidden"
-        name="component_breakdown_json"
-        defaultValue={
-          word?.component_breakdown_json
-            ? JSON.stringify(word.component_breakdown_json)
-            : ""
-        }
-      />
 
       <AdminFormCard
         title={t("admin.words.form.title")}
-        description={t("admin.words.form.description")}
+        description="Edit shared word metadata here. Reading-specific meanings, examples, and publish state live in the sense editor below."
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Field label={t("admin.words.form.slug")}>
@@ -79,9 +69,6 @@ export async function WordForm({
           <Field label={t("admin.words.form.hanzi")}>
             <input name="hanzi" defaultValue={word?.hanzi ?? ""} className={inputClassName()} />
           </Field>
-          <Field label={t("admin.words.form.pinyin")}>
-            <input name="pinyin" defaultValue={word?.pinyin ?? ""} className={inputClassName()} />
-          </Field>
           <Field label={t("admin.words.form.hanViet")}>
             <input
               name="han_viet"
@@ -96,24 +83,10 @@ export async function WordForm({
               className={inputClassName()}
             />
           </Field>
-          <Field label={t("admin.words.form.vietnameseMeaning")}>
-            <input
-              name="vietnamese_meaning"
-              defaultValue={word?.vietnamese_meaning ?? ""}
-              className={inputClassName()}
-            />
-          </Field>
           <Field label={t("contentSync.detail.fields.normalizedText")}>
             <input
               name="normalized_text"
               defaultValue={word?.normalized_text ?? word?.simplified ?? ""}
-              className={inputClassName()}
-            />
-          </Field>
-          <Field label={t("contentSync.detail.fields.meaningsVi")}>
-            <input
-              name="meanings_vi"
-              defaultValue={word?.meanings_vi ?? word?.vietnamese_meaning ?? ""}
               className={inputClassName()}
             />
           </Field>
@@ -152,15 +125,6 @@ export async function WordForm({
               labelMapping={TAG_LABELS}
             />
           </Field>
-          <Field label={t("contentSync.detail.fields.partOfSpeech")}>
-            <SearchableMultiSelect
-              name="part_of_speech"
-              options={PART_OF_SPEECH_LIST}
-              defaultValue={word?.part_of_speech ?? []}
-              labelMapping={TAG_LABELS}
-              isMulti={true}
-            />
-          </Field>
           <Field label={t("contentSync.detail.fields.characterStructureType")}>
             <SearchableMultiSelect
               name="character_structure_type"
@@ -187,6 +151,15 @@ export async function WordForm({
               <option value="high">{t("admin.words.form.sourceConfidenceOptions.high")}</option>
             </select>
           </Field>
+          <Field label="Review status">
+            <select name="review_status" defaultValue={word?.review_status ?? "approved"} className={inputClassName()}>
+              <option value="pending">{t("contentSync.status.review.pending")}</option>
+              <option value="needs_review">{t("contentSync.status.review.needsReview")}</option>
+              <option value="approved">{t("contentSync.status.review.approved")}</option>
+              <option value="rejected">{t("contentSync.status.review.rejected")}</option>
+              <option value="applied">{t("contentSync.status.review.applied")}</option>
+            </select>
+          </Field>
           <Field label={t("contentSync.detail.fields.radicalSummary")}>
             <textarea
               name="radical_summary"
@@ -208,11 +181,15 @@ export async function WordForm({
               className={textareaClassName("min-h-24")}
             />
           </Field>
-          <Field label={t("contentSync.detail.fields.readingCandidates")}>
+          <Field label={t("admin.words.form.componentBreakdownJson")}>
             <textarea
-              name="reading_candidates"
-              defaultValue={word?.reading_candidates ?? ""}
-              className={textareaClassName("min-h-24")}
+              name="component_breakdown_json"
+              defaultValue={
+                word?.component_breakdown_json
+                  ? JSON.stringify(word.component_breakdown_json, null, 2)
+                  : ""
+              }
+              className={textareaClassName("min-h-24 font-mono text-xs")}
             />
           </Field>
           <Field label={t("contentSync.detail.fields.ambiguityNote")}>
@@ -247,15 +224,20 @@ export async function WordForm({
               />
             </Field>
           </div>
-          <div className="md:col-span-2">
-            <Field label={t("admin.words.form.examples")}>
-              <WordExamplesEditor
-                name="examples_text"
-                defaultValue={initialValue?.examplesText ?? ""}
-              />
-            </Field>
-          </div>
         </div>
+      </AdminFormCard>
+
+      <AdminFormCard
+        title="Sense editor"
+        description="Manage each reading or meaning separately. Saving this section will regenerate the legacy summary fields on the word record."
+      >
+        <WordSensesEditor
+          name="senses_json"
+          defaultValue={initialValue?.editableSenses ?? []}
+          ambiguityFlag={word?.ambiguity_flag ?? false}
+          sourceConfidence={word?.source_confidence ?? null}
+          readingCandidates={word?.reading_candidates ?? null}
+        />
 
         <AdminSubmitRow
           submitLabel={submitLabel}

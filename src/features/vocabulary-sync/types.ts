@@ -15,6 +15,22 @@ export interface NormalizedExample {
   sortOrder: number;
 }
 
+export interface NormalizedSenseExample {
+  cn: string;
+  py: string | null;
+  vi: string;
+}
+
+export interface NormalizedSense {
+  pinyin: string;
+  partOfSpeech: string | null;
+  meaningVi: string;
+  usageNote: string | null;
+  senseOrder: number;
+  isPrimary: boolean;
+  examples: NormalizedSenseExample[];
+}
+
 export interface NormalizedVocabSyncPayload {
   externalId: string | null;
   inputText: string | null;
@@ -39,6 +55,9 @@ export interface NormalizedVocabSyncPayload {
   ambiguityFlag: boolean;
   ambiguityNote: string | null;
   readingCandidates: string | null;
+  senses: NormalizedSense[];
+  senseSourceKeys: string[];
+  senseContentHashes: string[];
   reviewStatus: WordReviewStatus;
   aiStatus: WordAiStatus;
   sourceUpdatedAt: string | null;

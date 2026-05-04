@@ -3,20 +3,26 @@
 import { z } from "zod";
 
 import {
-  examplesToTextarea,
   optionalText,
-  parseExamplesTextarea,
   requiredText,
   requireAdminSupabase,
   revalidateAdminPaths,
   redirectTo,
 } from "@/features/admin/shared";
+import {
+  buildEditorSenses,
+  deriveLegacyWordSummaryFromSenses,
+  normalizePinyinPlain,
+  parseAdminSensesJson,
+  type AdminWordSenseDraft,
+} from "@/features/admin/word-senses";
 import { splitPipeDelimited } from "@/features/admin/content-sync-utils";
 import {
   loadTopicTagResolutionRows,
   resolveTopicAssignmentsFromRows,
 } from "@/features/shared/topic-tag-resolution";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
+import { buildSenseContentHashForApply } from "@/features/vocabulary-sync/apply-senses";
 import { logger } from "@/lib/logger";
 
 const wordSchema = z.object({
@@ -25,18 +31,14 @@ const wordSchema = z.object({
   simplified: z.string().min(1, "Simplified Chinese is required."),
   traditional: z.string().nullable(),
   hanzi: z.string().min(1, "Hanzi is required."),
-  pinyin: z.string().min(1, "Pinyin is required."),
   hanViet: z.string().nullable(),
-  vietnameseMeaning: z.string().min(1, "Vietnamese meaning is required."),
   englishMeaning: z.string().nullable(),
   normalizedText: z.string().min(1, "Normalized text is required."),
-  meaningsVi: z.string().min(1, "Vietnamese meanings are required."),
   traditionalVariant: z.string().nullable(),
   hskLevel: z.number().int().min(1).max(9),
   topicId: z.string().uuid().nullable(),
   radicalIds: z.array(z.string().uuid()).default([]),
   topicTags: z.array(z.string().min(1)).default([]),
-  partOfSpeech: z.string().nullable(),
   componentBreakdownJson: z.string().nullable(),
   radicalSummary: z.string().nullable(),
   mnemonic: z.string().nullable(),
@@ -45,7 +47,7 @@ const wordSchema = z.object({
   notes: z.string().nullable(),
   ambiguityFlag: z.boolean(),
   ambiguityNote: z.string().nullable(),
-  readingCandidates: z.string().nullable(),
+  reviewStatus: z.enum(["pending", "needs_review", "approved", "rejected", "applied"]),
   aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]),
   sourceConfidence: z.enum(["low", "medium", "high"]).nullable(),
   isPublished: z.boolean(),
@@ -117,7 +119,29 @@ export interface AdminWordEditor {
     last_source_updated_at: string | null;
     is_published: boolean;
   };
-  examplesText: string;
+  senses: Array<{
+    id: string;
+    word_id: string;
+    slug: string | null;
+    pinyin: string;
+    pinyin_plain: string | null;
+    pinyin_numbered: string | null;
+    part_of_speech: string | null;
+    meaning_vi: string;
+    meaning_en: string | null;
+    usage_note: string | null;
+    grammar_role: string | null;
+    common_collocations: unknown;
+    sense_order: number;
+    is_primary: boolean;
+    source_confidence: "low" | "medium" | "high" | null;
+    review_status: "pending" | "needs_review" | "approved" | "rejected" | "applied";
+    content_hash: string | null;
+    is_published: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
+  editableSenses: AdminWordSenseDraft[];
 }
 
 export interface AdminSelectOption {
@@ -266,11 +290,22 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
 
   const { data: examples, error: examplesError } = await supabase
     .from("word_examples")
-    .select("chinese_text, pinyin, vietnamese_meaning, sort_order")
+    .select("chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id")
     .eq("word_id", id)
     .order("sort_order");
 
   if (examplesError) throw examplesError;
+
+  const { data: senses, error: sensesError } = await supabase
+    .from("word_senses")
+    .select(
+      "id, word_id, slug, pinyin, pinyin_plain, pinyin_numbered, part_of_speech, meaning_vi, meaning_en, usage_note, grammar_role, common_collocations, sense_order, is_primary, source_confidence, review_status, content_hash, is_published, created_at, updated_at",
+    )
+    .eq("word_id", id)
+    .order("sense_order")
+    .order("created_at");
+
+  if (sensesError) throw sensesError;
 
   const { data: radicalLinks, error: radicalLinksError } = await supabase
     .from("word_radicals")
@@ -306,17 +341,38 @@ export async function getWordEditor(id: string): Promise<AdminWordEditor | null>
           ? radicalIds
           : word.radical_id
             ? [word.radical_id]
-            : [],
+          : [],
       topic_tags: topicTags,
     },
-    examplesText: examplesToTextarea(
-      (examples ?? []).map((example) => ({
+    senses: senses ?? [],
+    editableSenses: buildEditorSenses({
+      word,
+      senses: senses ?? [],
+      examples: (examples ?? []).map((example) => ({
         chineseText: example.chinese_text,
         pinyin: example.pinyin,
         vietnameseMeaning: example.vietnamese_meaning,
+        sortOrder: example.sort_order,
+        senseId: example.sense_id,
       })),
-    ),
+    }),
   };
+}
+
+function buildSenseContentHashForAdmin(sense: AdminWordSenseDraft) {
+  return buildSenseContentHashForApply({
+    pinyin: sense.pinyin,
+    partOfSpeech: sense.partOfSpeech,
+    meaningVi: sense.meaningVi,
+    usageNote: sense.usageNote,
+    senseOrder: sense.senseOrder,
+    isPrimary: sense.isPrimary,
+    examples: sense.examples.map((example) => ({
+      cn: example.chineseText,
+      py: example.pinyin || null,
+      vi: example.vietnameseMeaning,
+    })),
+  });
 }
 
 export async function listWordFormOptions(): Promise<{
@@ -350,18 +406,14 @@ export async function saveWordAction(formData: FormData) {
     simplified: requiredText(formData.get("simplified")),
     traditional: optionalText(formData.get("traditional")),
     hanzi: requiredText(formData.get("hanzi")) || requiredText(formData.get("simplified")),
-    pinyin: requiredText(formData.get("pinyin")),
     hanViet: optionalText(formData.get("han_viet")),
-    vietnameseMeaning: requiredText(formData.get("vietnamese_meaning")),
     englishMeaning: optionalText(formData.get("english_meaning")),
     normalizedText: requiredText(formData.get("normalized_text")),
-    meaningsVi: requiredText(formData.get("meanings_vi")),
     traditionalVariant: optionalText(formData.get("traditional_variant")),
     hskLevel: Number(requiredText(formData.get("hsk_level"))),
     topicId: optionalText(formData.get("topic_id")),
     radicalIds: splitPipeDelimited(optionalText(formData.get("radical_ids"))),
     topicTags: splitPipeDelimited(optionalText(formData.get("topic_tags"))),
-    partOfSpeech: optionalText(formData.get("part_of_speech")),
     componentBreakdownJson: optionalText(formData.get("component_breakdown_json")),
     radicalSummary: optionalText(formData.get("radical_summary")),
     mnemonic: optionalText(formData.get("mnemonic")),
@@ -370,7 +422,14 @@ export async function saveWordAction(formData: FormData) {
     notes: optionalText(formData.get("notes")),
     ambiguityFlag: formData.get("ambiguity_flag") === "on",
     ambiguityNote: optionalText(formData.get("ambiguity_note")),
-    readingCandidates: optionalText(formData.get("reading_candidates")),
+    reviewStatus:
+      (optionalText(formData.get("review_status")) as
+        | "pending"
+        | "needs_review"
+        | "approved"
+        | "rejected"
+        | "applied"
+        | null) ?? "approved",
     aiStatus:
       optionalText(formData.get("ai_status")) as
         | "pending"
@@ -393,6 +452,16 @@ export async function saveWordAction(formData: FormData) {
     }
   }
 
+  const senses = parseAdminSensesJson(optionalText(formData.get("senses_json")));
+  const legacySummary = deriveLegacyWordSummaryFromSenses(senses);
+  const flatExamples = senses.flatMap((sense) =>
+    sense.examples.map((example) => ({
+      chineseText: example.chineseText,
+      pinyin: example.pinyin || null,
+      vietnameseMeaning: example.vietnameseMeaning || "",
+    })),
+  );
+
   const primaryRadicalId = parsed.radicalIds[0] ?? null;
   const topicRows = await loadTopicTagResolutionRows(supabase);
   const topicAssignments = resolveTopicAssignmentsFromRows(topicRows, parsed.topicTags);
@@ -403,20 +472,20 @@ export async function saveWordAction(formData: FormData) {
     simplified: parsed.simplified,
     traditional: parsed.traditional,
     hanzi: parsed.hanzi,
-    pinyin: parsed.pinyin,
+    pinyin: legacySummary.pinyin,
     han_viet: parsed.hanViet,
-    vietnamese_meaning: parsed.vietnameseMeaning,
+    vietnamese_meaning: legacySummary.vietnameseMeaning,
     english_meaning: parsed.englishMeaning,
     normalized_text: parsed.normalizedText,
-    meanings_vi: parsed.meaningsVi,
+    meanings_vi: legacySummary.meaningsVi,
     traditional_variant: parsed.traditionalVariant,
     hsk_level: parsed.hskLevel,
     topic_id: resolvedTopicId,
     radical_id: primaryRadicalId,
-    review_status: "approved" as const,
+    review_status: parsed.reviewStatus,
     ai_status: parsed.aiStatus,
     source_confidence: parsed.sourceConfidence,
-    part_of_speech: parsed.partOfSpeech,
+    part_of_speech: legacySummary.partOfSpeech,
     component_breakdown_json: componentBreakdownJson,
     radical_summary: parsed.radicalSummary,
     mnemonic: parsed.mnemonic,
@@ -425,15 +494,15 @@ export async function saveWordAction(formData: FormData) {
     notes: parsed.notes,
     ambiguity_flag: parsed.ambiguityFlag,
     ambiguity_note: parsed.ambiguityNote,
-    reading_candidates: parsed.readingCandidates,
+    reading_candidates: legacySummary.readingCandidates,
     content_hash: buildWordContentHash({
       normalizedText: parsed.normalizedText,
-      pinyin: parsed.pinyin,
-      meaningsVi: parsed.meaningsVi,
+      pinyin: legacySummary.pinyin,
+      meaningsVi: legacySummary.meaningsVi,
       hanViet: parsed.hanViet,
       traditionalVariant: parsed.traditionalVariant,
       hskLevel: parsed.hskLevel,
-      partOfSpeech: parsed.partOfSpeech,
+      partOfSpeech: legacySummary.partOfSpeech,
       componentBreakdownJson,
       radicalSummary: parsed.radicalSummary,
       mnemonic: parsed.mnemonic,
@@ -442,10 +511,11 @@ export async function saveWordAction(formData: FormData) {
       notes: parsed.notes,
       ambiguityFlag: parsed.ambiguityFlag,
       ambiguityNote: parsed.ambiguityNote,
-      readingCandidates: parsed.readingCandidates,
+      readingCandidates: legacySummary.readingCandidates,
       mainRadicals: parsed.radicalIds,
       topicTags: parsed.topicTags,
-      }),
+      examples: flatExamples,
+    }),
     is_published: parsed.isPublished,
   };
 
@@ -478,6 +548,10 @@ export async function saveWordAction(formData: FormData) {
       slug: parsed.slug,
       published: parsed.isPublished,
     });
+  }
+
+  if (!wordId) {
+    throw new Error("Word id was not resolved after save.");
   }
 
   const { error: deleteRadicalsError } = await supabase.from("word_radicals").delete().eq("word_id", wordId);
@@ -540,20 +614,109 @@ export async function saveWordAction(formData: FormData) {
     if (insertTagLinksError) throw insertTagLinksError;
   }
 
-  const examples = parseExamplesTextarea(formData.get("examples_text"));
-  const { error: deleteError } = await supabase.from("word_examples").delete().eq("word_id", wordId);
-  if (deleteError) throw deleteError;
+  const { data: existingSenses, error: existingSensesError } = await supabase
+    .from("word_senses")
+    .select("id, slug")
+    .eq("word_id", wordId);
 
-  if (examples.length > 0) {
-    const { error: insertExamplesError } = await supabase.from("word_examples").insert(
-      examples.map((example) => ({
+  if (existingSensesError) throw existingSensesError;
+
+  const submittedExistingIds = new Set(
+    senses
+      .map((sense) => sense.id)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  const removableSenseIds =
+    (existingSenses ?? [])
+      .map((sense) => sense.id)
+      .filter((senseId) => !submittedExistingIds.has(senseId));
+
+  const { error: deleteExamplesError } = await supabase.from("word_examples").delete().eq("word_id", wordId);
+  if (deleteExamplesError) throw deleteExamplesError;
+
+  if (removableSenseIds.length > 0) {
+    const { error: deleteSensesError } = await supabase
+      .from("word_senses")
+      .delete()
+      .eq("word_id", wordId)
+      .in("id", removableSenseIds);
+
+    if (deleteSensesError) throw deleteSensesError;
+  }
+
+  const existingSenseById = new Map((existingSenses ?? []).map((sense) => [sense.id, sense]));
+  const persistedSenses: Array<{ id: string; draft: AdminWordSenseDraft }> = [];
+
+  for (const sense of senses) {
+    const basePayload = {
+      word_id: wordId,
+      slug: sense.id ? existingSenseById.get(sense.id)?.slug ?? null : null,
+      pinyin: sense.pinyin,
+      pinyin_plain: normalizePinyinPlain(sense.pinyin),
+      pinyin_numbered: null,
+      part_of_speech: sense.partOfSpeech,
+      meaning_vi: sense.meaningVi,
+      meaning_en: null,
+      usage_note: sense.usageNote,
+      grammar_role: null,
+      common_collocations: null,
+      sense_order: sense.senseOrder,
+      is_primary: sense.isPrimary,
+      source_confidence: parsed.sourceConfidence,
+      review_status: parsed.reviewStatus,
+      content_hash: buildSenseContentHashForAdmin(sense),
+      is_published: sense.isPublished && parsed.isPublished,
+    };
+
+    if (sense.id && existingSenseById.has(sense.id)) {
+      const { error: updateSenseError } = await supabase
+        .from("word_senses")
+        .update(basePayload)
+        .eq("id", sense.id)
+        .eq("word_id", wordId);
+
+      if (updateSenseError) throw updateSenseError;
+      persistedSenses.push({ id: sense.id, draft: sense });
+      continue;
+    }
+
+    const { data: createdSense, error: insertSenseError } = await supabase
+      .from("word_senses")
+      .insert(basePayload)
+      .select("id")
+      .single();
+
+    if (insertSenseError) throw insertSenseError;
+    persistedSenses.push({ id: createdSense.id, draft: sense });
+  }
+
+  const examplesToInsert: Array<{
+    word_id: string;
+    sense_id: string;
+    chinese_text: string;
+    pinyin: string | null;
+    vietnamese_meaning: string;
+    sort_order: number;
+  }> = [];
+  let nextSortOrder = 1;
+
+  for (const persistedSense of persistedSenses.sort((left, right) => left.draft.senseOrder - right.draft.senseOrder)) {
+    for (const example of persistedSense.draft.examples) {
+      examplesToInsert.push({
         word_id: wordId,
+        sense_id: persistedSense.id,
         chinese_text: example.chineseText,
-        pinyin: example.pinyin,
-        vietnamese_meaning: example.vietnameseMeaning,
-        sort_order: example.sortOrder,
-      })),
-    );
+        pinyin: example.pinyin || null,
+        vietnamese_meaning: example.vietnameseMeaning || "",
+        sort_order: nextSortOrder,
+      });
+      nextSortOrder += 1;
+    }
+  }
+
+  if (examplesToInsert.length > 0) {
+    const { error: insertExamplesError } = await supabase.from("word_examples").insert(examplesToInsert);
 
     if (insertExamplesError) throw insertExamplesError;
   }

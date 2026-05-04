@@ -66,7 +66,8 @@ export function ReviewStudyExperience({
     items,
     onPersistOutcome: async ({ currentItem, result, grade, mode, nextCompletionPercent }) => {
       const payload: StudyOutcomeSubmission = {
-        wordId: currentItem.id,
+        wordId: currentItem.wordId,
+        senseId: currentItem.senseId ?? null,
         mode,
         result,
         grade,
@@ -279,7 +280,17 @@ export function ReviewStudyExperience({
                   <>
                     <p className="text-hanzi mt-3 text-foreground">{session.currentItem.hanzi}</p>
                     <p className="text-pinyin mt-2 text-muted-foreground">{session.currentItem.pinyin}</p>
+                    {session.currentItem.partOfSpeech ? (
+                      <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        {session.currentItem.partOfSpeech}
+                      </p>
+                    ) : null}
                     <p className="text-meaning mt-3 text-muted-foreground">{session.currentItem.vietnameseMeaning}</p>
+                    {session.currentItem.promptExample ? (
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {session.currentItem.promptExample.chineseText}
+                      </p>
+                    ) : null}
                   </>
                 )}
               </div>
@@ -347,7 +358,7 @@ export function ReviewStudyExperience({
 
               {session.feedback?.result === "incorrect" ? (
                 <AiExplanationCard
-                  payload={{ kind: "word", wordId: session.currentItem.id }}
+                  payload={{ kind: "word", wordId: session.currentItem.wordId }}
                   title={t("ai.explanation.wordTitle", { value: session.currentItem.hanzi })}
                   description={t("ai.explanation.incorrectDescription")}
                   triggerLabel={t("ai.explanation.open")}

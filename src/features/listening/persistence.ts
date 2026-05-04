@@ -148,9 +148,39 @@ export async function persistListeningPracticeOutcome({
     skipped: input.skipped ?? false,
   });
 
+  const sourceMetadata =
+    target.source_metadata && typeof target.source_metadata === "object" && !Array.isArray(target.source_metadata)
+      ? (target.source_metadata as Record<string, unknown>)
+      : null;
+  const linkedSenseId =
+    typeof sourceMetadata?.senseId === "string" && sourceMetadata.senseId.length > 0
+      ? sourceMetadata.senseId
+      : null;
+  let linkedWordId =
+    typeof sourceMetadata?.wordId === "string" && sourceMetadata.wordId.length > 0
+      ? sourceMetadata.wordId
+      : sourceType === "word" ? target.source_ref_id : null;
+  let resolvedSenseId = linkedSenseId;
+
+  if ((!linkedWordId || !resolvedSenseId) && sourceType === "example" && target.source_ref_id) {
+    const { data: exampleTarget, error: exampleTargetError } = await supabase
+      .from("word_examples")
+      .select("word_id, sense_id")
+      .eq("id", target.source_ref_id)
+      .maybeSingle();
+
+    if (exampleTargetError) {
+      throw exampleTargetError;
+    }
+
+    linkedWordId = linkedWordId ?? exampleTarget?.word_id ?? null;
+    resolvedSenseId = resolvedSenseId ?? exampleTarget?.sense_id ?? null;
+  }
+
   const { error: eventError } = await supabase.from("practice_events").insert({
     user_id: userId,
-    word_id: null,
+    word_id: linkedWordId,
+    sense_id: resolvedSenseId,
     example_id: null,
     tts_audio_cache_id: input.ttsAudioCacheId,
     practice_type: "listening_dictation",

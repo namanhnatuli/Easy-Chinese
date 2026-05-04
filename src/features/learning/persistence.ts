@@ -16,6 +16,62 @@ function getUtcDateKey(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
+async function readExistingWordProgress(
+  supabase: SupabaseClient,
+  userId: string,
+  wordId: string,
+  senseId?: string | null,
+) {
+  const selectColumns =
+    "id, status, correct_count, incorrect_count, streak_count, interval_days, ease_factor";
+
+  if (senseId) {
+    const exact = await supabase
+      .from("user_word_progress")
+      .select(selectColumns)
+      .eq("user_id", userId)
+      .eq("word_id", wordId)
+      .eq("sense_id", senseId)
+      .maybeSingle();
+
+    if (exact.error) {
+      throw exact.error;
+    }
+
+    if (exact.data) {
+      return exact.data;
+    }
+
+    const legacy = await supabase
+      .from("user_word_progress")
+      .select(selectColumns)
+      .eq("user_id", userId)
+      .eq("word_id", wordId)
+      .is("sense_id", null)
+      .maybeSingle();
+
+    if (legacy.error) {
+      throw legacy.error;
+    }
+
+    return legacy.data;
+  }
+
+  const result = await supabase
+    .from("user_word_progress")
+    .select(selectColumns)
+    .eq("user_id", userId)
+    .eq("word_id", wordId)
+    .is("sense_id", null)
+    .maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.data;
+}
+
 export async function persistStudyOutcome({
   supabase,
   userId,
@@ -30,34 +86,67 @@ export async function persistStudyOutcome({
   logger.info("study_outcome_persist_started", {
     userId,
     wordId: input.wordId,
+    senseId: input.senseId ?? null,
     lessonId: input.lessonId ?? null,
     mode: input.mode,
     result: input.result,
   });
 
-  const { data: existingProgress, error: progressReadError } = await supabase
-    .from("user_word_progress")
-    .select("status, correct_count, incorrect_count, streak_count, interval_days, ease_factor")
-    .eq("user_id", userId)
-    .eq("word_id", input.wordId)
-    .maybeSingle();
-
-  if (progressReadError) {
-    throw progressReadError;
-  }
+  const existingProgress = await readExistingWordProgress(
+    supabase,
+    userId,
+    input.wordId,
+    input.senseId,
+  );
 
   let existingMemory: { due_at: string | null; state: string } | null = null;
 
   if (input.lessonId) {
-    const { data: lessonMembership, error: membershipError } = await supabase
-      .from("lesson_words")
-      .select("word_id")
-      .eq("lesson_id", input.lessonId)
-      .eq("word_id", input.wordId)
-      .maybeSingle();
+    let lessonMembership: { word_id: string } | null = null;
 
-    if (membershipError) {
-      throw membershipError;
+    if (input.senseId) {
+      const exactMembership = await supabase
+        .from("lesson_words")
+        .select("word_id")
+        .eq("lesson_id", input.lessonId)
+        .eq("word_id", input.wordId)
+        .eq("sense_id", input.senseId)
+        .maybeSingle();
+
+      if (exactMembership.error) {
+        throw exactMembership.error;
+      }
+
+      lessonMembership = exactMembership.data;
+
+      if (!lessonMembership) {
+        const legacyMembership = await supabase
+          .from("lesson_words")
+          .select("word_id")
+          .eq("lesson_id", input.lessonId)
+          .eq("word_id", input.wordId)
+          .is("sense_id", null)
+          .maybeSingle();
+
+        if (legacyMembership.error) {
+          throw legacyMembership.error;
+        }
+
+        lessonMembership = legacyMembership.data;
+      }
+    } else {
+      const membership = await supabase
+        .from("lesson_words")
+        .select("word_id")
+        .eq("lesson_id", input.lessonId)
+        .eq("word_id", input.wordId)
+        .maybeSingle();
+
+      if (membership.error) {
+        throw membership.error;
+      }
+
+      lessonMembership = membership.data;
     }
 
     if (!lessonMembership) {
@@ -77,18 +166,51 @@ export async function persistStudyOutcome({
 
     existingLessonCompletionPercent = Number(existingLessonProgress?.completion_percent ?? 0);
   } else {
-    const { data: memoryRow, error: memoryReadError } = await supabase
-      .from("user_word_memory")
-      .select("due_at, state")
-      .eq("user_id", userId)
-      .eq("word_id", input.wordId)
-      .maybeSingle();
+    if (input.senseId) {
+      const exactMemory = await supabase
+        .from("user_word_memory")
+        .select("due_at, state")
+        .eq("user_id", userId)
+        .eq("word_id", input.wordId)
+        .eq("sense_id", input.senseId)
+        .maybeSingle();
 
-    if (memoryReadError) {
-      throw memoryReadError;
+      if (exactMemory.error) {
+        throw exactMemory.error;
+      }
+
+      existingMemory = exactMemory.data;
+
+      if (!existingMemory) {
+        const legacyMemory = await supabase
+          .from("user_word_memory")
+          .select("due_at, state")
+          .eq("user_id", userId)
+          .eq("word_id", input.wordId)
+          .is("sense_id", null)
+          .maybeSingle();
+
+        if (legacyMemory.error) {
+          throw legacyMemory.error;
+        }
+
+        existingMemory = legacyMemory.data;
+      }
+    } else {
+      const memoryResult = await supabase
+        .from("user_word_memory")
+        .select("due_at, state")
+        .eq("user_id", userId)
+        .eq("word_id", input.wordId)
+        .is("sense_id", null)
+        .maybeSingle();
+
+      if (memoryResult.error) {
+        throw memoryResult.error;
+      }
+
+      existingMemory = memoryResult.data;
     }
-
-    existingMemory = memoryRow;
 
     if (!existingMemory?.due_at || new Date(existingMemory.due_at) > new Date()) {
       throw new Error("This word is not available in the review queue.");
@@ -102,6 +224,7 @@ export async function persistStudyOutcome({
     supabase,
     userId,
     wordId: input.wordId,
+    senseId: input.senseId,
     grade,
     now,
     mode: input.mode,
@@ -124,17 +247,31 @@ export async function persistStudyOutcome({
     memoryTransition.next,
   );
 
-  const { error: wordProgressError } = await supabase.from("user_word_progress").upsert(
-    {
-      user_id: userId,
-      word_id: input.wordId,
-      ...progressPatch,
-    },
-    { onConflict: "user_id,word_id" },
-  );
+  const wordProgressPayload = {
+    user_id: userId,
+    word_id: input.wordId,
+    sense_id: input.senseId ?? null,
+    ...progressPatch,
+  };
 
-  if (wordProgressError) {
-    throw wordProgressError;
+  if (existingProgress?.id) {
+    const { error: wordProgressError } = await supabase
+      .from("user_word_progress")
+      .update(wordProgressPayload)
+      .eq("id", existingProgress.id)
+      .eq("user_id", userId);
+
+    if (wordProgressError) {
+      throw wordProgressError;
+    }
+  } else {
+    const { error: wordProgressError } = await supabase
+      .from("user_word_progress")
+      .insert(wordProgressPayload);
+
+    if (wordProgressError) {
+      throw wordProgressError;
+    }
   }
 
   if (input.lessonId) {
@@ -166,7 +303,7 @@ export async function persistStudyOutcome({
     userId,
     amount: getXpForReviewResult(legacyResult),
     reason: `review:${input.mode}:${legacyResult}`,
-    sourceKey: `review:${input.wordId}:${getUtcDateKey(now)}`,
+    sourceKey: `review:${input.wordId}:${input.senseId ?? "word"}:${getUtcDateKey(now)}`,
   });
 
   if (input.lessonId && existingLessonCompletionPercent < 100 && input.completionPercent >= 100) {
@@ -188,6 +325,7 @@ export async function persistStudyOutcome({
   logger.info("study_outcome_persist_completed", {
     userId,
     wordId: input.wordId,
+    senseId: input.senseId ?? null,
     lessonId: input.lessonId ?? null,
     status: progressPatch.status,
     dueAt: memoryTransition.next.dueAt,

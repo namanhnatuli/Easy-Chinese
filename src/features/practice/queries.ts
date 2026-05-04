@@ -1,5 +1,6 @@
 import { selectReadingPracticeItems, selectWritingPracticeItems, splitWordIntoHanziCharacters } from "@/features/practice/helpers";
 import { DEFAULT_LEARNING_SCHEDULER_SETTINGS } from "@/features/memory/spaced-repetition";
+import { buildLearningSenseCards } from "@/features/learning/sense-cards";
 import type {
   PracticeDashboardSummary,
   ReadingPracticeSentenceItem,
@@ -11,6 +12,9 @@ import type {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type WordMemoryRow = {
+  id: string;
+  word_id: string;
+  sense_id: string | null;
   scheduler_type: "sm2" | "fsrs";
   state: "new" | "learning" | "review" | "relearning";
   ease_factor: number;
@@ -28,16 +32,16 @@ type WordMemoryRow = {
   last_grade: "again" | "hard" | "good" | "easy" | null;
 };
 
-async function listWordMemoryByWordIds(userId: string, wordIds: string[]): Promise<Map<string, WordMemoryRow>> {
+async function listWordMemoryByWordIds(userId: string, wordIds: string[]): Promise<WordMemoryRow[]> {
   if (wordIds.length === 0) {
-    return new Map<string, WordMemoryRow>();
+    return [];
   }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("user_word_memory")
     .select(
-      "word_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
+      "id, word_id, sense_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
     )
     .eq("user_id", userId)
     .in("word_id", wordIds);
@@ -46,7 +50,7 @@ async function listWordMemoryByWordIds(userId: string, wordIds: string[]): Promi
     throw error;
   }
 
-  return new Map((data ?? []).map((row) => [row.word_id, row]));
+  return data ?? [];
 }
 
 function normalizeRelation<T>(value: T | T[] | null): T | null {
@@ -59,13 +63,13 @@ function normalizeRelation<T>(value: T | T[] | null): T | null {
 
 async function listReadingProgressByWordIds(userId: string, wordIds: string[]) {
   if (wordIds.length === 0) {
-    return new Map<string, { id: string; status: "new" | "practicing" | "completed" | "difficult"; attempt_count: number; last_practiced_at: string | null }>();
+    return [] as Array<{ id: string; word_id: string | null; sense_id: string | null; status: "new" | "practicing" | "completed" | "difficult"; attempt_count: number; last_practiced_at: string | null }>;
   }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("user_reading_progress")
-    .select("id, word_id, status, attempt_count, last_practiced_at")
+    .select("id, word_id, sense_id, status, attempt_count, last_practiced_at")
     .eq("user_id", userId)
     .eq("practice_type", "word")
     .in("word_id", wordIds);
@@ -74,23 +78,7 @@ async function listReadingProgressByWordIds(userId: string, wordIds: string[]) {
     throw error;
   }
 
-  return new Map(
-    (data ?? []).flatMap((row) =>
-      row.word_id
-        ? [
-            [
-              row.word_id,
-              {
-                id: row.id,
-                status: row.status,
-                attempt_count: row.attempt_count,
-                last_practiced_at: row.last_practiced_at,
-              },
-            ] as const,
-          ]
-        : [],
-    ),
-  );
+  return data ?? [];
 }
 
 async function listReadingProgressByExampleIds(userId: string, exampleIds: string[]) {
@@ -101,7 +89,7 @@ async function listReadingProgressByExampleIds(userId: string, exampleIds: strin
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("user_reading_progress")
-    .select("id, example_id, status, attempt_count, last_practiced_at")
+    .select("id, example_id, sense_id, status, attempt_count, last_practiced_at")
     .eq("user_id", userId)
     .eq("practice_type", "sentence")
     .in("example_id", exampleIds);
@@ -145,10 +133,10 @@ export async function listReadingWordPracticeItems({
 
   if (lessonId) {
     query = query
-      .select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level, lesson_words!inner(lesson_id)")
+      .select("id, slug, hanzi, simplified, traditional, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, mnemonic, word_senses(id, pinyin, part_of_speech, meaning_vi, usage_note, sense_order, is_primary, is_published), word_examples(id, chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id), lesson_words!inner(lesson_id, sense_id)")
       .eq("lesson_words.lesson_id", lessonId);
   } else {
-    query = query.select("id, slug, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level");
+    query = query.select("id, slug, hanzi, simplified, traditional, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, mnemonic, word_senses(id, pinyin, part_of_speech, meaning_vi, usage_note, sense_order, is_primary, is_published), word_examples(id, chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id)");
   }
 
   if (wordId) {
@@ -166,61 +154,135 @@ export async function listReadingWordPracticeItems({
     slug: string;
     hanzi: string;
     simplified: string;
+    traditional: string | null;
     pinyin: string;
+    han_viet: string | null;
     vietnamese_meaning: string;
     hsk_level: number;
+    notes?: string | null;
+    mnemonic?: string | null;
+    word_senses?: Array<{
+      id: string;
+      pinyin: string;
+      part_of_speech: string | null;
+      meaning_vi: string;
+      usage_note: string | null;
+      sense_order: number;
+      is_primary: boolean;
+      is_published: boolean;
+    }>;
+    word_examples?: Array<{
+      id: string;
+      chinese_text: string;
+      pinyin: string | null;
+      vietnamese_meaning: string;
+      sort_order: number;
+      sense_id: string | null;
+    }>;
+    lesson_words?: Array<{ lesson_id: string; sense_id: string | null }>;
   }> | null;
 
   if (error) {
     throw error;
   }
 
-  const progressByWordId = userId ? await listReadingProgressByWordIds(userId, (typedData ?? []).map((row) => row.id)) : new Map();
-  const memoryByWordId = userId ? await listWordMemoryByWordIds(userId, (typedData ?? []).map((row) => row.id)) : new Map();
-  const items = (typedData ?? []).map((row) => {
-    const progress = progressByWordId.get(row.id);
-    const memory = memoryByWordId.get(row.id);
+  const progressRows = userId ? await listReadingProgressByWordIds(userId, (typedData ?? []).map((row) => row.id)) : [];
+  const memoryRows = userId ? await listWordMemoryByWordIds(userId, (typedData ?? []).map((row) => row.id)) : [];
+  const progressByKey = new Map(progressRows.map((row) => [`${row.word_id}::${row.sense_id ?? ""}`, row]));
+  const legacyProgressByWordId = new Map(progressRows.filter((row) => row.sense_id === null).map((row) => [row.word_id ?? "", row]));
+  const memoryByKey = new Map(memoryRows.map((row: any) => [`${row.word_id}::${row.sense_id ?? ""}`, row]));
+  const legacyMemoryByWordId = new Map(memoryRows.filter((row: any) => row.sense_id === null).map((row: any) => [row.word_id, row]));
+  const items = (typedData ?? []).flatMap((row) => {
+    const preferredSenseId = row.lesson_words?.[0]?.sense_id ?? null;
+    const cards = buildLearningSenseCards({
+      word: {
+        id: row.id,
+        slug: row.slug,
+        simplified: row.simplified,
+        traditional: row.traditional,
+        hanzi: row.hanzi,
+        pinyin: row.pinyin,
+        hanViet: row.han_viet,
+        vietnameseMeaning: row.vietnamese_meaning,
+        hskLevel: row.hsk_level,
+        notes: row.notes ?? null,
+        mnemonic: row.mnemonic ?? null,
+      },
+      senses: (row.word_senses ?? [])
+        .filter((sense) => sense.is_published)
+        .map((sense) => ({
+          id: sense.id,
+          pinyin: sense.pinyin,
+          partOfSpeech: sense.part_of_speech,
+          meaningVi: sense.meaning_vi,
+          usageNote: sense.usage_note,
+          senseOrder: sense.sense_order,
+          isPrimary: sense.is_primary,
+        })),
+      examples: (row.word_examples ?? []).map((example) => ({
+        id: example.id,
+        chineseText: example.chinese_text,
+        pinyin: example.pinyin,
+        vietnameseMeaning: example.vietnamese_meaning,
+        sortOrder: example.sort_order,
+        senseId: example.sense_id,
+      })),
+      preferredSenseId,
+    });
 
-    return {
-      kind: "word",
-      id: row.id,
-      slug: row.slug,
-      hanzi: row.hanzi,
-      simplified: row.simplified,
-      pinyin: row.pinyin,
-      vietnameseMeaning: row.vietnamese_meaning,
-      hskLevel: row.hsk_level,
-      progress: progress
-        ? {
-            id: progress.id,
-            status: progress.status,
-            attemptCount: progress.attempt_count,
-            lastPracticedAt: progress.last_practiced_at,
-          }
-        : null,
-      memory: memory
-        ? {
-            schedulerType:
-              memory.scheduler_type === "sm2"
-                ? "sm2"
-                : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
-            state: memory.state,
-            easeFactor: Number(memory.ease_factor),
-            intervalDays: memory.interval_days,
-            dueAt: memory.due_at,
-            reps: memory.reps,
-            lapses: memory.lapses,
-            learningStepIndex: memory.learning_step_index,
-            fsrsStability: memory.fsrs_stability === null ? null : Number(memory.fsrs_stability),
-            fsrsDifficulty: memory.fsrs_difficulty === null ? null : Number(memory.fsrs_difficulty),
-            fsrsRetrievability: memory.fsrs_retrievability === null ? null : Number(memory.fsrs_retrievability),
-            scheduledDays: memory.scheduled_days,
-            elapsedDays: memory.elapsed_days,
-            lastReviewedAt: memory.last_reviewed_at,
-            lastGrade: memory.last_grade,
-          }
-        : null,
-    } satisfies ReadingPracticeWordItem;
+    return cards.map((card) => {
+      const progress =
+        progressByKey.get(`${card.wordId}::${card.senseId ?? ""}`) ??
+        (card.isPrimary ? legacyProgressByWordId.get(card.wordId) : undefined);
+      const memory =
+        memoryByKey.get(`${card.wordId}::${card.senseId ?? ""}`) ??
+        (card.isPrimary ? legacyMemoryByWordId.get(card.wordId) : undefined);
+
+      return {
+        kind: "word",
+        id: card.id,
+        wordId: card.wordId,
+        senseId: card.senseId,
+        slug: card.slug,
+        hanzi: card.hanzi,
+        simplified: card.simplified,
+        pinyin: card.pinyin,
+        vietnameseMeaning: card.vietnameseMeaning,
+        hskLevel: card.hskLevel,
+        partOfSpeech: card.partOfSpeech,
+        promptExample: card.promptExample,
+        progress: progress
+          ? {
+              id: progress.id,
+              status: progress.status,
+              attemptCount: progress.attempt_count,
+              lastPracticedAt: progress.last_practiced_at,
+            }
+          : null,
+        memory: memory
+          ? {
+              schedulerType:
+                memory.scheduler_type === "sm2"
+                  ? "sm2"
+                  : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
+              state: memory.state,
+              easeFactor: Number(memory.ease_factor),
+              intervalDays: memory.interval_days,
+              dueAt: memory.due_at,
+              reps: memory.reps,
+              lapses: memory.lapses,
+              learningStepIndex: memory.learning_step_index,
+              fsrsStability: memory.fsrs_stability === null ? null : Number(memory.fsrs_stability),
+              fsrsDifficulty: memory.fsrs_difficulty === null ? null : Number(memory.fsrs_difficulty),
+              fsrsRetrievability: memory.fsrs_retrievability === null ? null : Number(memory.fsrs_retrievability),
+              scheduledDays: memory.scheduled_days,
+              elapsedDays: memory.elapsed_days,
+              lastReviewedAt: memory.last_reviewed_at,
+              lastGrade: memory.last_grade,
+            }
+          : null,
+      } satisfies ReadingPracticeWordItem;
+    });
   });
 
   return selectReadingPracticeItems(items, limit);
@@ -239,7 +301,7 @@ export async function listReadingSentencePracticeItems({
   let query = supabase
     .from("word_examples")
     .select(
-      "id, chinese_text, pinyin, vietnamese_meaning, sort_order, words!inner(id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published)",
+      "id, chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id, words!inner(id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, is_published)",
     )
     .eq("words.is_published", true)
     .order("sort_order")
@@ -261,16 +323,24 @@ export async function listReadingSentencePracticeItems({
   const linkedWordIds = (data ?? [])
     .map((row) => normalizeRelation(row.words)?.id)
     .filter((value): value is string => Boolean(value));
-  const memoryByWordId = userId ? await listWordMemoryByWordIds(userId, linkedWordIds) : new Map();
+  const memoryRows = userId ? await listWordMemoryByWordIds(userId, linkedWordIds) : [];
+  const memoryByKey = new Map(memoryRows.map((row: any) => [`${row.word_id}::${row.sense_id ?? ""}`, row]));
+  const legacyMemoryByWordId = new Map(memoryRows.filter((row: any) => row.sense_id === null).map((row: any) => [row.word_id, row]));
 
   const items = (data ?? []).map((row) => {
     const word = normalizeRelation(row.words);
     const progress = progressByExampleId.get(row.id);
-    const memory = word ? memoryByWordId.get(word.id) : null;
+    const memory = word
+      ? memoryByKey.get(`${word.id}::${row.sense_id ?? ""}`) ??
+        ((row.sense_id ?? null) ? undefined : legacyMemoryByWordId.get(word.id)) ??
+        legacyMemoryByWordId.get(word.id)
+      : null;
 
     return {
       kind: "sentence",
       id: row.id,
+      wordId: word?.id ?? null,
+      senseId: row.sense_id ?? null,
       chineseText: row.chinese_text,
       pinyin: row.pinyin,
       vietnameseMeaning: row.vietnamese_meaning,
@@ -451,8 +521,8 @@ export async function getWritingPracticeWordDetail({
   let memory: WordMemoryRow | null = null;
 
   if (userId) {
-    const memoryByWordId = await listWordMemoryByWordIds(userId, [wordId]);
-    memory = memoryByWordId.get(wordId) ?? null;
+    const memoryRows = await listWordMemoryByWordIds(userId, [wordId]);
+    memory = memoryRows.find((row) => row.sense_id === null && row.word_id === wordId) ?? null;
     const { data: progressRows, error: progressError } = await supabase
       .from("user_writing_progress")
       .select("character, status, attempt_count, last_practiced_at")
@@ -607,7 +677,7 @@ export async function listRecentPracticeActivity(
   const { data, error } = await supabase
     .from("practice_events")
     .select(
-      "id, created_at, practice_type, result, metadata, tts_audio_cache(id, text_preview, source_text, source_type, character_count), words(id, slug, hanzi, pinyin, vietnamese_meaning), word_examples(id, chinese_text, vietnamese_meaning)",
+      "id, created_at, practice_type, result, sense_id, metadata, tts_audio_cache(id, text_preview, source_text, source_type, character_count), words(id, slug, hanzi, pinyin, vietnamese_meaning), word_senses(id, pinyin, meaning_vi), word_examples(id, chinese_text, vietnamese_meaning)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -619,6 +689,7 @@ export async function listRecentPracticeActivity(
 
   return (data ?? []).map((row) => {
     const word = normalizeRelation(row.words);
+    const sense = normalizeRelation(row.word_senses);
     const sentence = normalizeRelation(row.word_examples);
     const listening = normalizeRelation(row.tts_audio_cache);
     const metadata =
@@ -631,6 +702,7 @@ export async function listRecentPracticeActivity(
       createdAt: row.created_at,
       practiceType: row.practice_type,
       result: row.result,
+      senseId: row.sense_id ?? null,
       word: word
         ? {
             id: word.id,
@@ -638,6 +710,13 @@ export async function listRecentPracticeActivity(
             hanzi: word.hanzi,
             pinyin: word.pinyin,
             vietnameseMeaning: word.vietnamese_meaning,
+          }
+        : null,
+      sense: sense
+        ? {
+            id: sense.id,
+            pinyin: sense.pinyin,
+            meaningVi: sense.meaning_vi,
           }
         : null,
       sentence: sentence

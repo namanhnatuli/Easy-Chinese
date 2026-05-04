@@ -20,15 +20,52 @@ async function readExistingWordMemory(
   supabase: SupabaseClient,
   userId: string,
   wordId: string,
+  senseId?: string | null,
 ): Promise<ExistingWordMemorySnapshot | null> {
-  const { data, error } = await supabase
-    .from("user_word_memory")
-    .select(
-      "scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
-    )
-    .eq("user_id", userId)
-    .eq("word_id", wordId)
-    .maybeSingle();
+  const selectColumns =
+    "id, sense_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade";
+  let data: Record<string, unknown> | null = null;
+  let error: unknown = null;
+
+  if (senseId) {
+    const exactResult = await supabase
+      .from("user_word_memory")
+      .select(selectColumns)
+      .eq("user_id", userId)
+      .eq("word_id", wordId)
+      .eq("sense_id", senseId)
+      .maybeSingle();
+
+    if (exactResult.error) {
+      throw exactResult.error;
+    }
+
+    data = exactResult.data;
+
+    if (!data) {
+      const legacyResult = await supabase
+        .from("user_word_memory")
+        .select(selectColumns)
+        .eq("user_id", userId)
+        .eq("word_id", wordId)
+        .is("sense_id", null)
+        .maybeSingle();
+
+      data = legacyResult.data;
+      error = legacyResult.error;
+    }
+  } else {
+    const result = await supabase
+      .from("user_word_memory")
+      .select(selectColumns)
+      .eq("user_id", userId)
+      .eq("word_id", wordId)
+      .is("sense_id", null)
+      .maybeSingle();
+
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     throw error;
@@ -39,22 +76,24 @@ async function readExistingWordMemory(
   }
 
   return {
+    id: data.id as string,
+    senseId: (data.sense_id as string | null | undefined) ?? null,
     schedulerType:
       data.scheduler_type === "sm2" ? "sm2" : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
-    state: data.state,
+    state: data.state as ExistingWordMemorySnapshot["state"],
     easeFactor: Number(data.ease_factor),
-    intervalDays: data.interval_days,
-    dueAt: data.due_at,
-    reps: data.reps,
-    lapses: data.lapses,
-    learningStepIndex: data.learning_step_index,
+    intervalDays: Number(data.interval_days ?? 0),
+    dueAt: (data.due_at as string | null | undefined) ?? null,
+    reps: Number(data.reps ?? 0),
+    lapses: Number(data.lapses ?? 0),
+    learningStepIndex: Number(data.learning_step_index ?? 0),
     fsrsStability: data.fsrs_stability === null ? null : Number(data.fsrs_stability),
     fsrsDifficulty: data.fsrs_difficulty === null ? null : Number(data.fsrs_difficulty),
     fsrsRetrievability: data.fsrs_retrievability === null ? null : Number(data.fsrs_retrievability),
-    scheduledDays: data.scheduled_days ?? 0,
-    elapsedDays: data.elapsed_days ?? 0,
-    lastReviewedAt: data.last_reviewed_at,
-    lastGrade: data.last_grade,
+    scheduledDays: Number(data.scheduled_days ?? 0),
+    elapsedDays: Number(data.elapsed_days ?? 0),
+    lastReviewedAt: (data.last_reviewed_at as string | null | undefined) ?? null,
+    lastGrade: (data.last_grade as SchedulerGrade | null | undefined) ?? null,
   };
 }
 
@@ -102,10 +141,17 @@ async function countCompletedToday(
   });
 }
 
-function getWordMemoryLogPayload(transition: SchedulerTransition, userId: string, wordId: string, grade: SchedulerGrade) {
+function getWordMemoryLogPayload(
+  transition: SchedulerTransition,
+  userId: string,
+  wordId: string,
+  senseId: string | null | undefined,
+  grade: SchedulerGrade,
+) {
   return {
     userId,
     wordId,
+    senseId: senseId ?? null,
     grade,
     schedulerType: transition.next.schedulerType,
     previousState: transition.previous.state,
@@ -121,6 +167,7 @@ async function insertReviewEvent({
   supabase,
   userId,
   wordId,
+  senseId,
   practiceType,
   grade,
   previous,
@@ -131,6 +178,7 @@ async function insertReviewEvent({
   supabase: SupabaseClient;
   userId: string;
   wordId: string;
+  senseId?: string | null;
   practiceType: string;
   grade: SchedulerGrade;
   previous: SchedulerTransition["previous"];
@@ -141,6 +189,7 @@ async function insertReviewEvent({
   const { error } = await supabase.from("review_events").insert({
     user_id: userId,
     word_id: wordId,
+    sense_id: senseId ?? null,
     mode: mode ?? null,
     result: mapMemoryGradeToReviewResult(grade),
     scheduler_type: next.schedulerType,
@@ -170,6 +219,7 @@ export async function persistWordMemoryGrade({
   supabase,
   userId,
   wordId,
+  senseId,
   grade,
   now,
   practiceType,
@@ -178,13 +228,14 @@ export async function persistWordMemoryGrade({
   supabase: SupabaseClient;
   userId: string;
   wordId: string;
+  senseId?: string | null;
   grade: SchedulerGrade;
   now: Date;
   practiceType: string;
   mode?: ReviewMode | null;
 }) {
   const [existing, learningStats] = await Promise.all([
-    readExistingWordMemory(supabase, userId, wordId),
+    readExistingWordMemory(supabase, userId, wordId, senseId),
     readExistingLearningStats(supabase, userId),
   ]);
   const schedulerSettings = resolveLearningSchedulerSettings(existing, learningStats);
@@ -196,14 +247,20 @@ export async function persistWordMemoryGrade({
   });
   const patch = buildWordMemoryPatch(existing, grade, now, schedulerSettings);
 
-  const { error } = await supabase.from("user_word_memory").upsert(
-    {
-      user_id: userId,
-      word_id: wordId,
-      ...patch,
-    },
-    { onConflict: "user_id,word_id" },
-  );
+  const writePayload = {
+    user_id: userId,
+    word_id: wordId,
+    sense_id: senseId ?? null,
+    ...patch,
+  };
+
+  const { error } = existing?.id
+    ? await supabase
+        .from("user_word_memory")
+        .update(writePayload)
+        .eq("id", existing.id)
+        .eq("user_id", userId)
+    : await supabase.from("user_word_memory").insert(writePayload);
 
   if (error) {
     throw error;
@@ -213,6 +270,7 @@ export async function persistWordMemoryGrade({
     supabase,
     userId,
     wordId,
+    senseId,
     practiceType,
     grade,
     previous: transition.previous,
@@ -221,7 +279,7 @@ export async function persistWordMemoryGrade({
     mode,
   });
 
-  logger.info("user_word_memory_persisted", getWordMemoryLogPayload(transition, userId, wordId, grade));
+  logger.info("user_word_memory_persisted", getWordMemoryLogPayload(transition, userId, wordId, senseId, grade));
 
   return transition;
 }

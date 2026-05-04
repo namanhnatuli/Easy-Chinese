@@ -61,6 +61,9 @@ export function buildProgressSummary(
     masteredCount,
     dueTodayCount,
     overdueCount,
+    knownSenses: 0,
+    difficultSenses: 0,
+    partiallyLearnedMultiSenseWords: 0,
   };
 }
 

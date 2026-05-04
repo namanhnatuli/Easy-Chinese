@@ -8,6 +8,7 @@ export type ListeningDictationResult = "correct" | "almost" | "incorrect";
 
 export interface ListeningSourceMetadata {
   wordId?: string | null;
+  senseId?: string | null;
   wordSlug?: string | null;
   articleId?: string | null;
   articleSlug?: string | null;

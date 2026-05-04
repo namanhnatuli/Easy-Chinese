@@ -42,8 +42,66 @@ test("parseAndNormalizeVocabSyncRow normalizes sheet payloads", () => {
   assert.equal(row.normalizedPayload.partOfSpeech, "dong_tu");
   assert.deepEqual(row.normalizedPayload.mainRadicals, ["扌", "电", "舌"]);
   assert.equal(row.normalizedPayload.examples.length, 2);
+  assert.equal(row.normalizedPayload.senses.length, 1);
+  assert.equal(row.normalizedPayload.senses[0]?.isPrimary, true);
   assert.equal(row.normalizedPayload.sourceUpdatedAt, "2026-04-18T07:31:16.000Z");
   assert.ok(row.contentHash);
+});
+
+test("parseAndNormalizeVocabSyncRow uses senses_json when provided", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 5,
+    values: {
+      normalized_text: "得",
+      pinyin: "de",
+      meanings_vi: "được",
+      part_of_speech: "tro_tu",
+      senses_json: JSON.stringify({
+        senses: [
+          {
+            pinyin: "de",
+            meaning_vi: "trợ từ kết cấu",
+            part_of_speech: "tro_tu",
+            usage_note: "Dùng rất thường xuyên.",
+            sense_order: 2,
+            is_primary: false,
+            examples: [
+              {
+                cn: "跑得快",
+                py: "pǎo de kuài",
+                vi: "chạy nhanh",
+              },
+            ],
+          },
+          {
+            pinyin: "děi",
+            meaning_vi: "phải, cần phải",
+            part_of_speech: "dong_tu",
+            sense_order: 1,
+            is_primary: true,
+            examples: [
+              {
+                chineseText: "我得走了。",
+                pinyin: "Wǒ děi zǒu le.",
+                vietnameseMeaning: "Tôi phải đi rồi.",
+              },
+            ],
+          },
+          {},
+        ],
+      }),
+    },
+  });
+
+  assert.equal(row.parseErrors.length, 0);
+  assert.equal(row.normalizedPayload.senses.length, 2);
+  assert.equal(row.normalizedPayload.pinyin, "děi");
+  assert.equal(row.normalizedPayload.meaningsVi, "phải, cần phải || trợ từ kết cấu");
+  assert.equal(row.normalizedPayload.partOfSpeech, "dong_tu|tro_tu");
+  assert.equal(row.normalizedPayload.readingCandidates, "děi|phải, cần phải || de|trợ từ kết cấu");
+  assert.deepEqual(row.normalizedPayload.examples.map((example) => example.chineseText), ["我得走了。", "跑得快"]);
+  assert.equal(row.normalizedPayload.senseSourceKeys.length, 2);
+  assert.equal(row.sourceRowKey, "得::děi::dong_tu|tro_tu");
 });
 
 test("parseAndNormalizeVocabSyncRow derives source_row_key from text, pinyin, and part of speech even with external_id", () => {
@@ -60,6 +118,28 @@ test("parseAndNormalizeVocabSyncRow derives source_row_key from text, pinyin, an
 
   assert.equal(row.parseErrors.length, 0);
   assert.equal(row.sourceRowKey, "看::kàn::dong_tu");
+});
+
+test("parseAndNormalizeVocabSyncRow falls back to one default sense when senses_json is empty", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 6,
+    values: {
+      normalized_text: "看",
+      pinyin: "kàn",
+      meanings_vi: "nhìn",
+      part_of_speech: "dong_tu",
+      notes: "Nghĩa cơ bản.",
+      examples: "CN=我看书。|PY=Wǒ kàn shū.|VI=Tôi đọc sách.",
+      senses_json: "",
+    },
+  });
+
+  assert.equal(row.parseErrors.length, 0);
+  assert.equal(row.normalizedPayload.senses.length, 1);
+  assert.equal(row.normalizedPayload.senses[0]?.meaningVi, "nhìn");
+  assert.equal(row.normalizedPayload.senses[0]?.usageNote, "Nghĩa cơ bản.");
+  assert.equal(row.normalizedPayload.senses[0]?.examples[0]?.cn, "我看书。");
+  assert.equal(row.normalizedPayload.examples[0]?.vietnameseMeaning, "Tôi đọc sách.");
 });
 
 test("parseAndNormalizeVocabSyncRow records parse errors for invalid payloads", () => {
@@ -82,4 +162,22 @@ test("parseAndNormalizeVocabSyncRow records parse errors for invalid payloads", 
   assert.ok(row.parseErrors.some((error) => error.includes("normalized_text is required")));
   assert.ok(row.parseErrors.some((error) => error.includes("Invalid component_breakdown_json JSON")));
   assert.ok(row.parseErrors.some((error) => error.includes("Invalid hsk_level")));
+});
+
+test("parseAndNormalizeVocabSyncRow marks invalid senses_json and falls back to default sense", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 7,
+    values: {
+      normalized_text: "得",
+      pinyin: "de",
+      meanings_vi: "được",
+      part_of_speech: "tro_tu",
+      senses_json: "{bad json}",
+    },
+  });
+
+  assert.equal(row.initialChangeClassification, "invalid");
+  assert.ok(row.parseErrors.some((error) => error.includes("Invalid senses_json JSON")));
+  assert.equal(row.normalizedPayload.senses.length, 1);
+  assert.equal(row.normalizedPayload.senses[0]?.pinyin, "de");
 });

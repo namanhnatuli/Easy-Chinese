@@ -17,6 +17,15 @@ interface ExistingWordExample {
   sortOrder: number;
 }
 
+interface ExistingWordSenseSnapshot {
+  id: string;
+  pinyin: string;
+  partOfSpeech: string | null;
+  contentHash: string | null;
+  senseOrder: number;
+  isPrimary: boolean;
+}
+
 export interface ExistingWordPreviewSnapshot {
   id: string;
   slug: string;
@@ -48,6 +57,7 @@ export interface ExistingWordPreviewSnapshot {
   lastSourceUpdatedAt: string | null;
   mainRadicals: string[];
   topicTags: string[];
+  senses: ExistingWordSenseSnapshot[];
   examples: ExistingWordExample[];
 }
 

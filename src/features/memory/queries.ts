@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { countSuccessfulLearningActivitiesToday } from "@/features/memory/activity";
+import { buildLearningSenseCards } from "@/features/learning/sense-cards";
 
 import type {
   DailyGoalProgress,
@@ -27,7 +28,7 @@ async function listDueMemoryWordIds(userId: string, nowIso: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("user_word_memory")
-    .select("word_id")
+    .select("word_id, sense_id")
     .eq("user_id", userId)
     .not("due_at", "is", null)
     .lte("due_at", nowIso);
@@ -36,7 +37,7 @@ async function listDueMemoryWordIds(userId: string, nowIso: string) {
     throw error;
   }
 
-  return new Set((data ?? []).map((row) => row.word_id));
+  return new Set((data ?? []).map((row) => row.sense_id ?? row.word_id));
 }
 
 async function listPublishedWordsByIds(wordIds: string[]) {
@@ -47,7 +48,9 @@ async function listPublishedWordsByIds(wordIds: string[]) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("words")
-    .select("id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level")
+    .select(
+      "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, mnemonic, word_senses(id, pinyin, part_of_speech, meaning_vi, usage_note, sense_order, is_primary, is_published), word_examples(id, chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id)",
+    )
     .in("id", wordIds)
     .eq("is_published", true);
 
@@ -65,11 +68,11 @@ async function listSuggestedNewWords(userId: string, limit: number) {
 
   const supabase = await createSupabaseServerClient();
   const [{ data: memoryRows, error: memoryError }, { data: dueWords, error: lessonError }] = await Promise.all([
-    supabase.from("user_word_memory").select("word_id").eq("user_id", userId),
+    supabase.from("user_word_memory").select("word_id, sense_id").eq("user_id", userId),
     supabase
       .from("lesson_words")
       .select(
-        "sort_order, lessons!inner(id, slug, title, hsk_level, sort_order, is_published), words!inner(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, is_published)",
+        "sort_order, sense_id, lessons!inner(id, slug, title, hsk_level, sort_order, is_published), words!inner(id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, hsk_level, notes, mnemonic, is_published, word_senses(id, pinyin, part_of_speech, meaning_vi, usage_note, sense_order, is_primary, is_published), word_examples(id, chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id))",
       )
       .eq("lessons.is_published", true)
       .eq("words.is_published", true)
@@ -86,26 +89,63 @@ async function listSuggestedNewWords(userId: string, limit: number) {
     throw lessonError;
   }
 
-  const knownWordIds = new Set((memoryRows ?? []).map((row) => row.word_id));
-  const items: Array<{
-    id: string;
-    slug: string;
-    simplified: string;
-    traditional: string | null;
-    hanzi: string;
-    pinyin: string;
-    han_viet: string | null;
-    vietnamese_meaning: string;
-    hsk_level: number;
-  }> = [];
+  const knownKeys = new Set((memoryRows ?? []).map((row) => `${row.word_id}::${row.sense_id ?? ""}`));
+  const items: Array<ReturnType<typeof buildLearningSenseCards>[number]> = [];
 
   for (const row of dueWords ?? []) {
     const word = normalizeRelation(row.words);
-    if (!word || knownWordIds.has(word.id) || items.some((item) => item.id === word.id)) {
+    if (!word) {
       continue;
     }
 
-    items.push(word);
+    const cards = buildLearningSenseCards({
+      word: {
+        id: word.id,
+        slug: word.slug,
+        simplified: word.simplified,
+        traditional: word.traditional,
+        hanzi: word.hanzi,
+        pinyin: word.pinyin,
+        hanViet: word.han_viet,
+        vietnameseMeaning: word.vietnamese_meaning,
+        hskLevel: word.hsk_level,
+        notes: word.notes,
+        mnemonic: word.mnemonic,
+      },
+      senses: (word.word_senses ?? [])
+        .filter((sense) => sense.is_published)
+        .map((sense) => ({
+          id: sense.id,
+          pinyin: sense.pinyin,
+          partOfSpeech: sense.part_of_speech,
+          meaningVi: sense.meaning_vi,
+          usageNote: sense.usage_note,
+          senseOrder: sense.sense_order,
+          isPrimary: sense.is_primary,
+        })),
+      examples: (word.word_examples ?? []).map((example) => ({
+        id: example.id,
+        chineseText: example.chinese_text,
+        pinyin: example.pinyin,
+        vietnameseMeaning: example.vietnamese_meaning,
+        sortOrder: example.sort_order,
+        senseId: example.sense_id,
+      })),
+      preferredSenseId: row.sense_id ?? null,
+    });
+
+    for (const card of cards) {
+      const memoryKey = `${card.wordId}::${card.senseId ?? ""}`;
+      if (knownKeys.has(memoryKey) || items.some((item) => item.id === card.id)) {
+        continue;
+      }
+
+      items.push(card);
+      if (items.length >= limit) {
+        break;
+      }
+    }
+
     if (items.length >= limit) {
       break;
     }
@@ -125,7 +165,7 @@ export async function listPersonalizedReviewQueue(
   const { data: memoryRows, error: memoryError } = await supabase
     .from("user_word_memory")
     .select(
-      "word_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
+      "id, word_id, sense_id, scheduler_type, state, ease_factor, interval_days, due_at, reps, lapses, learning_step_index, fsrs_stability, fsrs_difficulty, fsrs_retrievability, scheduled_days, elapsed_days, last_reviewed_at, last_grade",
     )
     .eq("user_id", userId)
     .lte("due_at", now.toISOString())
@@ -138,23 +178,15 @@ export async function listPersonalizedReviewQueue(
 
   const dueWords = await listPublishedWordsByIds((memoryRows ?? []).map((row) => row.word_id));
   const newWords = options?.includeNew ? await listSuggestedNewWords(userId, Math.max(limit - dueWords.length, 0)) : [];
-  const queueWords = [...dueWords];
-
-  for (const word of newWords) {
-    if (!queueWords.some((item) => item.id === word.id)) {
-      queueWords.push(word);
-    }
-  }
-
-  const memoryMap = new Map((memoryRows ?? []).map((row) => [row.word_id, row]));
-
-  return queueWords
-    .map((word) => {
-      const memory = memoryMap.get(word.id);
-      const intervalDays = memory?.interval_days ?? 0;
-      const queueSource: DueReviewItem["queueSource"] = memory ? "due" : "new";
-
-      return {
+  const exactMemoryMap = new Map((memoryRows ?? []).map((row) => [`${row.word_id}::${row.sense_id ?? ""}`, row]));
+  const legacyMemoryMap = new Map(
+    (memoryRows ?? [])
+      .filter((row) => row.sense_id === null)
+      .map((row) => [row.word_id, row]),
+  );
+  const dueCards: DueReviewItem[] = dueWords.flatMap((word) => {
+    const cards = buildLearningSenseCards({
+      word: {
         id: word.id,
         slug: word.slug,
         simplified: word.simplified,
@@ -163,42 +195,140 @@ export async function listPersonalizedReviewQueue(
         pinyin: word.pinyin,
         hanViet: word.han_viet,
         vietnameseMeaning: word.vietnamese_meaning,
+        hskLevel: word.hsk_level,
+        notes: word.notes,
+        mnemonic: word.mnemonic,
+      },
+      senses: (word.word_senses ?? [])
+        .filter((sense) => sense.is_published)
+        .map((sense) => ({
+          id: sense.id,
+          pinyin: sense.pinyin,
+          partOfSpeech: sense.part_of_speech,
+          meaningVi: sense.meaning_vi,
+          usageNote: sense.usage_note,
+          senseOrder: sense.sense_order,
+          isPrimary: sense.is_primary,
+        })),
+      examples: (word.word_examples ?? []).map((example) => ({
+        id: example.id,
+        chineseText: example.chinese_text,
+        pinyin: example.pinyin,
+        vietnameseMeaning: example.vietnamese_meaning,
+        sortOrder: example.sort_order,
+        senseId: example.sense_id,
+      })),
+    });
+
+    const cardsWithMemory = cards
+      .map((card): DueReviewItem | null => {
+        const memory =
+          exactMemoryMap.get(`${card.wordId}::${card.senseId ?? ""}`) ??
+          (card.isPrimary ? legacyMemoryMap.get(card.wordId) : undefined);
+
+        if (!memory) {
+          return null;
+        }
+
+        const intervalDays = memory.interval_days ?? 0;
+
+        return {
+          id: card.id,
+          wordId: card.wordId,
+          senseId: card.senseId,
+          slug: card.slug,
+          simplified: card.simplified,
+          traditional: card.traditional,
+          hanzi: card.hanzi,
+          pinyin: card.pinyin,
+          hanViet: card.hanViet,
+          vietnameseMeaning: card.vietnameseMeaning,
+          sortOrder: 0,
+          partOfSpeech: card.partOfSpeech,
+          promptExample: card.promptExample,
+          status:
+            memory.state === "review"
+              ? intervalDays >= 30
+                ? "mastered"
+                : "review"
+              : memory.state === "new"
+                ? "new"
+                : "learning",
+          memoryState: memory.state,
+          schedulerType:
+            memory.scheduler_type === "sm2"
+              ? "sm2"
+              : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
+          dueAt: memory.due_at ?? null,
+          lastReviewedAt: memory.last_reviewed_at ?? null,
+          intervalDays,
+          streakCount: Math.max((memory.reps ?? 0) - (memory.lapses ?? 0), 0),
+          correctCount: Math.max((memory.reps ?? 0) - (memory.lapses ?? 0), 0),
+          incorrectCount: memory.lapses ?? 0,
+          queueSource: "due",
+          reps: memory.reps ?? 0,
+          lapses: memory.lapses ?? 0,
+          easeFactor: Number(memory.ease_factor ?? 2.5),
+          learningStepIndex: memory.learning_step_index ?? 0,
+          fsrsStability: memory.fsrs_stability === null || memory.fsrs_stability === undefined ? null : Number(memory.fsrs_stability),
+          fsrsDifficulty: memory.fsrs_difficulty === null || memory.fsrs_difficulty === undefined ? null : Number(memory.fsrs_difficulty),
+          fsrsRetrievability:
+            memory.fsrs_retrievability === null || memory.fsrs_retrievability === undefined
+              ? null
+              : Number(memory.fsrs_retrievability),
+          scheduledDays: memory.scheduled_days ?? 0,
+          elapsedDays: memory.elapsed_days ?? 0,
+          lastGrade: memory.last_grade ?? null,
+        };
+      })
+      .filter((item): item is DueReviewItem => item !== null);
+
+    return cardsWithMemory;
+  });
+
+  const queueCards: DueReviewItem[] = [...dueCards];
+
+  for (const card of newWords) {
+    if (!queueCards.some((item) => item.wordId === card.wordId && item.senseId === card.senseId)) {
+      queueCards.push({
+        id: card.id,
+        wordId: card.wordId,
+        senseId: card.senseId,
+        slug: card.slug,
+        simplified: card.simplified,
+        traditional: card.traditional,
+        hanzi: card.hanzi,
+        pinyin: card.pinyin,
+        hanViet: card.hanViet,
+        vietnameseMeaning: card.vietnameseMeaning,
         sortOrder: 0,
-        status:
-          memory?.state === "review"
-            ? intervalDays >= 30
-              ? "mastered"
-              : "review"
-            : memory?.state === "new"
-              ? "new"
-              : "learning",
-        memoryState: memory?.state ?? "new",
-        schedulerType:
-          memory?.scheduler_type === "sm2"
-            ? "sm2"
-            : DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
-        dueAt: memory?.due_at ?? null,
-        lastReviewedAt: memory?.last_reviewed_at ?? null,
-        intervalDays,
-        streakCount: Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
-        correctCount: Math.max((memory?.reps ?? 0) - (memory?.lapses ?? 0), 0),
-        incorrectCount: memory?.lapses ?? 0,
-        queueSource,
-        reps: memory?.reps ?? 0,
-        lapses: memory?.lapses ?? 0,
-        easeFactor: Number(memory?.ease_factor ?? 2.5),
-        learningStepIndex: memory?.learning_step_index ?? 0,
-        fsrsStability: memory?.fsrs_stability === null || memory?.fsrs_stability === undefined ? null : Number(memory.fsrs_stability),
-        fsrsDifficulty: memory?.fsrs_difficulty === null || memory?.fsrs_difficulty === undefined ? null : Number(memory.fsrs_difficulty),
-        fsrsRetrievability:
-          memory?.fsrs_retrievability === null || memory?.fsrs_retrievability === undefined
-            ? null
-            : Number(memory.fsrs_retrievability),
-        scheduledDays: memory?.scheduled_days ?? 0,
-        elapsedDays: memory?.elapsed_days ?? 0,
-        lastGrade: memory?.last_grade ?? null,
-      } satisfies DueReviewItem;
-    })
+        partOfSpeech: card.partOfSpeech,
+        promptExample: card.promptExample,
+        status: "new",
+        memoryState: "new",
+        schedulerType: DEFAULT_LEARNING_SCHEDULER_SETTINGS.schedulerType,
+        dueAt: null,
+        lastReviewedAt: null,
+        intervalDays: 0,
+        streakCount: 0,
+        correctCount: 0,
+        incorrectCount: 0,
+        queueSource: "new",
+        reps: 0,
+        lapses: 0,
+        easeFactor: 2.5,
+        learningStepIndex: 0,
+        fsrsStability: null,
+        fsrsDifficulty: null,
+        fsrsRetrievability: null,
+        scheduledDays: 0,
+        elapsedDays: 0,
+        lastGrade: null,
+      });
+    }
+  }
+
+  return queueCards
     .sort((left, right) => {
       const leftTime = left.dueAt ? new Date(left.dueAt).getTime() : Number.MAX_SAFE_INTEGER;
       const rightTime = right.dueAt ? new Date(right.dueAt).getTime() : Number.MAX_SAFE_INTEGER;

@@ -21,7 +21,8 @@ function getReadingPayload(item: ReadingPracticeItem, grade: SchedulerGrade) {
   if (item.kind === "word") {
     return {
       practiceType: "word",
-      wordId: item.id,
+      wordId: item.wordId,
+      senseId: item.senseId,
       grade,
     };
   }
@@ -235,6 +236,7 @@ export function ReadingPracticeSession({
   const chineseText = currentItem.kind === "word" ? currentItem.hanzi : currentItem.chineseText;
   const pinyin = currentItem.kind === "word" ? currentItem.pinyin : currentItem.pinyin;
   const meaning = currentItem.kind === "word" ? currentItem.vietnameseMeaning : currentItem.vietnameseMeaning;
+  const senseContext = currentItem.kind === "word" ? currentItem.promptExample?.chineseText ?? null : null;
 
   return (
     <section className="surface-panel p-5 sm:p-6 lg:p-8">
@@ -266,19 +268,22 @@ export function ReadingPracticeSession({
                 ref={pronunciationButtonRef}
                 text={getSpeechText(currentItem)}
                 sourceType={currentItem.kind === "word" ? "word" : "example"}
-                sourceRefId={currentItem.id}
+                sourceRefId={currentItem.kind === "word" ? currentItem.wordId : currentItem.id}
                 sourceMetadata={
                   currentItem.kind === "word"
                     ? {
                         slug: currentItem.slug,
                         pinyin: currentItem.pinyin,
                         vietnameseMeaning: currentItem.vietnameseMeaning,
+                        senseId: currentItem.senseId,
+                        promptExampleId: currentItem.promptExample?.id ?? null,
                       }
                     : {
                         pinyin: currentItem.pinyin,
                         vietnameseMeaning: currentItem.vietnameseMeaning,
                         wordId: currentItem.linkedWord?.id ?? null,
                         wordSlug: currentItem.linkedWord?.slug ?? null,
+                        senseId: currentItem.senseId,
                       }
                 }
                 lang="zh-CN"
@@ -305,9 +310,19 @@ export function ReadingPracticeSession({
               {showPinyin && pinyin ? (
                 <p className="mt-4 text-lg text-muted-foreground sm:text-xl">{pinyin}</p>
               ) : null}
+              {currentItem.kind === "word" && currentItem.partOfSpeech ? (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  {currentItem.partOfSpeech}
+                </p>
+              ) : null}
               {showMeaning ? (
                 <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                   {meaning}
+                </p>
+              ) : null}
+              {senseContext ? (
+                <p className="mx-auto mt-4 max-w-2xl rounded-[1rem] bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+                  {senseContext}
                 </p>
               ) : null}
             </div>
@@ -359,7 +374,7 @@ export function ReadingPracticeSession({
             {currentItem.kind === "word" ? (
               <div className="mt-6">
                 <AiSentenceGeneratorCard
-                  wordId={currentItem.id}
+                  wordId={currentItem.wordId}
                   title={t("ai.sentences.practiceTitle")}
                   description={t("ai.sentences.practiceDescription")}
                 />
