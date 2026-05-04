@@ -31,6 +31,7 @@ import type {
   UserSkillBreakdown,
   UserVocabularyStatusBreakdown,
 } from "@/features/progress/dashboard.types";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import { getDefaultDailyGoal, getVisibleStreakCount } from "@/features/memory/spaced-repetition";
 
 type ProgressTimeSeriesRows = {
@@ -485,7 +486,7 @@ export async function getUserRecentActivity(
       occurredAt: row.reviewed_at,
       label: word.hanzi,
       detail: row.result,
-      href: `/vocabulary/${word.slug}`,
+      href: buildVocabularyDetailPath(word.slug),
       meta: {
         mode: row.mode,
       },
@@ -507,7 +508,7 @@ export async function getUserRecentActivity(
         occurredAt: row.created_at,
         label: word.hanzi,
         detail: row.result,
-        href: `/vocabulary/${word.slug}`,
+        href: buildVocabularyDetailPath(word.slug),
         meta: {
           practiceType: "writing_character",
         },
@@ -521,7 +522,7 @@ export async function getUserRecentActivity(
         occurredAt: row.created_at,
         label: word.hanzi,
         detail: row.result,
-        href: `/vocabulary/${word.slug}`,
+        href: buildVocabularyDetailPath(word.slug),
         meta: {
           practiceType: "reading_word",
         },
@@ -535,7 +536,7 @@ export async function getUserRecentActivity(
         occurredAt: row.created_at,
         label: sentence?.chinese_text ?? word?.hanzi ?? "Sentence",
         detail: row.result,
-        href: word?.slug ? `/vocabulary/${word.slug}` : null,
+        href: word?.slug ? buildVocabularyDetailPath(word.slug) : null,
         meta: {
           practiceType: "reading_sentence",
         },

@@ -7,7 +7,7 @@ const importExampleSchema = z.object({
 });
 
 const importWordSchema = z.object({
-  slug: z.string().trim().min(1, "Slug is required."),
+  slug: z.string().trim().optional().nullable(),
   simplified: z.string().trim().min(1, "Simplified Chinese is required."),
   traditional: z.string().trim().optional().nullable(),
   hanzi: z.string().trim().min(1, "Hanzi is required."),
@@ -122,7 +122,7 @@ function parseCsvRows(text: string) {
 
 function mapRawImportRow(row: Record<string, unknown>) {
   return importWordSchema.parse({
-    slug: row.slug,
+    slug: normalizeNullableText(row.slug),
     simplified: row.simplified,
     traditional: normalizeNullableText(row.traditional),
     hanzi: row.hanzi ?? row.simplified,
@@ -160,12 +160,12 @@ export function detectImportedWordDuplicates(words: ImportedWordInput[]) {
   const duplicates: string[] = [];
 
   words.forEach((word, index) => {
-    const slugKey = word.slug.toLowerCase();
+    const slugKey = word.slug?.toLowerCase() ?? "";
     const pairKey = `${word.hanzi.toLowerCase()}::${word.vietnameseMeaning.toLowerCase()}`;
 
-    if (seenSlugs.has(slugKey)) {
+    if (slugKey && seenSlugs.has(slugKey)) {
       duplicates.push(`Row ${index + 2}: duplicate slug "${word.slug}" in import file.`);
-    } else {
+    } else if (slugKey) {
       seenSlugs.add(slugKey);
     }
 

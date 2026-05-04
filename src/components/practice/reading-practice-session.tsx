@@ -10,6 +10,7 @@ import { PronunciationFeedback } from "@/components/practice/pronunciation-feedb
 import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import { predictDueHintsForGrades } from "@/features/memory/spaced-repetition";
 import type { LearningSchedulerSettings } from "@/features/memory/spaced-repetition";
 import { useI18n } from "@/i18n/client";
@@ -336,7 +337,7 @@ export function ReadingPracticeSession({
                   <p className="text-2xl font-semibold text-foreground">{currentItem.linkedWord.hanzi}</p>
                   <p className="text-sm text-muted-foreground">{currentItem.linkedWord.pinyin}</p>
                   <Button asChild variant="outline">
-                    <Link href={link(`/vocabulary/${currentItem.linkedWord.slug}`)}>{t("practice.reading.openWord")}</Link>
+                    <Link href={link(buildVocabularyDetailPath(currentItem.linkedWord.slug))}>{t("practice.reading.openWord")}</Link>
                   </Button>
                 </div>
               </div>

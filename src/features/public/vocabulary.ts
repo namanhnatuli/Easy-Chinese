@@ -4,6 +4,7 @@ import { TAG_LABELS } from "@/features/vocabulary-sync/constants";
 
 const vocabularyFilterSchema = z.object({
   q: z.string().trim().min(1).optional(),
+  pinyin: z.string().trim().min(1).optional(),
   hsk: z.coerce.number().int().min(1).max(9).optional(),
   topic: z.string().trim().min(1).optional(),
   radical: z.string().uuid().optional(),
@@ -47,6 +48,7 @@ export interface PublicWordSense {
 
 export interface VocabularyFilters {
   q?: string;
+  pinyin?: string;
   hsk?: number;
   topic?: string;
   radical?: string;
@@ -278,6 +280,7 @@ export function attachWordRelations<T extends PublicWordListItem>(
 export function parseVocabularyFilters(searchParams: Record<string, string | string[] | undefined>) {
   return vocabularyFilterSchema.parse({
     q: optionalQueryValue(searchParams.q),
+    pinyin: optionalQueryValue(searchParams.pinyin),
     hsk: optionalQueryValue(searchParams.hsk),
     topic: optionalQueryValue(searchParams.topic),
     radical: optionalQueryValue(searchParams.radical),

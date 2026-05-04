@@ -21,13 +21,17 @@ import {
   loadTopicTagResolutionRows,
   resolveTopicAssignmentsFromRows,
 } from "@/features/shared/topic-tag-resolution";
+import {
+  buildLegacyPinyinSlug,
+  buildUniqueWordSlug,
+} from "@/features/public/vocabulary-slugs";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { buildSenseContentHashForApply } from "@/features/vocabulary-sync/apply-senses";
 import { logger } from "@/lib/logger";
 
 const wordSchema = z.object({
   id: z.string().uuid().optional(),
-  slug: z.string().min(1, "Slug is required."),
+  slug: z.string().nullable(),
   simplified: z.string().min(1, "Simplified Chinese is required."),
   traditional: z.string().nullable(),
   hanzi: z.string().min(1, "Hanzi is required."),
@@ -52,6 +56,33 @@ const wordSchema = z.object({
   sourceConfidence: z.enum(["low", "medium", "high"]).nullable(),
   isPublished: z.boolean(),
 });
+
+async function buildUniqueAdminWordSlug(
+  supabase: Awaited<ReturnType<typeof requireAdminSupabase>>["supabase"],
+  input: {
+    normalizedText: string | null;
+    hanzi: string | null;
+    simplified: string | null;
+  },
+  excludeWordId?: string,
+) {
+  const baseSlug = buildUniqueWordSlug(input, []);
+  const { data, error } = await supabase
+    .from("words")
+    .select("id, slug")
+    .ilike("slug", `${baseSlug}%`);
+
+  if (error) {
+    throw error;
+  }
+
+  return buildUniqueWordSlug(
+    input,
+    (data ?? [])
+      .filter((word) => word.id !== excludeWordId)
+      .map((word) => word.slug),
+  );
+}
 
 export interface AdminWordListItem {
   id: string;
@@ -402,7 +433,7 @@ export async function saveWordAction(formData: FormData) {
   const { supabase, auth } = await requireAdminSupabase();
   const parsed = wordSchema.parse({
     id: optionalText(formData.get("id")) ?? undefined,
-    slug: requiredText(formData.get("slug")),
+    slug: optionalText(formData.get("slug")),
     simplified: requiredText(formData.get("simplified")),
     traditional: optionalText(formData.get("traditional")),
     hanzi: requiredText(formData.get("hanzi")) || requiredText(formData.get("simplified")),
@@ -454,6 +485,18 @@ export async function saveWordAction(formData: FormData) {
 
   const senses = parseAdminSensesJson(optionalText(formData.get("senses_json")));
   const legacySummary = deriveLegacyWordSummaryFromSenses(senses);
+  const generatedSlug = await buildUniqueAdminWordSlug(
+    supabase,
+    {
+      normalizedText: parsed.normalizedText,
+      hanzi: parsed.hanzi,
+      simplified: parsed.simplified,
+    },
+    parsed.id,
+  );
+  const submittedSlug = parsed.slug?.trim() ?? "";
+  const legacyPinyinSlug = buildLegacyPinyinSlug(legacySummary.pinyin);
+  const safeSlug = !submittedSlug || submittedSlug === legacyPinyinSlug ? generatedSlug : submittedSlug;
   const flatExamples = senses.flatMap((sense) =>
     sense.examples.map((example) => ({
       chineseText: example.chineseText,
@@ -468,7 +511,7 @@ export async function saveWordAction(formData: FormData) {
   const resolvedTopicId = parsed.topicId ?? topicAssignments.primaryTopicId;
 
   const payload = {
-    slug: parsed.slug,
+    slug: safeSlug,
     simplified: parsed.simplified,
     traditional: parsed.traditional,
     hanzi: parsed.hanzi,
@@ -527,7 +570,7 @@ export async function saveWordAction(formData: FormData) {
     logger.info("admin_word_updated", {
       userId: auth.user?.id ?? null,
       wordId,
-      slug: parsed.slug,
+      slug: safeSlug,
       published: parsed.isPublished,
     });
   } else {
@@ -545,7 +588,7 @@ export async function saveWordAction(formData: FormData) {
     logger.info("admin_word_created", {
       userId: auth.user?.id ?? null,
       wordId,
-      slug: parsed.slug,
+      slug: safeSlug,
       published: parsed.isPublished,
     });
   }

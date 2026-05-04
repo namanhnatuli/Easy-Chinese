@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HomePageData } from "@/features/home/queries";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import { getServerI18n } from "@/i18n/server";
 
 function ProgressBar({
@@ -450,7 +451,7 @@ export async function HomeDashboard({ data }: { data: HomePageData }) {
               data.recentActivity.recentWords.map((word) => (
                 <Link
                   key={word.id}
-                  href={link(`/vocabulary/${word.slug}`)}
+                  href={link(buildVocabularyDetailPath(word.slug))}
                   className="flex items-center justify-between rounded-2xl border border-border/70 px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
                 >
                   <div>

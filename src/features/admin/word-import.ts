@@ -10,6 +10,7 @@ import {
   parseWordImportText,
   type ImportedWordInput,
 } from "@/features/admin/word-import-parser";
+import { buildUniqueWordSlug } from "@/features/public/vocabulary-slugs";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 
 export interface WordImportState {
@@ -53,7 +54,6 @@ export async function importWordsFromText({
   }
 
   const { supabase, auth } = await requireAdminSupabase();
-  const slugs = [...new Set(parsedWords.map((word) => word.slug))];
   const hanzis = [...new Set(parsedWords.map((word) => word.hanzi))];
   const topicSlugs = [...new Set(parsedWords.map((word) => word.topicSlug).filter(Boolean))];
   const radicals = [...new Set(parsedWords.map((word) => word.radicalCharacter).filter(Boolean))];
@@ -64,7 +64,7 @@ export async function importWordsFromText({
     { data: topics, error: topicsError },
     { data: radicalRows, error: radicalsError },
   ] = await Promise.all([
-    supabase.from("words").select("slug").in("slug", slugs),
+    supabase.from("words").select("slug").limit(10000),
     supabase.from("words").select("hanzi").in("hanzi", hanzis),
     topicSlugs.length > 0
       ? supabase.from("topics").select("id, slug").in("slug", topicSlugs)
@@ -79,7 +79,7 @@ export async function importWordsFromText({
   if (topicsError) throw topicsError;
   if (radicalsError) throw radicalsError;
 
-  const existingSlugSet = new Set((existingBySlug ?? []).map((row) => row.slug.toLowerCase()));
+  const existingSlugs = new Set((existingBySlug ?? []).map((row) => row.slug));
   const existingHanziSet = new Set((existingByHanzi ?? []).map((row) => row.hanzi.toLowerCase()));
   const topicMap = new Map((topics ?? []).map((topic) => [topic.slug, topic.id]));
   const radicalMap = new Map((radicalRows ?? []).map((radical) => [radical.radical, radical.id]));
@@ -88,11 +88,6 @@ export async function importWordsFromText({
   const acceptedWords: ImportedWordInput[] = [];
 
   parsedWords.forEach((word, index) => {
-    if (existingSlugSet.has(word.slug.toLowerCase())) {
-      validationMessages.push(`Row ${index + 2}: slug "${word.slug}" already exists.`);
-      return;
-    }
-
     if (existingHanziSet.has(word.hanzi.toLowerCase())) {
       validationMessages.push(`Row ${index + 2}: hanzi "${word.hanzi}" already exists.`);
       return;
@@ -130,8 +125,21 @@ export async function importWordsFromText({
     };
   }
 
-  const insertPayload = acceptedWords.map((word) => ({
-    slug: word.slug,
+  const acceptedWordEntries = acceptedWords.map((word) => {
+    const slug = buildUniqueWordSlug(
+      {
+        normalizedText: word.simplified,
+        hanzi: word.hanzi,
+        simplified: word.simplified,
+      },
+      existingSlugs,
+    );
+    existingSlugs.add(slug);
+    return { word, slug };
+  });
+
+  const insertPayload = acceptedWordEntries.map(({ word, slug }) => ({
+    slug,
     simplified: word.simplified,
     traditional: word.traditional,
     hanzi: word.hanzi,
@@ -185,9 +193,9 @@ export async function importWordsFromText({
   }
 
   const insertedMap = new Map((insertedWords ?? []).map((word) => [word.slug, word.id]));
-  const examplePayload = acceptedWords.flatMap((word) =>
+  const examplePayload = acceptedWordEntries.flatMap(({ word, slug }) =>
     word.examples.map((example, index) => ({
-      word_id: insertedMap.get(word.slug),
+      word_id: insertedMap.get(slug),
       chinese_text: example.chineseText,
       pinyin: example.pinyin ?? null,
       vietnamese_meaning: example.vietnameseMeaning,

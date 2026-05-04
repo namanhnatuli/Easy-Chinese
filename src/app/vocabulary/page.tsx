@@ -13,6 +13,7 @@ import {
   parseVocabularyPage,
   parseVocabularyFilters,
 } from "@/features/public/vocabulary";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import {
   listVocabularyFilterOptions,
   listPublicWordsPage,
@@ -24,6 +25,7 @@ const PAGE_SIZE = 12;
 function buildVocabularyPath(params: {
   page?: number;
   q?: string;
+  pinyin?: string;
   hsk?: number;
   topic?: string;
   radical?: string;
@@ -32,6 +34,10 @@ function buildVocabularyPath(params: {
 
   if (params.q) {
     searchParams.set("q", params.q);
+  }
+
+  if (params.pinyin) {
+    searchParams.set("pinyin", params.pinyin);
   }
 
   if (params.hsk) {
@@ -264,7 +270,7 @@ export default async function VocabularyPage({
 
                 <div className="mt-auto flex justify-end">
                   <Button asChild variant="outline">
-                    <Link href={link(`/vocabulary/${word.slug}`)}>{t("vocabulary.openDetail")}</Link>
+                    <Link href={link(buildVocabularyDetailPath(word.slug))}>{t("vocabulary.openDetail")}</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -283,6 +289,7 @@ export default async function VocabularyPage({
                     buildVocabularyPath({
                       page: wordsPage.page - 1,
                       q: filters.q,
+                      pinyin: filters.pinyin,
                       hsk: filters.hsk,
                       topic: filters.topic,
                       radical: filters.radical,
@@ -303,6 +310,7 @@ export default async function VocabularyPage({
                     buildVocabularyPath({
                       page: wordsPage.page + 1,
                       q: filters.q,
+                      pinyin: filters.pinyin,
                       hsk: filters.hsk,
                       topic: filters.topic,
                       radical: filters.radical,

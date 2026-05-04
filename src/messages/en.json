@@ -337,6 +337,10 @@
       "searchPlaceholder": "Search by hanzi, pinyin, meaning, or slug"
     },
     "openDetail": "Open detail",
+    "legacyPinyinBadge": "Old pinyin slug",
+    "legacyPinyinTitle": "Multiple words have the reading {value}",
+    "legacyPinyinDescription": "The old pinyin slug is no longer specific enough. Choose the correct Hanzi entry to open its detail page.",
+    "legacyPinyinSearch": "View search results",
     "pageStatus": "Page {page} of {totalPages}",
     "structureBadge": "Structure: {value}",
     "ambiguousBadge": "Needs care",

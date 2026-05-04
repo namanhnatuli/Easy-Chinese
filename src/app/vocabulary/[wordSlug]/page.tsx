@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { HanziWriterAnimator } from "@/components/shared/hanzi-writer-animator";
 import { PageHeader } from "@/components/shared/page-header";
@@ -12,7 +12,8 @@ import {
   formatPublicPartOfSpeech,
   formatPublicStructureType,
 } from "@/features/public/vocabulary";
-import { getPublicWordBySlug } from "@/features/public/vocabulary.server";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
+import { resolvePublicWordRoute } from "@/features/public/vocabulary.server";
 import { getServerI18n } from "@/i18n/server";
 
 const sourceConfidenceKey = {
@@ -21,19 +22,39 @@ const sourceConfidenceKey = {
   high: "vocabulary.sourceConfidence.high",
 } as const;
 
+function takeFirstSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function appendSearchParams(pathname: string, searchParams: Record<string, string | string[] | undefined>) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    const firstValue = takeFirstSearchParam(value);
+    if (firstValue) {
+      params.set(key, firstValue);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ wordSlug: string }>;
 }): Promise<Metadata> {
   const { wordSlug } = await params;
-  const word = await getPublicWordBySlug(wordSlug);
+  const routeResolution = await resolvePublicWordRoute(wordSlug);
 
-  if (!word) {
+  if (routeResolution.kind !== "word") {
     return {
       title: "Vocabulary not found",
     };
   }
+
+  const { word } = routeResolution;
 
   return {
     title: `${word.hanzi} (${word.pinyin})`,
@@ -50,16 +71,71 @@ export default async function VocabularyDetailPage({
 }) {
   const { wordSlug } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const word = await getPublicWordBySlug(wordSlug);
   const { t, link } = await getServerI18n();
+  const routeResolution = await resolvePublicWordRoute(wordSlug);
 
-  if (!word) {
+  if (routeResolution.kind === "legacy-redirect") {
+    redirect(
+      link(
+        appendSearchParams(
+          buildVocabularyDetailPath(routeResolution.slug),
+          resolvedSearchParams,
+        ),
+      ),
+    );
+  }
+
+  if (routeResolution.kind === "legacy-disambiguation") {
+    return (
+      <div className="page-shell">
+        <PageHeader
+          eyebrow={t("vocabulary.detailEyebrow")}
+          badge={t("vocabulary.legacyPinyinBadge")}
+          title={t("vocabulary.legacyPinyinTitle", { value: routeResolution.pinyinSlug })}
+          description={t("vocabulary.legacyPinyinDescription")}
+          actions={
+            <Button asChild>
+              <Link href={link(`/vocabulary?pinyin=${encodeURIComponent(routeResolution.pinyinSlug)}`)}>
+                {t("vocabulary.legacyPinyinSearch")}
+              </Link>
+            </Button>
+          }
+        />
+
+        <section className="grid gap-4 md:grid-cols-2">
+          {routeResolution.candidates.map((candidate) => (
+            <Card key={candidate.id} className="border-border/80 bg-card/95">
+              <CardContent className="flex h-full flex-col gap-4 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-hanzi">{candidate.hanzi}</p>
+                    <p className="mt-1 text-pinyin">{candidate.pinyin}</p>
+                  </div>
+                  <Badge variant="secondary">HSK {candidate.hskLevel}</Badge>
+                </div>
+                <p className="text-sm leading-6 text-muted-foreground">{candidate.vietnameseMeaning}</p>
+                <div className="mt-auto flex justify-end">
+                  <Button asChild variant="outline">
+                    <Link href={link(buildVocabularyDetailPath(candidate.canonicalSlug))}>
+                      {t("vocabulary.openDetail")}
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      </div>
+    );
+  }
+
+  if (routeResolution.kind === "not-found") {
     notFound();
   }
 
-  const requestedSenseId = Array.isArray(resolvedSearchParams.sense)
-    ? resolvedSearchParams.sense[0]
-    : resolvedSearchParams.sense;
+  const word = routeResolution.word;
+
+  const requestedSenseId = takeFirstSearchParam(resolvedSearchParams.sense);
   const displayedHanzi =
     word.traditionalVariant && word.traditionalVariant !== word.simplified
       ? `${word.simplified} [${word.traditionalVariant}]`

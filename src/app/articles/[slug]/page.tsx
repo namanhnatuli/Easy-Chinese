@@ -14,6 +14,7 @@ import {
   toggleArticleBookmarkAction,
 } from "@/features/articles/progress";
 import { getPublicArticleBySlug } from "@/features/public/articles.server";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -141,7 +142,7 @@ export default async function ArticleDetailPage({
                 article.relatedWords.map((word) => (
                   <Link
                     key={word.id}
-                    href={link(`/vocabulary/${word.slug}`)}
+                    href={link(buildVocabularyDetailPath(word.slug))}
                     className="block rounded-2xl border border-border/80 p-4 transition-colors hover:bg-muted/40"
                   >
                     <p className="font-chinese text-xl font-semibold text-foreground">{word.hanzi}</p>

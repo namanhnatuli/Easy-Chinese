@@ -337,6 +337,10 @@
       "searchPlaceholder": "Tìm theo chữ Hán, pinyin, nghĩa hoặc slug"
     },
     "openDetail": "Mở chi tiết",
+    "legacyPinyinBadge": "Slug pinyin cũ",
+    "legacyPinyinTitle": "Có nhiều từ có âm đọc {value}",
+    "legacyPinyinDescription": "Slug pinyin cũ không còn đủ chính xác. Chọn đúng chữ Hán để mở trang chi tiết.",
+    "legacyPinyinSearch": "Xem kết quả tìm kiếm",
     "pageStatus": "Trang {page} / {totalPages}",
     "structureBadge": "Cấu trúc: {value}",
     "ambiguousBadge": "Cần lưu ý",

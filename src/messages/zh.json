@@ -337,6 +337,10 @@
       "searchPlaceholder": "按汉字、拼音、释义或 slug 搜索"
     },
     "openDetail": "查看详情",
+    "legacyPinyinBadge": "旧拼音 slug",
+    "legacyPinyinTitle": "有多个词读作 {value}",
+    "legacyPinyinDescription": "旧拼音 slug 已不够精确。请选择正确的汉字词条。",
+    "legacyPinyinSearch": "查看搜索结果",
     "pageStatus": "第 {page} 页，共 {totalPages} 页",
     "structureBadge": "结构：{value}",
     "ambiguousBadge": "需留意",

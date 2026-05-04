@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { evaluateListeningDictationAnswer } from "@/features/listening/evaluation";
+import { buildVocabularyDetailPath } from "@/features/public/vocabulary-slugs";
 import type {
   ListeningHintState,
   ListeningPersistedOutcome,
@@ -446,7 +447,7 @@ export function ListeningPracticeSession({
                   <p className="text-lg font-semibold text-foreground">{currentItem.linkedWord.hanzi}</p>
                   <p>{currentItem.linkedWord.pinyin}</p>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={link(`/vocabulary/${currentItem.linkedWord.slug}`)}>{t("practice.reading.openWord")}</Link>
+                    <Link href={link(buildVocabularyDetailPath(currentItem.linkedWord.slug))}>{t("practice.reading.openWord")}</Link>
                   </Button>
                 </div>
               </div>

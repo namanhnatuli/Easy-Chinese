@@ -16,6 +16,11 @@ import {
   mapWordListItem,
   normalizeRelation,
 } from "./vocabulary";
+import {
+  buildLegacyPinyinSlug,
+  buildWordSlugBase,
+  decodeVocabularySlugSegment,
+} from "./vocabulary-slugs";
 
 async function listWordRadicals(wordIds: string[]) {
   if (wordIds.length === 0) {
@@ -198,6 +203,12 @@ export async function listPublicWordsPage(
     listQuery = listQuery.or(searchExpression);
   }
 
+  if (filters.pinyin) {
+    const escaped = filters.pinyin.replace(/[%_,]/g, "\\$&");
+    countQuery = countQuery.ilike("pinyin", `%${escaped}%`);
+    listQuery = listQuery.ilike("pinyin", `%${escaped}%`);
+  }
+
   if (filters.hsk) {
     countQuery = countQuery.eq("hsk_level", filters.hsk);
     listQuery = listQuery.eq("hsk_level", filters.hsk);
@@ -248,12 +259,13 @@ export async function listPublicWordsPage(
 
 export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetail | null> {
   const supabase = await createSupabaseServerClient();
+  const decodedSlug = decodeVocabularySlugSegment(slug);
   const { data: word, error: wordError } = await supabase
     .from("words")
     .select(
       "id, slug, simplified, traditional, hanzi, pinyin, han_viet, vietnamese_meaning, english_meaning, meanings_vi, normalized_text, traditional_variant, hsk_level, notes, part_of_speech, radical_summary, mnemonic, character_structure_type, structure_explanation, ambiguity_flag, ambiguity_note, reading_candidates, source_confidence, topics(id, name, slug)",
     )
-    .eq("slug", slug)
+    .eq("slug", decodedSlug)
     .eq("is_published", true)
     .maybeSingle();
 
@@ -372,4 +384,145 @@ export async function getPublicWordBySlug(slug: string): Promise<PublicWordDetai
       examples: resolvedExamples,
     }),
   } satisfies PublicWordDetail;
+}
+
+export interface PublicLegacyPinyinCandidate {
+  id: string;
+  slug: string;
+  canonicalSlug: string;
+  hanzi: string;
+  simplified: string;
+  pinyin: string;
+  vietnameseMeaning: string;
+  hskLevel: number;
+}
+
+async function listPublicWordsByLegacyPinyinSlug(slug: string): Promise<PublicLegacyPinyinCandidate[]> {
+  const supabase = await createSupabaseServerClient();
+  const decodedSlug = decodeVocabularySlugSegment(slug);
+  const { data, error } = await supabase
+    .from("words")
+    .select("id, slug, normalized_text, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level")
+    .eq("is_published", true)
+    .order("hsk_level")
+    .order("hanzi")
+    .limit(5000);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .filter((word) => buildLegacyPinyinSlug(word.pinyin) === decodedSlug)
+    .map((word) => ({
+      id: word.id,
+      slug: word.slug,
+      canonicalSlug: buildWordSlugBase({
+        normalizedText: word.normalized_text,
+        hanzi: word.hanzi,
+        simplified: word.simplified,
+      }),
+      hanzi: word.hanzi,
+      simplified: word.simplified,
+      pinyin: word.pinyin,
+      vietnameseMeaning: word.vietnamese_meaning,
+      hskLevel: word.hsk_level,
+    }));
+}
+
+async function listPublicWordsByHanziSlug(slug: string): Promise<PublicLegacyPinyinCandidate[]> {
+  const supabase = await createSupabaseServerClient();
+  const decodedSlug = decodeVocabularySlugSegment(slug);
+  const { data, error } = await supabase
+    .from("words")
+    .select("id, slug, normalized_text, hanzi, simplified, pinyin, vietnamese_meaning, hsk_level")
+    .eq("is_published", true)
+    .order("hsk_level")
+    .order("hanzi")
+    .limit(5000);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .filter((word) => {
+      const canonicalSlug = buildWordSlugBase({
+        normalizedText: word.normalized_text,
+        hanzi: word.hanzi,
+        simplified: word.simplified,
+      });
+
+      return canonicalSlug === decodedSlug;
+    })
+    .map((word) => ({
+      id: word.id,
+      slug: word.slug,
+      canonicalSlug: buildWordSlugBase({
+        normalizedText: word.normalized_text,
+        hanzi: word.hanzi,
+        simplified: word.simplified,
+      }),
+      hanzi: word.hanzi,
+      simplified: word.simplified,
+      pinyin: word.pinyin,
+      vietnameseMeaning: word.vietnamese_meaning,
+      hskLevel: word.hsk_level,
+    }));
+}
+
+export type PublicWordRouteResolution =
+  | { kind: "word"; word: PublicWordDetail }
+  | { kind: "legacy-redirect"; slug: string }
+  | {
+      kind: "legacy-disambiguation";
+      pinyinSlug: string;
+      candidates: PublicLegacyPinyinCandidate[];
+    }
+  | { kind: "not-found" };
+
+export async function resolvePublicWordRoute(slug: string): Promise<PublicWordRouteResolution> {
+  const decodedSlug = decodeVocabularySlugSegment(slug);
+  const hanziCandidates = await listPublicWordsByHanziSlug(decodedSlug);
+
+  if (hanziCandidates.length === 1) {
+    const word = await getPublicWordBySlug(hanziCandidates[0].slug);
+
+    if (word) {
+      return { kind: "word", word };
+    }
+  }
+
+  if (hanziCandidates.length > 1) {
+    return {
+      kind: "legacy-disambiguation",
+      pinyinSlug: decodedSlug,
+      candidates: hanziCandidates,
+    };
+  }
+
+  const legacyCandidates = await listPublicWordsByLegacyPinyinSlug(decodedSlug);
+
+  if (legacyCandidates.length === 1) {
+    return {
+      kind: "legacy-redirect",
+      slug: legacyCandidates[0].canonicalSlug,
+    };
+  }
+
+  if (legacyCandidates.length > 1) {
+    return {
+      kind: "legacy-disambiguation",
+      pinyinSlug: decodedSlug,
+      candidates: legacyCandidates,
+    };
+  }
+
+  const word = await getPublicWordBySlug(decodedSlug);
+
+  if (word) {
+    return { kind: "word", word };
+  }
+
+  return { kind: "not-found" };
 }
