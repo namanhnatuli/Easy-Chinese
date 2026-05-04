@@ -33,7 +33,8 @@ function setupExamSheets() {
   createSheetWithHeader_(CONFIG.SHEET_ASSETS, [
     'asset_id', 'owner_type', 'owner_id', 'asset_type',
     'storage_provider', 'storage_path', 'public_url',
-    'transcript_zh', 'transcript_pinyin', 'sort_order'
+    'transcript_zh', 'transcript_pinyin', 'sort_order',
+    'review_status', 'bbox'
   ]);
 
   createSheetWithHeader_(CONFIG.SHEET_PDF_PAGES, [

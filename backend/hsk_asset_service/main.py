@@ -9,7 +9,7 @@ import requests
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pdf2image import convert_from_bytes
-from PIL import Image
+from PIL import Image, ImageDraw
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -21,11 +21,27 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
+GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "hsk-assets")
+
+# NOTE: These grid coordinates are calibrated for HSK 1 sample papers at 300 DPI.
+# For other levels or layouts, these should ideally be detected or passed via API.
+QUESTION_ROWS = {
+    1: {"top": 775, "bottom": 957},
+    2: {"top": 957, "bottom": 1138},
+    3: {"top": 1138, "bottom": 1325},
+    4: {"top": 1325, "bottom": 1510},
+    5: {"top": 1510, "bottom": 1694},
+}
+
+CENTER_COL = {
+    "left": 356,
+    "right": 786,
+}
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
@@ -44,10 +60,9 @@ app.add_middleware(
 async def health_check():
     return {"status": "ok", "service": "hsk_asset_service"}
 
-def convert_pdf_page_to_image(pdf_bytes: bytes, page_no: int, dpi: int = 200) -> Image.Image:
-    """Converts a specific PDF page to a PIL Image."""
-    logger.info(f"Rendering page {page_no}...")
-    # pdf2image pages are 0-indexed internally, but user provides 1-indexed
+def convert_pdf_page_to_image(pdf_bytes: bytes, page_no: int, dpi: int = 300) -> Image.Image:
+    """Converts a specific PDF page to a PIL Image at high DPI."""
+    logger.info(f"Rendering page {page_no} at {dpi} DPI...")
     images = convert_from_bytes(
         pdf_bytes,
         first_page=page_no,
@@ -70,39 +85,30 @@ def call_gemini_detect_boxes(image_b64: str, img_w: int, img_h: int, part_metada
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
 
     prompt = f"""
-Identify bounding boxes for question and option images on this HSK exam page.
-Part: {part_metadata['part_key']}
-Section: {part_metadata['section_type']}
-Question Type: {part_metadata['question_type']}
-Question Range: {part_metadata['question_from']} to {part_metadata['question_to']}
+Detect the photographic image assets in the CENTRAL column only.
 
-Requirements:
-- Detect ONLY the relevant images for the questions/options.
-- Exclude headers, page numbers, instructions, and text.
-- Return pixel coordinates {{x, y, w, h}} relative to the input image.
-- Image size is {img_w}x{img_h}.
-
-Specific Rules:
-- For 'listen_true_false_image' or 'read_true_false_image_word':
-  - owner_type: "question", owner_ref: "question_no", asset_key: "q{{question_no}}_image"
-- For 'listen_choose_picture':
-  - owner_type: "option", owner_ref: "{{question_no}}_{{option_key}}", asset_key: "q{{question_no}}_{{option_key}}_image"
-- For 'listen_match_picture' or 'read_match_picture':
-  - owner_type: "group_option", owner_ref: "{{option_key}}", asset_key: "group_{{option_key}}_image"
-
-Return a JSON object with an 'assets' array.
-Example:
+Return JSON:
 {{
   "assets": [
     {{
+      "x": number,
+      "y": number,
+      "w": number,
+      "h": number,
       "asset_key": "q1_image",
       "owner_type": "question",
-      "owner_ref": "1",
-      "bbox": {{ "x": 100, "y": 200, "w": 300, "h": 220 }},
-      "asset_hint": "brief description of content"
+      "owner_ref": "1"
     }}
   ]
 }}
+
+Rules:
+- Coordinates must be normalized 0-1000.
+- Include the FULL visible image, not only the main object.
+- Include empty/white background around the photo if it belongs to the image.
+- Do NOT cut wheels, feet, heads, clocks, bowls, or hands.
+- Ignore table borders, question numbers, example section, checkmarks, and X marks.
+- Return only images for questions {part_metadata['question_from']} to {part_metadata['question_to']}.
 """
 
     payload = {
@@ -117,7 +123,8 @@ Example:
         }
     }
 
-    response = requests.post(f"{GEMINI_API_URL}?key={GEMINI_API_KEY}", json=payload)
+    url = f"{GEMINI_API_BASE_URL}/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    response = requests.post(url, json=payload)
     
     if response.status_code != 200:
         logger.error(f"Gemini API error: {response.text}")
@@ -126,18 +133,64 @@ Example:
     try:
         result = response.json()
         text_content = result['candidates'][0]['content']['parts'][0]['text']
+        logger.info(f"RAW GEMINI JSON: {text_content}")
+        
         data = json.loads(text_content)
-        return data.get("assets", [])
+        
+        # Handle both list and object responses
+        assets = []
+        if isinstance(data, list):
+            assets = data
+        elif isinstance(data, dict):
+            assets = data.get("assets", [])
+
+        processed_assets = []
+        q_start = part_metadata.get('question_from') or 1
+        
+        for i, asset in enumerate(assets):
+            # Extract coordinates
+            x = asset.get('x')
+            y = asset.get('y')
+            w = asset.get('w') or asset.get('width')
+            h = asset.get('h') or asset.get('height')
+            
+            if x is None or y is None:
+                box = asset.get('bbox') or asset.get('box') or asset.get('coordinates') or {}
+                x = box.get('x', 0)
+                y = box.get('y', 0)
+                w = box.get('w') or box.get('width', 0)
+                h = box.get('h') or box.get('height', 0)
+
+            pixel_bbox = {
+                'x': int((x / 1000) * img_w),
+                'y': int((y / 1000) * img_h),
+                'w': int((w / 1000) * img_w),
+                'h': int((h / 1000) * img_h)
+            }
+
+            question_no = q_start + i
+            asset_key = asset.get('asset_key') or f"q{question_no}_image"
+            owner_type = asset.get('owner_type') or "question"
+            owner_ref = asset.get('owner_ref') or str(question_no)
+
+            processed_assets.append({
+                "asset_key": asset_key,
+                "owner_type": owner_type,
+                "owner_ref": owner_ref,
+                "bbox": pixel_bbox,
+                "asset_hint": asset.get('asset_hint', '')
+            })
+                
+        return processed_assets
     except (json.JSONDecodeError, KeyError, IndexError) as e:
         logger.error(f"Failed to parse Gemini response: {e}")
-        logger.error(f"Raw tail: {response.text[-500:]}")
         raise HTTPException(status_code=502, detail="Invalid response from Gemini")
 
 def validate_detected_assets(assets: List[Dict[str, Any]], part_metadata: Dict[str, Any]) -> str:
     """Checks if detected count matches expected count."""
     q_from = part_metadata['question_from']
     q_to = part_metadata['question_to']
-    q_count = q_to - q_from + 1
+    q_count = (q_to - q_from + 1) if (q_to and q_from) else 0
     q_type = part_metadata['question_type']
 
     expected = 0
@@ -148,34 +201,63 @@ def validate_detected_assets(assets: List[Dict[str, Any]], part_metadata: Dict[s
     elif q_type in ["listen_match_picture", "read_match_picture"]:
         expected = 6
 
-    if len(assets) != expected:
+    if expected > 0 and len(assets) != expected:
         logger.warning(f"Expected {expected} assets, got {len(assets)}")
         return "needs_review"
     return "pending"
 
-def clamp_bbox(bbox: Dict[str, int], img_w: int, img_h: int, padding: int = 8) -> Optional[Dict[str, int]]:
-    """Clamps and pads bounding box."""
-    x, y, w, h = bbox['x'], bbox['y'], bbox['w'], bbox['h']
-    
-    x1 = max(0, min(x - padding, img_w - 1))
-    y1 = max(0, min(y - padding, img_h - 1))
-    x2 = max(0, min(x + w + padding, img_w))
-    y2 = max(0, min(y + h + padding, img_h))
+def expand_and_clamp_bbox(
+    bbox: Dict[str, int],
+    img_w: int,
+    img_h: int,
+    expand_x: int = 45,
+    expand_y: int = 35,
+) -> Dict[str, int]:
+    """Expands the box but stays within image boundaries."""
+    x = max(0, bbox["x"] - expand_x)
+    y = max(0, bbox["y"] - expand_y)
+    right = min(img_w, bbox["x"] + bbox["w"] + expand_x)
+    bottom = min(img_h, bbox["y"] + bbox["h"] + expand_y)
 
-    new_w = x2 - x1
-    new_h = y2 - y1
+    return {
+        "x": x,
+        "y": y,
+        "w": max(1, right - x),
+        "h": max(1, bottom - y),
+    }
 
-    if new_w < 5 or new_h < 5:
-        return None
+def clamp_bbox_to_row(
+    bbox: Dict[str, int],
+    row_top: int,
+    row_bottom: int,
+    col_left: int,
+    col_right: int,
+    padding: int = 8,
+) -> Dict[str, int]:
+    """Strictly clamps the box to row/column boundaries with a small safety padding."""
+    left = max(col_left, bbox["x"] - padding)
+    top = max(row_top, bbox["y"] - padding)
+    right = min(col_right, bbox["x"] + bbox["w"] + padding)
+    bottom = min(row_bottom, bbox["y"] + bbox["h"] + padding)
 
-    return {"x": int(x1), "y": int(y1), "w": int(new_w), "h": int(new_h)}
+    return {
+        "x": left,
+        "y": top,
+        "w": max(1, right - left),
+        "h": max(1, bottom - top),
+    }
 
 def crop_asset(image: Image.Image, bbox: Dict[str, int]) -> bytes:
-    """Crops an image and returns PNG bytes."""
-    crop_box = (bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h'])
-    cropped = image.crop(crop_box)
+    """Crops an image based on bbox."""
+    img_w, img_h = image.size
+    left = max(0, bbox["x"])
+    top = max(0, bbox["y"])
+    right = min(img_w, bbox["x"] + bbox["w"])
+    bottom = min(img_h, bbox["y"] + bbox["h"])
+
+    cropped = image.crop((left, top, right, bottom))
     img_byte_arr = io.BytesIO()
-    cropped.save(img_byte_arr, format='PNG')
+    cropped.save(img_byte_arr, format="PNG")
     return img_byte_arr.getvalue()
 
 def upload_png_to_supabase(png_bytes: bytes, storage_path: str) -> str:
@@ -184,18 +266,16 @@ def upload_png_to_supabase(png_bytes: bytes, storage_path: str) -> str:
         raise HTTPException(status_code=500, detail="Supabase not configured")
 
     try:
-        # Overwrite if exists
         supabase.storage.from_(SUPABASE_BUCKET).upload(
             path=storage_path,
             file=png_bytes,
             file_options={"content-type": "image/png", "x-upsert": "true"}
         )
-        # Get public URL
         res = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(storage_path)
         return res
     except Exception as e:
-        logger.error(f"Supabase upload error: {e}")
-        raise HTTPException(status_code=500, detail="Supabase upload failed")
+        logger.error(f"Supabase upload error for {storage_path}: {e}")
+        return ""
 
 def build_storage_path(metadata: Dict[str, Any], asset_key: str) -> str:
     """Builds the standardized storage path."""
@@ -209,8 +289,8 @@ async def detect_crop_upload(
     page_no: int = Form(...),
     part_key: str = Form(...),
     section_type: str = Form(...),
-    question_from: int = Form(...),
-    question_to: int = Form(...),
+    question_from: Optional[int] = Form(None),
+    question_to: Optional[int] = Form(None),
     question_type: str = Form(...)
 ):
     logger.info(f"Received request for {exam_set_id}, page {page_no}")
@@ -226,58 +306,118 @@ async def detect_crop_upload(
         "question_type": question_type
     }
 
-    # 1. Read PDF bytes
     pdf_bytes = await file.read()
 
-    # 2. Convert to image
     try:
-        page_img = convert_pdf_page_to_image(pdf_bytes, page_no)
+        page_img = convert_pdf_page_to_image(pdf_bytes, page_no, dpi=300)
         img_w, img_h = page_img.size
-        logger.info(f"Rendered page size: {img_w}x{img_h}")
     except Exception as e:
+        logger.error(f"Image conversion error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    # 3. Detect boxes
     img_b64 = image_to_base64(page_img)
     detected_assets = call_gemini_detect_boxes(img_b64, img_w, img_h, metadata)
-    logger.info(f"Gemini detected {len(detected_assets)} assets")
+    logger.info(f"Final detected assets after cleaning: {len(detected_assets)}")
 
-    # 4. Validate
+    # Debug Overlay
+    try:
+        debug_img = page_img.copy()
+        draw = ImageDraw.Draw(debug_img)
+        for asset in detected_assets:
+            box = asset.get("bbox")
+            try:
+                question_no = int(asset["owner_ref"])
+            except (ValueError, TypeError):
+                continue
+                
+            row = QUESTION_ROWS.get(question_no)
+            if box and row:
+                # Expand then clamp for the debug view as well
+                expanded = expand_and_clamp_bbox(box, img_w, img_h)
+                safe_box = clamp_bbox_to_row(
+                    bbox=expanded,
+                    row_top=row["top"],
+                    row_bottom=row["bottom"],
+                    col_left=CENTER_COL["left"],
+                    col_right=CENTER_COL["right"],
+                    padding=8,
+                )
+
+                draw.rectangle(
+                    [
+                        safe_box["x"],
+                        safe_box["y"],
+                        safe_box["x"] + safe_box["w"],
+                        safe_box["y"] + safe_box["h"],
+                    ],
+                    outline="red",
+                    width=5,
+                )
+
+        debug_io = io.BytesIO()
+        debug_img.save(debug_io, format="PNG")
+        debug_path = f"hsk/{hsk_level}/{exam_set_id}/{section_type}/{part_key}/debug_page_{page_no}.png"
+        supabase.storage.from_(SUPABASE_BUCKET).upload(debug_path, debug_io.getvalue(), {"content-type": "image/png", "x-upsert": "true"})
+    except Exception as e:
+        logger.warning(f"Failed to save debug image: {e}")
+
+    # Process crops
     review_status = validate_detected_assets(detected_assets, metadata)
-
-    # 5. Process crops and uploads
     results = []
     for asset in detected_assets:
         bbox = asset.get('bbox')
-        if not bbox:
-            continue
+        if not bbox: continue
 
-        clamped = clamp_bbox(bbox, img_w, img_h)
-        if not clamped:
-            logger.warning(f"Skipping invalid/tiny bbox for {asset['asset_key']}")
-            continue
+        try:
+            # 1. First expand the box to capture the full subject
+            expanded_bbox = expand_and_clamp_bbox(bbox, img_w, img_h, expand_x=45, expand_y=35)
+            
+            # 2. Then clamp strictly to the table row/column boundaries
+            try:
+                question_no = int(asset["owner_ref"])
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid owner_ref: {asset['owner_ref']}")
+                continue
 
-        # Crop
-        png_bytes = crop_asset(page_img, clamped)
+            row = QUESTION_ROWS.get(question_no)
+            if not row:
+                logger.warning(f"No row boundary for question {question_no}")
+                # Fallback to expanded but unclamped if row is unknown
+                safe_bbox = expanded_bbox
+            else:
+                safe_bbox = clamp_bbox_to_row(
+                    bbox=expanded_bbox,
+                    row_top=row["top"],
+                    row_bottom=row["bottom"],
+                    col_left=CENTER_COL["left"],
+                    col_right=CENTER_COL["right"],
+                    padding=8,
+                )
 
-        # Upload
-        storage_path = build_storage_path(metadata, asset['asset_key'])
-        public_url = upload_png_to_supabase(png_bytes, storage_path)
+            png_bytes = crop_asset(page_img, safe_bbox)
+            storage_path = build_storage_path(metadata, asset["asset_key"])
+            public_url = upload_png_to_supabase(png_bytes, storage_path)
 
-        # Build response asset
-        results.append({
-            "asset_key": asset['asset_key'],
-            "owner_type": asset['owner_type'],
-            "owner_ref": asset['owner_ref'],
-            "asset_type": "image",
-            "asset_hint": asset.get('asset_hint', ''),
-            "bbox": clamped,
-            "storage_provider": "supabase",
-            "storage_path": storage_path,
-            "public_url": public_url,
-            "review_status": review_status
-        })
+            if not public_url: continue
 
+            results.append({
+                "asset_key": asset["asset_key"],
+                "owner_type": asset["owner_type"],
+                "owner_ref": asset["owner_ref"],
+                "asset_type": "image",
+                "asset_hint": asset.get("asset_hint", ""),
+                "bbox": safe_bbox,
+                "gemini_bbox": bbox,
+                "storage_provider": "supabase",
+                "storage_path": storage_path,
+                "public_url": public_url,
+                "review_status": review_status
+            })
+            logger.info(f"Successfully processed: {asset['asset_key']}")
+        except Exception as e:
+            logger.error(f"Failed to process {asset.get('asset_key')}: {e}")
+
+    logger.info(f"Final results count: {len(results)}")
     return {"assets": results}
 
 if __name__ == "__main__":

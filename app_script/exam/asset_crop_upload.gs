@@ -1,55 +1,60 @@
 /**
  * Asset Crop & Upload Integration
  * 
- * This script connects Google Sheets with the HSK FastAPI backend.
- * It processes a selected row from 'PdfParsePages', uploads the PDF blob,
+ * Connects Google Sheets with the HSK FastAPI backend.
+ * Processes a selected row from 'PdfParsePages', uploads the PDF,
  * and updates 'QuestionAssets' with the returned metadata.
  */
 
-// Configuration - Update with your backend URL
-const BACKEND_URL = "https://your-backend-url.com"; 
-
 /**
- * Main entry point to process a single row.
+ * Main entry point to process the currently selected row in PdfParsePages.
  */
 function processSelectedRowForAssets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('PdfParsePages');
+  const sheet = getSheet_(CONFIG.SHEET_PDF_PAGES);
   const activeRow = sheet.getActiveRange().getRow();
   
   if (activeRow < 2) {
-    SpreadsheetApp.getUi().alert("Please select a valid row in 'PdfParsePages'.");
+    SpreadsheetApp.getUi().alert("Please select a valid row in '" + CONFIG.SHEET_PDF_PAGES + "'.");
     return;
   }
 
-  // Get data from row (adjust column indices based on your sheet layout)
-  // Assuming: A: pdf_file_id, B: page_no, C: part_key, D: section_type, E: raw_json, F: exam_set_id, G: hsk_level
-  const pdfFileId = sheet.getRange(activeRow, 1).getValue();
-  const pageNo = sheet.getRange(activeRow, 2).getValue();
-  const partKey = sheet.getRange(activeRow, 3).getValue();
-  const sectionType = sheet.getRange(activeRow, 4).getValue();
-  const rawJsonStr = sheet.getRange(activeRow, 5).getValue();
-  const examSetId = sheet.getRange(activeRow, 6).getValue();
-  const hskLevel = sheet.getRange(activeRow, 7).getValue();
+  // Get data from row matching setup.gs indices
+  const values = sheet.getRange(activeRow, 1, 1, 11).getValues()[0];
+  const examSetId = safeString_(values[0]);
+  const pdfFileId = safeString_(values[1]);
+  const pageNo = values[2];
+  const partKey = safeString_(values[3]);
+  const sectionType = safeString_(values[4]);
+  const qFrom = values[5];
+  const qTo = values[6];
+  const rawJsonStr = safeString_(values[8]);
 
   if (!pdfFileId || !pageNo || !rawJsonStr) {
-    SpreadsheetApp.getUi().alert("Missing required data in the selected row.");
+    SpreadsheetApp.getUi().alert("Missing required data (PDF ID, Page No, or Raw JSON) in the selected row.");
     return;
   }
 
   const rawJson = JSON.parse(rawJsonStr);
   const group = rawJson.group || {};
   
+  // Prepare payload for FastAPI
   const payload = {
-    'exam_set_id': examSetId.toString(),
-    'hsk_level': hskLevel.toString(),
+    'exam_set_id': examSetId,
+    'hsk_level': '1', // Default to 1 for now, or extract from examSetId
     'page_no': pageNo.toString(),
     'part_key': partKey,
     'section_type': sectionType,
-    'question_from': (group.question_from || 0).toString(),
-    'question_to': (group.question_to || 0).toString(),
+    'question_from': (qFrom || 0).toString(),
+    'question_to': (qTo || 0).toString(),
     'question_type': group.question_type || ""
   };
+
+  // Extract HSK level from exam_set_id if possible (e.g., hsk1_...)
+  if (examSetId.indexOf('hsk') === 0) {
+    const levelMatch = examSetId.match(/hsk(\d)/i);
+    if (levelMatch) payload['hsk_level'] = levelMatch[1];
+  }
 
   try {
     // 1. Fetch PDF from Drive
@@ -63,14 +68,13 @@ function processSelectedRowForAssets() {
       'muteHttpExceptions': true
     };
 
-    const response = UrlFetchApp.fetch(BACKEND_URL + "/detect-crop-upload", options);
+    logger_("Calling crop backend at " + CONFIG.CROP_BACKEND_URL);
+    const response = UrlFetchApp.fetch(CONFIG.CROP_BACKEND_URL + "/detect-crop-upload", options);
     const responseCode = response.getResponseCode();
     const responseText = response.getContentText();
 
     if (responseCode !== 200) {
-      Logger.log("Error from Backend: " + responseText);
-      SpreadsheetApp.getUi().alert("Backend Error: " + responseText);
-      return;
+      throw new Error("Backend Error (" + responseCode + "): " + responseText);
     }
 
     const result = JSON.parse(responseText);
@@ -82,49 +86,35 @@ function processSelectedRowForAssets() {
     }
 
     // 3. Upsert into 'QuestionAssets' sheet
-    upsertQuestionAssets(assets, examSetId, partKey);
+    saveAssetsToSheet_(assets, examSetId, partKey);
     
     SpreadsheetApp.getUi().alert("Successfully processed " + assets.length + " assets.");
 
   } catch (e) {
-    Logger.log("Error: " + e.toString());
+    logger_("Error in processSelectedRowForAssets: " + e.toString());
     SpreadsheetApp.getUi().alert("Integration Error: " + e.toString());
   }
 }
 
 /**
- * Upserts assets into the 'QuestionAssets' sheet.
+ * Saves returned assets into the QuestionAssets sheet.
  */
-function upsertQuestionAssets(assets, examSetId, partKey) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let assetSheet = ss.getSheetByName('QuestionAssets');
-  
-  if (!assetSheet) {
-    // Create sheet if missing with headers
-    assetSheet = ss.insertSheet('QuestionAssets');
-    assetSheet.appendRow([
-      'asset_id', 'owner_type', 'owner_id', 'asset_type', 
-      'storage_provider', 'storage_path', 'public_url', 
-      'asset_hint', 'sort_order', 'review_status', 'bbox'
-    ]);
-  }
-
-  const existingData = assetSheet.getDataRange().getValues();
-  const headers = existingData[0];
-  
+function saveAssetsToSheet_(assets, examSetId, partKey) {
   assets.forEach((asset, index) => {
-    // Determine owner_id based on type
+    // Standardize owner_id
     let ownerId = "";
     if (asset.owner_type === "question") {
       ownerId = examSetId + "_q" + asset.owner_ref;
     } else if (asset.owner_type === "option") {
-      ownerId = examSetId + "_q" + asset.owner_ref; // owner_ref is "6_A" already
+      ownerId = examSetId + "_q" + asset.owner_ref; 
     } else if (asset.owner_type === "group_option") {
       ownerId = examSetId + "_" + partKey + "_" + asset.owner_ref;
     }
 
     const assetId = examSetId + "_" + asset.asset_key;
-    const rowData = [
+    
+    // Match headers: [asset_id, owner_type, owner_id, asset_type, storage_provider, storage_path, public_url, transcript_zh, transcript_pinyin, sort_order, review_status, bbox]
+    const rowValues = [
       assetId,
       asset.owner_type,
       ownerId,
@@ -132,25 +122,17 @@ function upsertQuestionAssets(assets, examSetId, partKey) {
       asset.storage_provider,
       asset.storage_path,
       asset.public_url,
-      asset.asset_hint,
+      asset.asset_hint || "", // transcript_zh
+      "", // transcript_pinyin
       index + 1,
       asset.review_status,
       JSON.stringify(asset.bbox)
     ];
 
-    // Find existing row or append
-    let foundRow = -1;
-    for (let i = 1; i < existingData.length; i++) {
-      if (existingData[i][0] === assetId) {
-        foundRow = i + 1;
-        break;
-      }
-    }
-
-    if (foundRow > -1) {
-      assetSheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
-    } else {
-      assetSheet.appendRow(rowData);
-    }
+    upsertRowByFirstColumn_(CONFIG.SHEET_ASSETS, assetId, rowValues);
   });
+}
+
+function logger_(msg) {
+  Logger.log(msg);
 }

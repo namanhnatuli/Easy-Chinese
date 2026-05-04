@@ -10,7 +10,8 @@ const CONFIG = {
   SHEET_ASSETS: 'QuestionAssets',
   SHEET_PDF_PAGES: 'PdfParsePages',
 
-  PDF_PARSE_BATCH_SIZE: 1
+  PDF_PARSE_BATCH_SIZE: 1,
+  CROP_BACKEND_URL: 'https://your-backend-url.com'
 };
 
 const HSK1_PARTS = [
