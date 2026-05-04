@@ -95,9 +95,10 @@ Mỗi phần tử phải có các khóa: chinese, pinyin, vietnameseMeaning.
 Yêu cầu:
 - Câu ngắn, tự nhiên, phù hợp người học.
 - Bắt buộc dùng từ ${context.hanzi}.
+- Chỉ dùng đúng cách đọc, từ loại và nghĩa được cung cấp; không dùng nghĩa khác của cùng chữ.
 - Nghĩa tiếng Việt rõ ràng, không quá dài.
 
-Thông tin từ:
+Thông tin từ${context.senseId ? " theo sense đang chọn" : ""}:
 - Hanzi: ${context.hanzi}
 - Pinyin: ${context.pinyin}
 - Nghĩa: ${context.vietnameseMeaning}

@@ -10,11 +10,13 @@ import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import {
   formatPublicPartOfSpeech,
   formatPublicStructureType,
-  listVocabularyFilterOptions,
-  listPublicWordsPage,
   parseVocabularyPage,
   parseVocabularyFilters,
 } from "@/features/public/vocabulary";
+import {
+  listVocabularyFilterOptions,
+  listPublicWordsPage,
+} from "@/features/public/vocabulary.server";
 import { getServerI18n } from "@/i18n/server";
 
 const PAGE_SIZE = 12;

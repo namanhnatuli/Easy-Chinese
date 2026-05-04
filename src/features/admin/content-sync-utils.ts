@@ -1,6 +1,6 @@
 import { examplesToTextarea } from "@/features/admin/shared-utils";
 import type {
-  NormalizedVocabSyncPayload,
+  NormalizedSense,
   VocabSyncBatch,
   VocabSyncRow,
   WordAiStatus,
@@ -101,6 +101,58 @@ export function getEditablePayload(row: VocabSyncRow) {
   return (row.adminEditedPayload ?? row.normalizedPayload) as Record<string, unknown>;
 }
 
+function normalizeSenseForReview(sense: unknown, index: number): NormalizedSense | null {
+  if (!sense || typeof sense !== "object" || Array.isArray(sense)) {
+    return null;
+  }
+
+  const entry = sense as Record<string, unknown>;
+  const pinyin = typeof entry.pinyin === "string" ? entry.pinyin : "";
+  const meaningVi = typeof entry.meaningVi === "string" ? entry.meaningVi : "";
+
+  if (!pinyin || !meaningVi) {
+    return null;
+  }
+
+  return {
+    pinyin,
+    partOfSpeech: typeof entry.partOfSpeech === "string" ? entry.partOfSpeech : null,
+    meaningVi,
+    usageNote: typeof entry.usageNote === "string" ? entry.usageNote : null,
+    senseOrder:
+      typeof entry.senseOrder === "number" && Number.isFinite(entry.senseOrder)
+        ? entry.senseOrder
+        : index + 1,
+    isPrimary: entry.isPrimary === true,
+    examples: Array.isArray(entry.examples)
+      ? entry.examples
+          .map((example) => {
+            if (!example || typeof example !== "object" || Array.isArray(example)) {
+              return null;
+            }
+
+            const exampleEntry = example as Record<string, unknown>;
+            const cn = typeof exampleEntry.cn === "string" ? exampleEntry.cn : "";
+            const vi = typeof exampleEntry.vi === "string" ? exampleEntry.vi : "";
+
+            if (!cn || !vi) {
+              return null;
+            }
+
+            return {
+              cn,
+              py: typeof exampleEntry.py === "string" ? exampleEntry.py : null,
+              vi,
+            };
+          })
+          .filter((example): example is NormalizedSense["examples"][number] => Boolean(example))
+      : [],
+    validationWarnings: Array.isArray(entry.validationWarnings)
+      ? entry.validationWarnings.filter((warning): warning is string => typeof warning === "string")
+      : [],
+  };
+}
+
 export function getEditablePayloadForForm(row: VocabSyncRow) {
   const payload = getEditablePayload(row);
   const examples = payload && Array.isArray(payload.examples)
@@ -136,6 +188,15 @@ export function getEditablePayloadForForm(row: VocabSyncRow) {
     topicTags: Array.isArray(payload.topicTags) ? payload.topicTags.join(" | ") : "",
     examples: examples,
     examplesText: examplesToTextarea(examples),
+    senses: Array.isArray(payload.senses)
+      ? payload.senses
+          .map((sense, index) => normalizeSenseForReview(sense, index))
+          .filter((sense): sense is NormalizedSense => Boolean(sense))
+      : [],
+    senseSourceMode: payload.senseSourceMode === "senses_json" ? "senses_json" : "legacy",
+    validationWarnings: Array.isArray(payload.validationWarnings)
+      ? payload.validationWarnings.filter((warning): warning is string => typeof warning === "string")
+      : [],
     similarChars: Array.isArray(payload.similarChars) ? payload.similarChars.join(" | ") : "",
     characterStructureType:
       typeof payload.characterStructureType === "string" ? payload.characterStructureType : "",

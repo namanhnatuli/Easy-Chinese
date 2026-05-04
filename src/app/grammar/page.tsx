@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { listPublicGrammarPoints, parseGrammarFilters } from "@/features/public/grammar";
+import { parseGrammarFilters } from "@/features/public/grammar";
+import { listPublicGrammarPoints } from "@/features/public/grammar.server";
 import { getServerI18n } from "@/i18n/server";
 
 export default async function GrammarPage({

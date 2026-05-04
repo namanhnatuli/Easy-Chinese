@@ -7,7 +7,8 @@ import { FilterBar } from "@/components/shared/filter-bar";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listLessonTopics, listPublicLessons, parseLessonFilters } from "@/features/public/lessons";
+import { parseLessonFilters } from "@/features/public/lessons";
+import { listLessonTopics, listPublicLessons } from "@/features/public/lessons.server";
 import { getServerI18n } from "@/i18n/server";
 
 export default async function LessonsPage({

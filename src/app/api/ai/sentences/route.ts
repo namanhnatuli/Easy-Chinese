@@ -6,6 +6,7 @@ import { generateExampleSentences } from "@/features/ai/service";
 
 const sentenceSchema = z.object({
   wordId: z.string().uuid(),
+  senseId: z.string().uuid().nullable().optional(),
   count: z.coerce.number().int().min(2).max(3).optional(),
 });
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const context = await getWordAiContext(payload.wordId);
+    const context = await getWordAiContext(payload.wordId, { senseId: payload.senseId });
     if (!context) {
       return NextResponse.json({ message: "Word not found." }, { status: 404 });
     }

@@ -23,35 +23,48 @@ export function HanziWriterAnimator({
       return;
     }
 
-    // Clean up previous writer
+    const container = containerRef.current;
+    let cancelled = false;
+
     if (writerRef.current) {
-      // HanziWriter doesn't have an explicit destroy method, but we can clear the innerHTML
-      containerRef.current.innerHTML = "";
+      writerRef.current.pauseAnimation();
+      writerRef.current.cancelQuiz();
+      writerRef.current = null;
     }
 
-    writerRef.current = HanziWriter.create(containerRef.current, character, {
+    container.replaceChildren();
+
+    const writer = HanziWriter.create(container, character, {
       width: size,
       height: size,
       padding: 5,
       showOutline: true,
+      showCharacter: false,
       strokeAnimationSpeed: 1,
       delayBetweenStrokes: 50,
-      delayBetweenLoops: 2000,
       strokeColor: "#10b981", // emerald-500
       radicalColor: "#0ea5e9", // sky-500
       outlineColor: "rgba(148, 163, 184, 0.4)", // slate-400 with opacity
+      strokeWidth: 2,
+      outlineWidth: 2,
     });
 
-    writerRef.current.loopCharacterAnimation();
+    writerRef.current = writer;
+
+    void writer.animateCharacter().then(() => {
+      if (!cancelled) {
+        void writer.showCharacter({ duration: 150 });
+      }
+    });
 
     return () => {
-      if (writerRef.current) {
-        writerRef.current.cancelQuiz();
+      cancelled = true;
+      writer.pauseAnimation();
+      writer.cancelQuiz();
+      if (writerRef.current === writer) {
         writerRef.current = null;
       }
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
+      container.replaceChildren();
     };
   }, [character, size, mounted]);
 
@@ -69,7 +82,7 @@ export function HanziWriterAnimator({
         <line x1={size / 2} y1={0} x2={size / 2} y2={size} />
         <line x1={0} y1={size / 2} x2={size} y2={size / 2} />
       </svg>
-      <div ref={containerRef} className="absolute inset-0 z-10" />
+      <div key={`${character}-${size}`} ref={containerRef} className="absolute inset-0 z-10" />
     </div>
   );
 }

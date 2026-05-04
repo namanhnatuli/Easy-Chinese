@@ -4,7 +4,7 @@ import { LessonStudyExperience } from "@/components/learning/lesson-study-experi
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { getUserLearningSchedulerSettings } from "@/features/memory/queries";
-import { getPublicLessonById } from "@/features/public/lessons";
+import { getPublicLessonById } from "@/features/public/lessons.server";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 

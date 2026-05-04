@@ -5,8 +5,10 @@ import {
   listRecommendedLessonsForUser,
 } from "@/features/memory/queries";
 import { getDashboardData } from "@/features/progress/queries";
-import { listPublicArticles, type PublicArticleListItem } from "@/features/public/articles";
-import { listPublicLessons, type PublicLessonListItem } from "@/features/public/lessons";
+import { listPublicArticles } from "@/features/public/articles.server";
+import { listPublicLessons } from "@/features/public/lessons.server";
+import type { PublicArticleListItem } from "@/features/public/articles";
+import type { PublicLessonListItem } from "@/features/public/lessons";
 import type { AuthUser } from "@/types/domain";
 
 export interface HomeDashboardSummary {

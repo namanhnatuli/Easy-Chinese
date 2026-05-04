@@ -51,6 +51,7 @@ const normalizedSenseSchema = z.object({
   senseOrder: z.number().int().positive(),
   isPrimary: z.boolean(),
   examples: z.array(normalizedSenseExampleSchema).default([]),
+  validationWarnings: z.array(z.string().trim().min(1)).default([]).optional(),
 });
 
 const effectivePayloadSchema = z.object({
@@ -80,6 +81,8 @@ const effectivePayloadSchema = z.object({
   senses: z.array(normalizedSenseSchema).default([]),
   senseSourceKeys: z.array(z.string().trim().min(1)).default([]),
   senseContentHashes: z.array(z.string().trim().min(1)).default([]),
+  senseSourceMode: z.enum(["senses_json", "legacy"]).default("legacy"),
+  validationWarnings: z.array(z.string().trim().min(1)).default([]),
   reviewStatus: z.enum(["pending", "needs_review", "approved", "rejected", "applied"]).default("approved"),
   aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]).default("pending"),
   sourceUpdatedAt: z.string().trim().nullable().optional(),
@@ -151,7 +154,7 @@ async function buildUniqueWordSlug(payload: Pick<NormalizedVocabSyncPayload, "no
   return `${baseSlug}-${suffix}`;
 }
 
-function isPublishedReviewStatus(reviewStatus: NormalizedVocabSyncPayload["reviewStatus"]) {
+export function isPublishedReviewStatus(reviewStatus: NormalizedVocabSyncPayload["reviewStatus"]) {
   return reviewStatus === "approved" || reviewStatus === "applied";
 }
 
@@ -216,6 +219,8 @@ function getEffectivePayload(row: VocabSyncRow): NormalizedVocabSyncPayload {
     senses: parsed.senses,
     senseSourceKeys: parsed.senseSourceKeys,
     senseContentHashes: parsed.senseContentHashes,
+    senseSourceMode: parsed.senseSourceMode,
+    validationWarnings: parsed.validationWarnings,
     reviewStatus: parsed.reviewStatus,
     aiStatus: parsed.aiStatus,
     sourceUpdatedAt: parsed.sourceUpdatedAt ?? row.sourceUpdatedAt ?? null,
@@ -801,6 +806,10 @@ async function applySingleApprovedRow(row: VocabSyncRow): Promise<ApplyVocabSync
 
   try {
     payload = getEffectivePayload(row);
+    payload = {
+      ...payload,
+      reviewStatus: row.reviewStatus,
+    };
     payload = await normalizePayloadMainRadicals(payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Approved payload is invalid.";

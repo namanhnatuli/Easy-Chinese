@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LEARNING_ARTICLE_TYPE_OPTIONS } from "@/features/articles/constants";
+import { parseArticleFilters } from "@/features/public/articles";
 import {
   listPublicArticleFilterOptions,
   listPublicArticles,
-  parseArticleFilters,
-} from "@/features/public/articles";
+} from "@/features/public/articles.server";
 import { getServerI18n } from "@/i18n/server";
 
 export default async function ArticlesPage({

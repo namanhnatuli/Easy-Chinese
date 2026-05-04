@@ -12,10 +12,18 @@ import type { AiExampleSentence } from "@/features/ai/types";
 
 export function AiSentenceGeneratorCard({
   wordId,
+  senseId,
+  sensePinyin,
+  sensePartOfSpeech,
+  senseMeaning,
   title,
   description,
 }: {
   wordId: string;
+  senseId?: string | null;
+  sensePinyin?: string | null;
+  sensePartOfSpeech?: string | null;
+  senseMeaning?: string | null;
   title: string;
   description: string;
 }) {
@@ -38,7 +46,7 @@ export function AiSentenceGeneratorCard({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ wordId, count: 3 }),
+        body: JSON.stringify({ wordId, senseId, count: 3 }),
       });
 
       const body = (await response.json().catch(() => null)) as
@@ -64,6 +72,13 @@ export function AiSentenceGeneratorCard({
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
+            {sensePinyin || sensePartOfSpeech || senseMeaning ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sensePinyin ? <Badge variant="outline">{sensePinyin}</Badge> : null}
+                {sensePartOfSpeech ? <Badge variant="secondary">{sensePartOfSpeech}</Badge> : null}
+                {senseMeaning ? <Badge variant="outline">{senseMeaning}</Badge> : null}
+              </div>
+            ) : null}
           </div>
           <Button type="button" variant="outline" onClick={() => void handleGenerate()} disabled={loading}>
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
@@ -85,8 +100,8 @@ export function AiSentenceGeneratorCard({
         {sentences.map((sentence, index) => (
           <div key={`${sentence.chinese}-${index}`} className="rounded-[1.5rem] bg-muted/50 p-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <p className="text-lg font-semibold text-foreground">{sentence.chinese}</p>
+              <p className="text-lg font-semibold text-foreground">{sentence.chinese}</p>
+              <div className="space-y-2 flex items-start gap-2">
                 <PronunciationButton
                   text={sentence.chinese}
                   sourceType="custom"
@@ -102,8 +117,8 @@ export function AiSentenceGeneratorCard({
                   label={t("tts.playPronunciation")}
                   showErrorMessage={false}
                 />
+                <Badge variant="secondary">{t("ai.sentences.aiBadge")}</Badge>
               </div>
-              <Badge variant="secondary">{t("ai.sentences.aiBadge")}</Badge>
             </div>
             <p className="mt-2 text-pinyin">{sentence.pinyin}</p>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">{sentence.vietnameseMeaning}</p>

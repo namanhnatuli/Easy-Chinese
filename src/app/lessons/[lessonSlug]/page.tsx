@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPublicLessonBySlug } from "@/features/public/lessons";
+import { getPublicLessonBySlug } from "@/features/public/lessons.server";
 import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({

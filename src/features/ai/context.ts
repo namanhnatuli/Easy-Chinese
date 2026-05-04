@@ -11,12 +11,15 @@ function normalizeRelation<T>(value: T | T[] | null): T | null {
   return value;
 }
 
-export async function getWordAiContext(wordId: string): Promise<WordAiContext | null> {
+export async function getWordAiContext(
+  wordId: string,
+  options: { senseId?: string | null } = {},
+): Promise<WordAiContext | null> {
   const supabase = await createSupabaseServerClient();
   const { data: word, error } = await supabase
     .from("words")
     .select(
-      "id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, part_of_speech, notes, meanings_vi, topic_id, word_examples(chinese_text, pinyin, vietnamese_meaning, sort_order)",
+      "id, slug, hanzi, pinyin, vietnamese_meaning, hsk_level, part_of_speech, notes, meanings_vi, topic_id, word_examples(chinese_text, pinyin, vietnamese_meaning, sort_order, sense_id)",
     )
     .eq("id", wordId)
     .eq("is_published", true)
@@ -28,6 +31,34 @@ export async function getWordAiContext(wordId: string): Promise<WordAiContext | 
 
   if (!word) {
     return null;
+  }
+
+  let selectedSense: {
+    id: string;
+    pinyin: string;
+    part_of_speech: string | null;
+    meaning_vi: string;
+    usage_note: string | null;
+  } | null = null;
+
+  if (options.senseId) {
+    const { data: sense, error: senseError } = await supabase
+      .from("word_senses")
+      .select("id, pinyin, part_of_speech, meaning_vi, usage_note")
+      .eq("word_id", word.id)
+      .eq("id", options.senseId)
+      .eq("is_published", true)
+      .maybeSingle();
+
+    if (senseError) {
+      throw senseError;
+    }
+
+    if (!sense) {
+      return null;
+    }
+
+    selectedSense = sense;
   }
 
   const { data: similarRows, error: similarError } = await supabase
@@ -44,15 +75,17 @@ export async function getWordAiContext(wordId: string): Promise<WordAiContext | 
 
   return {
     id: word.id,
+    senseId: selectedSense?.id ?? null,
     slug: word.slug,
     hanzi: word.hanzi,
-    pinyin: word.pinyin,
-    vietnameseMeaning: word.vietnamese_meaning,
+    pinyin: selectedSense?.pinyin ?? word.pinyin,
+    vietnameseMeaning: selectedSense?.meaning_vi ?? word.vietnamese_meaning,
     hskLevel: word.hsk_level,
-    partOfSpeech: word.part_of_speech,
-    notes: word.notes,
-    meaningsVi: word.meanings_vi,
+    partOfSpeech: selectedSense?.part_of_speech ?? word.part_of_speech,
+    notes: selectedSense?.usage_note ?? word.notes,
+    meaningsVi: selectedSense?.meaning_vi ?? word.meanings_vi,
     examples: (word.word_examples ?? [])
+      .filter((example) => !selectedSense || example.sense_id === selectedSense.id)
       .sort((left, right) => left.sort_order - right.sort_order)
       .map((example) => ({
         chineseText: example.chinese_text,

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPublicGrammarPointBySlug } from "@/features/public/grammar";
+import { getPublicGrammarPointBySlug } from "@/features/public/grammar.server";
 import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({

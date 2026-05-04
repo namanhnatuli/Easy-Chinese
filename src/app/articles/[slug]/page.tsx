@@ -13,7 +13,7 @@ import {
   markArticleCompletedAction,
   toggleArticleBookmarkAction,
 } from "@/features/articles/progress";
-import { getPublicArticleBySlug } from "@/features/public/articles";
+import { getPublicArticleBySlug } from "@/features/public/articles.server";
 import { getServerI18n } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 

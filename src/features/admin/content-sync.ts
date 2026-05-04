@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import {
   optionalText,
-  parseExamplesTextarea,
 } from "@/features/admin/shared-utils";
 import {
   requireAdminSupabase,
@@ -19,6 +18,10 @@ import {
   startVocabSyncPreview,
 } from "@/features/vocabulary-sync/preview";
 import { applyApprovedVocabSyncRows } from "@/features/vocabulary-sync/apply";
+import {
+  buildSenseContentHashForApply,
+  buildSenseSourceKeyForApply,
+} from "@/features/vocabulary-sync/apply-senses";
 import { buildWordContentHash } from "@/features/vocabulary-sync/content-hash";
 import { buildSourceRowKey } from "@/features/vocabulary-sync/normalize";
 import {
@@ -27,12 +30,15 @@ import {
   updateVocabSyncRow,
 } from "@/features/vocabulary-sync/repository";
 import type {
+  NormalizedSense,
+  NormalizedSenseExample,
   NormalizedVocabSyncPayload,
   VocabSyncRow,
   WordAiStatus,
   WordReviewStatus,
   WordSourceConfidence,
 } from "@/features/vocabulary-sync/types";
+import { parseAdminSensesJson } from "@/features/admin/word-senses";
 import { logger } from "@/lib/logger";
 import {
   ContentSyncFilters,
@@ -78,25 +84,88 @@ function buildEditedRowIdentity(payload: NormalizedVocabSyncPayload) {
   };
 }
 
+function dedupePreserveOrder(values: string[]) {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    if (seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+}
+
+function flattenSenseExamples(senses: NormalizedSense[]): NormalizedVocabSyncPayload["examples"] {
+  let sortOrder = 1;
+  return senses.flatMap((sense) =>
+    sense.examples.map((example) => ({
+      chineseText: example.cn,
+      pinyin: example.py,
+      vietnameseMeaning: example.vi,
+      sortOrder: sortOrder++,
+    })),
+  );
+}
+
+function deriveSenseSummaries(senses: NormalizedSense[]) {
+  const primarySense = senses.find((sense) => sense.isPrimary) ?? senses[0] ?? null;
+
+  return {
+    pinyin: primarySense?.pinyin ?? null,
+    meaningsVi: dedupePreserveOrder(senses.map((sense) => sense.meaningVi)).join(" | ") || null,
+    partOfSpeech:
+      dedupePreserveOrder(
+        senses.map((sense) => sense.partOfSpeech).filter((value): value is string => Boolean(value)),
+      ).join(" | ") || null,
+    readingCandidates:
+      dedupePreserveOrder(senses.map((sense) => `${sense.pinyin}=${sense.meaningVi}`)).join(" || ") || null,
+    examples: flattenSenseExamples(senses),
+  };
+}
+
+function normalizeAdminEditedSenses(formData: FormData): NormalizedSense[] {
+  const editedSenses = parseAdminSensesJson(optionalText(formData.get("senses_json")));
+
+  return editedSenses.map((sense) => ({
+    pinyin: sense.pinyin,
+    partOfSpeech: sense.partOfSpeech,
+    meaningVi: sense.meaningVi,
+    usageNote: sense.usageNote,
+    senseOrder: sense.senseOrder,
+    isPrimary: sense.isPrimary,
+    examples: sense.examples.map(
+      (example): NormalizedSenseExample => ({
+        cn: example.chineseText,
+        py: example.pinyin || null,
+        vi: example.vietnameseMeaning,
+      }),
+    ),
+    validationWarnings: [],
+  }));
+}
+
+function buildSenseIdentity(input: {
+  normalizedText: string | null;
+  senses: NormalizedSense[];
+}) {
+  return {
+    senseSourceKeys: input.senses.map((sense) =>
+      buildSenseSourceKeyForApply({
+        normalizedText: input.normalizedText,
+        pinyin: sense.pinyin,
+        partOfSpeech: sense.partOfSpeech,
+      }),
+    ),
+    senseContentHashes: input.senses.map((sense) => buildSenseContentHashForApply(sense)),
+  };
+}
+
 const syncRowEditableSchema = z.object({
   normalizedText: z.string().trim().min(1),
-  pinyin: z.string().trim().min(1),
-  meaningsVi: z.string().trim().min(1),
   hanViet: z.string().trim().nullable(),
   traditionalVariant: z.string().trim().nullable(),
   mainRadicals: z.array(z.string().trim().min(1)),
   radicalSummary: z.string().trim().nullable(),
   hskLevel: z.number().int().min(1).max(9).nullable(),
-  partOfSpeech: z.string().trim().nullable(),
   topicTags: z.array(z.string().trim().min(1)),
-  examples: z.array(
-    z.object({
-      chineseText: z.string().trim().min(1),
-      pinyin: z.string().trim().nullable(),
-      vietnameseMeaning: z.string().trim().min(1),
-      sortOrder: z.number().int().positive(),
-    }),
-  ),
   similarChars: z.array(z.string().trim().min(1)),
   characterStructureType: z.string().trim().nullable(),
   structureExplanation: z.string().trim().nullable(),
@@ -183,36 +252,19 @@ async function refreshBatchesReviewCounts(batchIds: string[]) {
   }
 }
 
-async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyncRow) {
+async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyncRow): Promise<NormalizedVocabSyncPayload> {
   try {
     const basePayload = getEditablePayload(fallbackRow);
-
-  // Parse examples from separate fields dynamically
-  const exampleIndices = Array.from(formData.keys())
-    .filter((key) => key.startsWith("example_zh_"))
-    .map((key) => parseInt(key.replace("example_zh_", ""), 10))
-    .sort((a, b) => a - b);
-
-  const examples: { chineseText: string; pinyin: string | null; vietnameseMeaning: string; sortOrder: number }[] = [];
-  exampleIndices.forEach((i, index) => {
-    const zh = optionalText(formData.get(`example_zh_${i}`));
-    const vn = optionalText(formData.get(`example_vi_${i}`));
-    const py = optionalText(formData.get(`example_py_${i}`));
-
-    if (zh && vn) {
-      examples.push({
-        chineseText: zh,
-        pinyin: py,
-        vietnameseMeaning: vn,
-        sortOrder: index + 1,
-      });
-    }
-  });
+    const normalizedText = String(formData.get("normalized_text") ?? "").trim();
+    const editedSenses = normalizeAdminEditedSenses(formData);
+    const senseSummaries = deriveSenseSummaries(editedSenses);
+    const senseIdentity = buildSenseIdentity({
+      normalizedText,
+      senses: editedSenses,
+    });
 
     const parsed = syncRowEditableSchema.parse({
-      normalizedText: String(formData.get("normalized_text") ?? "").trim(),
-      pinyin: String(formData.get("pinyin") ?? "").trim(),
-      meaningsVi: String(formData.get("meanings_vi") ?? "").trim(),
+      normalizedText,
       hanViet: normalizeOptionalText(optionalText(formData.get("han_viet"))),
       traditionalVariant: normalizeOptionalText(optionalText(formData.get("traditional_variant"))),
       mainRadicals: splitPipeDelimited(optionalText(formData.get("main_radicals"))),
@@ -220,9 +272,7 @@ async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyn
       hskLevel: optionalText(formData.get("hsk_level"))
         ? Number(optionalText(formData.get("hsk_level")))
         : null,
-      partOfSpeech: normalizeOptionalText(optionalText(formData.get("part_of_speech"))),
       topicTags: splitPipeDelimited(optionalText(formData.get("topic_tags"))),
-      examples: examples.length > 0 ? examples : parseExamplesTextarea(formData.get("examples_text")),
       similarChars: splitPipeDelimited(optionalText(formData.get("similar_chars"))),
       characterStructureType:
         normalizeOptionalText(optionalText(formData.get("character_structure_type"))),
@@ -230,13 +280,17 @@ async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyn
         normalizeOptionalText(optionalText(formData.get("structure_explanation"))),
       mnemonic: normalizeOptionalText(optionalText(formData.get("mnemonic"))),
       notes: normalizeOptionalText(optionalText(formData.get("notes"))),
-      sourceConfidence: (optionalText(formData.get("source_confidence")) as WordSourceConfidence | null) ?? null,
+      sourceConfidence:
+        (optionalText(formData.get("source_confidence")) as WordSourceConfidence | null) ??
+        (typeof basePayload.sourceConfidence === "string" ? (basePayload.sourceConfidence as WordSourceConfidence) : null),
       ambiguityFlag: parseBooleanValue(formData.get("ambiguity_flag")),
       ambiguityNote: normalizeOptionalText(optionalText(formData.get("ambiguity_note"))),
       readingCandidates: normalizeOptionalText(optionalText(formData.get("reading_candidates"))),
       reviewStatus: (optionalText(formData.get("review_status")) as WordReviewStatus | null) ?? fallbackRow.reviewStatus,
       aiStatus: (optionalText(formData.get("ai_status")) as WordAiStatus | null) ?? fallbackRow.aiStatus,
-      sourceUpdatedAt: normalizeOptionalText(optionalText(formData.get("source_updated_at"))),
+      sourceUpdatedAt:
+        normalizeOptionalText(optionalText(formData.get("source_updated_at"))) ??
+        (typeof basePayload.sourceUpdatedAt === "string" ? basePayload.sourceUpdatedAt : fallbackRow.sourceUpdatedAt),
     });
 
     return {
@@ -249,10 +303,17 @@ async function buildAdminEditedPayload(formData: FormData, fallbackRow: VocabSyn
           ? basePayload.inputText
           : null,
       componentBreakdownJson: basePayload.componentBreakdownJson ?? null,
-      senses: Array.isArray(basePayload.senses) ? basePayload.senses : [],
-      senseSourceKeys: Array.isArray(basePayload.senseSourceKeys) ? basePayload.senseSourceKeys : [],
-      senseContentHashes: Array.isArray(basePayload.senseContentHashes) ? basePayload.senseContentHashes : [],
+      senses: editedSenses,
+      senseSourceKeys: senseIdentity.senseSourceKeys,
+      senseContentHashes: senseIdentity.senseContentHashes,
+      senseSourceMode: "senses_json",
+      validationWarnings: [],
       ...parsed,
+      pinyin: senseSummaries.pinyin,
+      meaningsVi: senseSummaries.meaningsVi,
+      partOfSpeech: senseSummaries.partOfSpeech,
+      readingCandidates: senseSummaries.readingCandidates,
+      examples: senseSummaries.examples,
     };
   } catch (error) {
     logger.error("admin_content_sync_payload_build_failed", {

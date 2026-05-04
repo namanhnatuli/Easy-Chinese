@@ -29,6 +29,7 @@ export interface NormalizedSense {
   senseOrder: number;
   isPrimary: boolean;
   examples: NormalizedSenseExample[];
+  validationWarnings?: string[];
 }
 
 export interface NormalizedVocabSyncPayload {
@@ -58,6 +59,8 @@ export interface NormalizedVocabSyncPayload {
   senses: NormalizedSense[];
   senseSourceKeys: string[];
   senseContentHashes: string[];
+  senseSourceMode: "senses_json" | "legacy";
+  validationWarnings: string[];
   reviewStatus: WordReviewStatus;
   aiStatus: WordAiStatus;
   sourceUpdatedAt: string | null;

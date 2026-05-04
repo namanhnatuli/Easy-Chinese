@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CircleOff, GitCompare, Sparkles, FileWarning, X, Plus, Trash2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import {
   ApplyStatusBadge,
@@ -24,13 +24,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchableMultiSelect } from "@/components/admin/searchable-multi-select";
+import { WordSensesEditor } from "@/components/admin/word-senses-editor";
 import {
   ALLOWED_TOPIC_TAGS,
   CHARACTER_STRUCTURE_LIST,
-  PART_OF_SPEECH_LIST,
   TAG_LABELS,
 } from "@/features/vocabulary-sync/constants";
 import type { VocabSyncRow } from "@/features/vocabulary-sync/types";
+import type { AdminWordSenseDraft } from "@/features/admin/word-senses";
 import type { ContentSyncFilters } from "@/features/admin/content-sync-utils";
 import { getEditablePayloadForForm } from "@/features/admin/content-sync-utils";
 import { useI18n } from "@/i18n/client";
@@ -63,7 +64,49 @@ export function ContentSyncDetailDialog({
   const [isPending, startTransition] = useTransition();
 
   const formValue = getEditablePayloadForForm(row || ({} as any));
-  const [examples, setExamples] = useState(formValue.examples);
+  const sourceModeLabel = formValue.senseSourceMode === "senses_json" ? "senses_json source of truth" : "legacy fallback mode";
+  const editorSenses: AdminWordSenseDraft[] =
+    formValue.senses.length > 0
+      ? formValue.senses.map((sense) => ({
+          id: null,
+          pinyin: sense.pinyin,
+          partOfSpeech: sense.partOfSpeech,
+          meaningVi: sense.meaningVi,
+          usageNote: sense.usageNote,
+          senseOrder: sense.senseOrder,
+          isPrimary: sense.isPrimary,
+          isPublished: true,
+          examples: sense.examples.map((example) => ({
+            chineseText: example.cn,
+            pinyin: example.py ?? "",
+            vietnameseMeaning: example.vi,
+          })),
+        }))
+      : [
+          {
+            id: null,
+            pinyin: formValue.pinyin,
+            partOfSpeech: formValue.partOfSpeech || null,
+            meaningVi: formValue.meaningsVi,
+            usageNote: formValue.notes || null,
+            senseOrder: 1,
+            isPrimary: true,
+            isPublished: true,
+            examples: formValue.examples.map((example) => ({
+              chineseText: example.chineseText,
+              pinyin: example.pinyin ?? "",
+              vietnameseMeaning: example.vietnameseMeaning,
+            })),
+          },
+        ];
+  const senseIssues = [
+    ...formValue.validationWarnings,
+    ...formValue.senses.flatMap((sense, index) => [
+      ...(sense.validationWarnings ?? []).map((warning) => `Sense ${index + 1}: ${warning}`),
+      ...(sense.examples.length === 0 ? [`Sense ${index + 1}: missing examples.`] : []),
+      ...(!sense.partOfSpeech ? [`Sense ${index + 1}: missing part_of_speech.`] : []),
+    ]),
+  ];
   const isResolved =
     row?.reviewStatus === "rejected" ||
     row?.reviewStatus === "applied" ||
@@ -72,12 +115,6 @@ export function ContentSyncDetailDialog({
   const isApprovedPendingApply =
     row?.reviewStatus === "approved" && row?.applyStatus === "pending";
   const isEditLocked = isResolved || isApprovedPendingApply;
-
-  useEffect(() => {
-    if (row) {
-      setExamples(formValue.examples);
-    }
-  }, [row?.id]);
 
   if (!row) return null;
 
@@ -128,13 +165,111 @@ export function ContentSyncDetailDialog({
           </div>
         ) : null}
 
-        <Tabs defaultValue="edit" className="mt-4">
+        <Tabs defaultValue="review" className="mt-4">
           <TabsList>
+            <TabsTrigger value="review">Review</TabsTrigger>
             <TabsTrigger value="edit">{t("contentSync.detail.tabs.edit")}</TabsTrigger>
             <TabsTrigger value="diff">{t("contentSync.detail.tabs.diff")}</TabsTrigger>
             <TabsTrigger value="payloads">{t("contentSync.detail.tabs.payloads")}</TabsTrigger>
             <TabsTrigger value="issues">{t("contentSync.detail.tabs.issues")}</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="review" className="space-y-5 pt-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-lg border bg-muted/20 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">Word summary</p>
+                  <Badge variant={formValue.senseSourceMode === "senses_json" ? "default" : "secondary"}>
+                    {sourceModeLabel}
+                  </Badge>
+                </div>
+                <dl className="grid gap-2 text-sm">
+                  <div><dt className="text-xs text-muted-foreground">Input text</dt><dd>{typeof row.rawPayload.input_text === "string" && row.rawPayload.input_text ? row.rawPayload.input_text : formValue.normalizedText}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Normalized text</dt><dd>{formValue.normalizedText || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">HSK level</dt><dd>{formValue.hskLevel || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Main radicals</dt><dd>{formValue.mainRadicals || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Radical summary</dt><dd>{formValue.radicalSummary || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Source confidence</dt><dd>{formValue.sourceConfidence || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Ambiguity</dt><dd>{formValue.ambiguityFlag ? "Yes" : "No"}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Ambiguity note</dt><dd>{formValue.ambiguityNote || t("common.notAvailable")}</dd></div>
+                </dl>
+              </div>
+
+              <div className="rounded-lg border bg-muted/20 p-4">
+                <p className="mb-3 text-sm font-semibold text-foreground">Derived legacy summary</p>
+                <dl className="grid gap-2 text-sm">
+                  <div><dt className="text-xs text-muted-foreground">Pinyin summary</dt><dd>{formValue.pinyin || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Meanings summary</dt><dd>{formValue.meaningsVi || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Part of speech summary</dt><dd>{formValue.partOfSpeech || t("common.notAvailable")}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">Reading candidates</dt><dd className="whitespace-pre-wrap">{formValue.readingCandidates || t("common.notAvailable")}</dd></div>
+                </dl>
+              </div>
+            </div>
+
+            {senseIssues.length > 0 ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">Issues to review</p>
+                <ul className="mt-2 grid gap-1 text-xs text-amber-800">
+                  {senseIssues.map((issue, index) => (
+                    <li key={`${issue}-${index}`}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">Senses</p>
+                <Badge variant="outline">{formValue.senses.length} total</Badge>
+              </div>
+              {formValue.senses.length > 0 ? (
+                <div className="grid gap-3">
+                  {formValue.senses.map((sense, senseIndex) => (
+                    <div key={`${sense.pinyin}-${sense.senseOrder}-${senseIndex}`} className="rounded-lg border bg-background p-4">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <Badge variant={sense.isPrimary ? "default" : "outline"}>{sense.isPrimary ? "Primary" : `Sense ${senseIndex + 1}`}</Badge>
+                        <Badge variant="secondary">Order {sense.senseOrder}</Badge>
+                        {sense.partOfSpeech ? <Badge variant="outline">{TAG_LABELS[sense.partOfSpeech] ?? sense.partOfSpeech}</Badge> : <Badge variant="destructive">Invalid POS</Badge>}
+                      </div>
+                      <dl className="grid gap-2 text-sm md:grid-cols-2">
+                        <div><dt className="text-xs text-muted-foreground">Pinyin</dt><dd>{sense.pinyin}</dd></div>
+                        <div><dt className="text-xs text-muted-foreground">Meaning VI</dt><dd>{sense.meaningVi}</dd></div>
+                        <div className="md:col-span-2"><dt className="text-xs text-muted-foreground">Usage note</dt><dd>{sense.usageNote || t("common.notAvailable")}</dd></div>
+                      </dl>
+                      {sense.validationWarnings && sense.validationWarnings.length > 0 ? (
+                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                          {sense.validationWarnings.join(" ")}
+                        </div>
+                      ) : null}
+                      <div className="mt-4 grid gap-2">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">Examples</p>
+                        {sense.examples.length > 0 ? (
+                          sense.examples.map((example, exampleIndex) => (
+                            <div key={`${example.cn}-${exampleIndex}`} className="rounded-md border bg-muted/20 p-3 text-sm">
+                              <p className="font-medium text-foreground">{example.cn}</p>
+                              <p className="text-muted-foreground">{example.py || t("common.notAvailable")}</p>
+                              <p>{example.vi}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">No examples attached to this sense.</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="No senses found" description="This row is using legacy word-level data or has invalid sense data." />
+              )}
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <p className="text-sm font-semibold text-foreground">Approval decision</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Use Approve and sync to publish approved words and senses immediately, Reject row to close it, or Save changes only to keep it in review.
+              </p>
+            </div>
+          </TabsContent>
 
           <TabsContent value="edit" className="space-y-6 pt-4 relative">
             {isPending && (
@@ -158,12 +293,6 @@ export function ContentSyncDetailDialog({
               <fieldset disabled={isEditLocked} className="grid gap-4 md:grid-cols-2">
                 <Field label={t("contentSync.detail.fields.normalizedText")}>
                   <input name="normalized_text" defaultValue={formValue.normalizedText} className={inputClassName()} />
-                </Field>
-                <Field label={t("contentSync.detail.fields.pinyin")}>
-                  <input name="pinyin" defaultValue={formValue.pinyin} className={inputClassName()} />
-                </Field>
-                <Field label={t("contentSync.detail.fields.meaningsVi")}>
-                  <input name="meanings_vi" defaultValue={formValue.meaningsVi} className={inputClassName()} />
                 </Field>
                 <Field label={t("contentSync.detail.fields.hanViet")}>
                   <input name="han_viet" defaultValue={formValue.hanViet} className={inputClassName()} />
@@ -192,15 +321,6 @@ export function ContentSyncDetailDialog({
                     labelMapping={TAG_LABELS}
                   />
                 </Field>
-                <Field label={t("contentSync.detail.fields.partOfSpeech")}>
-                  <SearchableMultiSelect
-                    name="part_of_speech"
-                    options={PART_OF_SPEECH_LIST}
-                    defaultValue={formValue.partOfSpeech}
-                    labelMapping={TAG_LABELS}
-                    isMulti={true}
-                  />
-                </Field>
                 <Field label={t("contentSync.detail.fields.characterStructureType")}>
                   <SearchableMultiSelect
                     name="character_structure_type"
@@ -222,56 +342,21 @@ export function ContentSyncDetailDialog({
                 <Field label={t("contentSync.detail.fields.sourceUpdatedAt")}>
                   <input name="source_updated_at" defaultValue={formValue.sourceUpdatedAt} className={inputClassName()} readOnly disabled />
                 </Field>
-                <div className="md:col-span-2 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">{t("contentSync.detail.fields.examples")}</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setExamples([...examples, { chineseText: "", pinyin: "", vietnameseMeaning: "", sortOrder: examples.length + 1 }])}
-                      className="h-8 gap-1 rounded-full px-3"
-                    >
-                      <Plus className="size-3" />
-                      {t("contentSync.detail.examples.add")}
-                    </Button>
+                <div className="md:col-span-2">
+                  <div className="mb-3 rounded-lg border bg-muted/20 p-4">
+                    <p className="text-sm font-semibold text-foreground">Sense-level edit</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Edit pinyin, part of speech, Vietnamese meaning, notes, and examples inside each sense. Word-level summaries are derived when saved.
+                    </p>
                   </div>
-                  <div className="grid gap-4">
-                    {examples.map((ex, i) => (
-                      <div key={i} className="group relative grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3 rounded-2xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
-                        <input
-                          name={`example_zh_${i}`}
-                          placeholder={t("contentSync.detail.examples.chinesePlaceholder")}
-                          defaultValue={ex.chineseText}
-                          className={inputClassName("h-9 rounded-xl")}
-                        />
-                        <input
-                          name={`example_py_${i}`}
-                          placeholder={t("contentSync.detail.examples.pinyinPlaceholder")}
-                          defaultValue={ex.pinyin ?? ""}
-                          className={inputClassName("h-9 rounded-xl")}
-                        />
-                        <input
-                          name={`example_vi_${i}`}
-                          placeholder={t("contentSync.detail.examples.meaningPlaceholder")}
-                          defaultValue={ex.vietnameseMeaning}
-                          className={inputClassName("h-9 rounded-xl")}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setExamples(examples.filter((_, idx) => idx !== i))}
-                          className="flex size-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    ))}
-                    {examples.length === 0 && (
-                      <p className="py-4 text-center text-xs text-muted-foreground border-2 border-dashed rounded-2xl">
-                        {t("contentSync.empty.noExamples")}
-                      </p>
-                    )}
-                  </div>
+                  <WordSensesEditor
+                    key={row.id}
+                    name="senses_json"
+                    defaultValue={editorSenses}
+                    ambiguityFlag={formValue.ambiguityFlag}
+                    sourceConfidence={formValue.sourceConfidence || null}
+                    readingCandidates={formValue.readingCandidates || null}
+                  />
                 </div>
                 <Field label={t("contentSync.detail.fields.structureExplanation")}>
                   <textarea name="structure_explanation" defaultValue={formValue.structureExplanation} className={textareaClassName("min-h-24")} />
@@ -281,9 +366,6 @@ export function ContentSyncDetailDialog({
                 </Field>
                 <Field label={t("contentSync.detail.fields.similarChars")} hint={t("contentSync.detail.fields.similarCharsHint")}>
                   <input name="similar_chars" defaultValue={formValue.similarChars} className={inputClassName()} />
-                </Field>
-                <Field label={t("contentSync.detail.fields.readingCandidates")}>
-                  <textarea name="reading_candidates" defaultValue={formValue.readingCandidates} className={textareaClassName("min-h-24")} />
                 </Field>
                 <Field label={t("contentSync.detail.fields.ambiguityNote")}>
                   <textarea name="ambiguity_note" defaultValue={formValue.ambiguityNote} className={textareaClassName("min-h-24")} />
@@ -423,6 +505,14 @@ export function ContentSyncDetailDialog({
                 {row.parseErrors.map((err, i) => (
                   <div key={i} className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
                     {err}
+                  </div>
+                ))}
+              </div>
+            ) : senseIssues.length > 0 ? (
+              <div className="space-y-2">
+                {senseIssues.map((warning, i) => (
+                  <div key={`${warning}-${i}`} className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                    {warning}
                   </div>
                 ))}
               </div>

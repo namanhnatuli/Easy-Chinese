@@ -52,14 +52,31 @@ function normalizeLowercaseEnum(value: unknown) {
   return normalizeOptionalText(value)?.toLowerCase() ?? null;
 }
 
-function normalizePartOfSpeech(value: unknown, parseErrors: string[], fieldName: string) {
+function normalizeLegacyPartOfSpeechSummary(value: unknown, warnings: string[]) {
+  const values = splitPipeDelimited(value).map((part) => part.toLowerCase());
+  if (values.length === 0) {
+    return null;
+  }
+
+  const validValues = dedupePreserveOrder(values.filter((part) => allowedPartOfSpeechValues.has(part)));
+  const invalidValues = values.filter((part) => !allowedPartOfSpeechValues.has(part));
+
+  if (invalidValues.length > 0) {
+    warnings.push(`Invalid legacy part_of_speech values ignored: ${dedupePreserveOrder(invalidValues).join(" | ")}.`);
+  }
+
+  return validValues.join(" | ") || null;
+}
+
+function normalizeSensePartOfSpeech(value: unknown, warnings: string[], fieldName: string) {
   const normalized = normalizeLowercaseEnum(value);
   if (!normalized) {
+    warnings.push(`Missing ${fieldName}.`);
     return null;
   }
 
   if (!allowedPartOfSpeechValues.has(normalized)) {
-    parseErrors.push(`Invalid ${fieldName}.`);
+    warnings.push(`Invalid ${fieldName}: ${normalized}.`);
     return null;
   }
 
@@ -336,11 +353,11 @@ function isEmptySenseCandidate(input: {
 function buildDefaultSense(input: {
   values: Record<string, string>;
   legacyExamples: NormalizedExample[];
-  parseErrors: string[];
+  validationWarnings: string[];
 }): NormalizedSense | null {
   const pinyin = normalizeOptionalText(input.values.pinyin);
   const meaningVi = normalizeOptionalText(input.values.meanings_vi ?? input.values.vietnamese_meaning);
-  const partOfSpeech = normalizePartOfSpeech(input.values.part_of_speech, input.parseErrors, "part_of_speech");
+  const partOfSpeech = normalizeLegacyPartOfSpeechSummary(input.values.part_of_speech, input.validationWarnings);
   const usageNote = normalizeOptionalText(input.values.notes);
 
   if (!pinyin || !meaningVi) {
@@ -387,24 +404,25 @@ function parseSensesJsonValue(value: unknown, parseErrors: string[]) {
 function normalizeSenseCandidate(
   rawSense: unknown,
   index: number,
-  parseErrors: string[],
+  validationWarnings: string[],
 ): NormalizedSense | null {
   const senseLabel = `sense ${index + 1}`;
+  const senseWarnings: string[] = [];
 
   if (!isPlainObject(rawSense)) {
-    parseErrors.push(`Invalid ${senseLabel}.`);
+    validationWarnings.push(`Invalid ${senseLabel}.`);
     return null;
   }
 
   const examples = parseSenseExamplesValue(
     readObjectValue(rawSense, "examples", "example_sentences", "exampleSentences"),
-    parseErrors,
+    senseWarnings,
     senseLabel,
   );
   const pinyin = normalizeOptionalText(readObjectValue(rawSense, "pinyin", "py"));
-  const partOfSpeech = normalizePartOfSpeech(
+  const partOfSpeech = normalizeSensePartOfSpeech(
     readObjectValue(rawSense, "part_of_speech", "partOfSpeech"),
-    parseErrors,
+    senseWarnings,
     `${senseLabel} part_of_speech`,
   );
   const meaningVi = normalizeOptionalText(
@@ -414,7 +432,7 @@ function normalizeSenseCandidate(
   const senseOrder = parseSenseOrder(
     readObjectValue(rawSense, "sense_order", "senseOrder", "order"),
     index + 1,
-    parseErrors,
+    senseWarnings,
     `${senseLabel} sense_order`,
   );
   const isPrimary = parseSenseBoolean(
@@ -426,8 +444,11 @@ function normalizeSenseCandidate(
     return null;
   }
 
-  if (!pinyin || !meaningVi) {
-    parseErrors.push(`Invalid ${senseLabel}. Each sense must include pinyin and meaning_vi.`);
+  if (!pinyin || !meaningVi || !partOfSpeech) {
+    validationWarnings.push(
+      `Invalid ${senseLabel}. Each sense must include pinyin, part_of_speech, and meaning_vi.`,
+      ...senseWarnings,
+    );
     return null;
   }
 
@@ -439,6 +460,7 @@ function normalizeSenseCandidate(
     senseOrder,
     isPrimary,
     examples,
+    validationWarnings: senseWarnings,
   };
 }
 
@@ -458,7 +480,7 @@ function ensureExactlyOnePrimarySense(senses: NormalizedSense[]) {
 }
 
 function deriveMeaningsViFromSenses(senses: NormalizedSense[]) {
-  return dedupePreserveOrder(senses.map((sense) => sense.meaningVi)).join(" || ") || null;
+  return dedupePreserveOrder(senses.map((sense) => sense.meaningVi)).join(" | ") || null;
 }
 
 function derivePartOfSpeechFromSenses(senses: NormalizedSense[]) {
@@ -468,12 +490,12 @@ function derivePartOfSpeechFromSenses(senses: NormalizedSense[]) {
       .filter((value): value is string => Boolean(value)),
   );
 
-  return values.join("|") || null;
+  return values.join(" | ") || null;
 }
 
 function deriveReadingCandidatesFromSenses(senses: NormalizedSense[]) {
   const values = dedupePreserveOrder(
-    senses.map((sense) => `${sense.pinyin}|${sense.meaningVi}`),
+    senses.map((sense) => `${sense.pinyin}=${sense.meaningVi}`),
   );
 
   return values.join(" || ") || null;
@@ -523,21 +545,33 @@ export function parseAndNormalizeSenses(input: {
   parseErrors: string[];
   normalizedText: string | null;
 }) {
-  const legacyExamples = parseExamples(input.values.examples, input.parseErrors);
+  const validationWarnings: string[] = [];
   const rawSenses = parseSensesJsonValue(input.values.senses_json, input.parseErrors);
   const parsedSenses =
-    rawSenses?.map((sense, index) => normalizeSenseCandidate(sense, index, input.parseErrors)).filter(
+    rawSenses?.map((sense, index) =>
+      normalizeSenseCandidate(sense, index, validationWarnings),
+    ).filter(
       (sense): sense is NormalizedSense => Boolean(sense),
     ) ?? [];
 
+  const usingSensesJson = Boolean(rawSenses && parsedSenses.length > 0);
+  const legacyExamples = usingSensesJson ? [] : parseExamples(input.values.examples, input.parseErrors);
   const fallbackSense = buildDefaultSense({
     values: input.values,
     legacyExamples,
-    parseErrors: input.parseErrors,
+    validationWarnings,
   });
 
+  if (rawSenses && parsedSenses.length === 0) {
+    input.parseErrors.push("senses_json does not contain any valid senses.");
+  }
+
+  if (usingSensesJson) {
+    normalizeLegacyPartOfSpeechSummary(input.values.part_of_speech, validationWarnings);
+  }
+
   const normalizedSenses = ensureExactlyOnePrimarySense(
-    parsedSenses.length > 0 ? parsedSenses : fallbackSense ? [fallbackSense] : [],
+    parsedSenses.length > 0 ? parsedSenses : !rawSenses && fallbackSense ? [fallbackSense] : [],
   );
   const primarySense = normalizedSenses.find((sense) => sense.isPrimary) ?? normalizedSenses[0] ?? null;
   const examples = flattenSenseExamples(normalizedSenses);
@@ -556,6 +590,8 @@ export function parseAndNormalizeSenses(input: {
       }),
     ),
     senseContentHashes: normalizedSenses.map((sense) => buildSenseContentHash(sense)),
+    senseSourceMode: usingSensesJson ? "senses_json" as const : "legacy" as const,
+    validationWarnings: dedupePreserveOrder(validationWarnings),
   };
 }
 
@@ -678,6 +714,8 @@ export function parseAndNormalizeVocabSyncRow(input: {
     senses: senses.senses,
     senseSourceKeys: senses.senseSourceKeys,
     senseContentHashes: senses.senseContentHashes,
+    senseSourceMode: senses.senseSourceMode,
+    validationWarnings: senses.validationWarnings,
     reviewStatus: parseReviewStatus(input.values.review_status, parseErrors),
     aiStatus: parseAiStatus(input.values.ai_status, parseErrors),
     sourceUpdatedAt: parseDateValue(input.values.updated_at, parseErrors),

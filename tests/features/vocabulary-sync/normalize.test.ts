@@ -96,12 +96,98 @@ test("parseAndNormalizeVocabSyncRow uses senses_json when provided", () => {
   assert.equal(row.parseErrors.length, 0);
   assert.equal(row.normalizedPayload.senses.length, 2);
   assert.equal(row.normalizedPayload.pinyin, "děi");
-  assert.equal(row.normalizedPayload.meaningsVi, "phải, cần phải || trợ từ kết cấu");
-  assert.equal(row.normalizedPayload.partOfSpeech, "dong_tu|tro_tu");
-  assert.equal(row.normalizedPayload.readingCandidates, "děi|phải, cần phải || de|trợ từ kết cấu");
+  assert.equal(row.normalizedPayload.meaningsVi, "phải, cần phải | trợ từ kết cấu");
+  assert.equal(row.normalizedPayload.partOfSpeech, "dong_tu | tro_tu");
+  assert.equal(row.normalizedPayload.readingCandidates, "děi=phải, cần phải || de=trợ từ kết cấu");
   assert.deepEqual(row.normalizedPayload.examples.map((example) => example.chineseText), ["我得走了。", "跑得快"]);
   assert.equal(row.normalizedPayload.senseSourceKeys.length, 2);
-  assert.equal(row.sourceRowKey, "得::děi::dong_tu|tro_tu");
+  assert.equal(row.normalizedPayload.senseSourceMode, "senses_json");
+  assert.equal(row.sourceRowKey, "得::děi::dong_tu | tro_tu");
+});
+
+test("parseAndNormalizeVocabSyncRow ignores multi-value legacy part_of_speech when senses_json is valid", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 8,
+    values: {
+      normalized_text: "次",
+      pinyin: "legacy pinyin",
+      meanings_vi: "legacy meaning",
+      part_of_speech: "luong_tu | tinh_tu",
+      examples: "CN=旧例句。|PY=Jiù lìjù.|VI=Ví dụ cũ.",
+      senses_json: JSON.stringify([
+        {
+          pinyin: "cì",
+          part_of_speech: "danh_tu",
+          meaning_vi: "lần (chỉ thứ tự, số lần)",
+          examples: [{ cn: "这是第几次了？", py: "Zhè shì dì jǐ cì le?", vi: "Đây là lần thứ mấy rồi?" }],
+          sense_order: 1,
+        },
+        {
+          pinyin: "cì",
+          part_of_speech: "tinh_tu",
+          meaning_vi: "thứ, kế tiếp",
+          examples: [{ cn: "下次一定成功。", py: "Xià cì yīdìng chénggōng.", vi: "Lần sau nhất định sẽ thành công." }],
+          sense_order: 2,
+        },
+      ]),
+    },
+  });
+
+  assert.equal(row.parseErrors.length, 0);
+  assert.equal(row.initialChangeClassification, "new");
+  assert.equal(row.normalizedPayload.senses.length, 2);
+  assert.equal(row.normalizedPayload.pinyin, "cì");
+  assert.equal(row.normalizedPayload.meaningsVi, "lần (chỉ thứ tự, số lần) | thứ, kế tiếp");
+  assert.equal(row.normalizedPayload.partOfSpeech, "danh_tu | tinh_tu");
+  assert.deepEqual(row.normalizedPayload.examples.map((example) => example.chineseText), ["这是第几次了?", "下次一定成功。"]);
+  assert.ok(!row.normalizedPayload.examples.some((example) => example.chineseText === "旧例句。"));
+});
+
+test("parseAndNormalizeVocabSyncRow keeps valid senses when another sense has invalid part_of_speech", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 9,
+    values: {
+      normalized_text: "行",
+      senses_json: JSON.stringify([
+        {
+          pinyin: "xíng",
+          part_of_speech: "dong_tu",
+          meaning_vi: "được, ổn",
+        },
+        {
+          pinyin: "háng",
+          part_of_speech: "bad_pos",
+          meaning_vi: "hàng, ngành",
+        },
+      ]),
+    },
+  });
+
+  assert.equal(row.parseErrors.length, 0);
+  assert.equal(row.normalizedPayload.senses.length, 1);
+  assert.equal(row.normalizedPayload.senses[0]?.pinyin, "xíng");
+  assert.ok(row.normalizedPayload.validationWarnings.some((warning) => warning.includes("Invalid sense 2")));
+  assert.equal(row.initialChangeClassification, "new");
+});
+
+test("parseAndNormalizeVocabSyncRow marks row invalid when senses_json has no valid senses", () => {
+  const row = parseAndNormalizeVocabSyncRow({
+    rowNumber: 10,
+    values: {
+      normalized_text: "行",
+      senses_json: JSON.stringify([
+        {
+          pinyin: "háng",
+          part_of_speech: "bad_pos",
+          meaning_vi: "hàng, ngành",
+        },
+      ]),
+    },
+  });
+
+  assert.equal(row.initialChangeClassification, "invalid");
+  assert.ok(row.parseErrors.some((error) => error.includes("does not contain any valid senses")));
+  assert.equal(row.normalizedPayload.senses.length, 0);
 });
 
 test("parseAndNormalizeVocabSyncRow derives source_row_key from text, pinyin, and part of speech even with external_id", () => {

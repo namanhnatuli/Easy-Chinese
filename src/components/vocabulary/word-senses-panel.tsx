@@ -5,11 +5,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { AiExplanationCard } from "@/components/ai/ai-explanation-card";
+import { AiSentenceGeneratorCard } from "@/components/ai/ai-sentence-generator-card";
 import { PronunciationButton } from "@/components/shared/pronunciation-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PublicWordDetail } from "@/features/public/vocabulary";
 import { formatPublicPartOfSpeech } from "@/features/public/vocabulary";
 import { useI18n } from "@/i18n/client";
@@ -66,82 +65,77 @@ export function WordSensesPanel({
   }
 
   return (
-    <Card className="border-border/80 bg-card/95">
-      <CardHeader className="gap-3">
+    <section className="space-y-4 border-t border-border/70 pt-5">
+      <div className="space-y-3">
         <div>
-          <CardTitle>{hasMultipleSenses ? "Cach doc va nghia" : t("vocabulary.meanings")}</CardTitle>
+          <h2 className="text-base font-semibold text-foreground">
+            {hasMultipleSenses ? t("vocabulary.readingMeaningTitle") : t("vocabulary.meanings")}
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {hasMultipleSenses
-              ? "Chon cach doc dung de xem nghia va vi du phu hop."
-              : "Thong tin cach doc, nghia va vi du cua tu nay."}
+              ? t("vocabulary.readingMeaningDescription")
+              : t("vocabulary.singleReadingMeaningDescription")}
           </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+
         {hasMultipleSenses ? (
-          <div className="flex flex-wrap gap-2 rounded-[1.5rem] bg-muted/35 p-3">
-            {word.resolvedSenses.map((sense) => (
-              <Badge key={`compare-${sense.id}`} variant={sense.id === selectedSense.id ? "secondary" : "outline"}>
-                {sense.pinyin} - {sense.shortMeaning}
-              </Badge>
-            ))}
+          <div className="flex flex-wrap gap-2 rounded-[1.5rem] bg-muted/30 p-3">
+            {word.resolvedSenses.map((sense) => {
+              const partOfSpeechLabel = formatPublicPartOfSpeech(sense.partOfSpeech)[0]?.label;
+              const selected = sense.id === selectedSense.id;
+
+              return (
+                <button
+                  key={sense.id}
+                  type="button"
+                  onClick={() => updateSenseSelection(sense.id)}
+                  aria-pressed={selected}
+                  className={[
+                    "inline-flex min-h-9 items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+                    selected
+                      ? "border-foreground bg-foreground text-background shadow-sm"
+                      : "border-border bg-background text-foreground hover:border-foreground/50 hover:bg-muted",
+                  ].join(" ")}
+                >
+                  {sense.pinyin}
+                  <span className="mx-1.5 text-current/60">-</span>
+                  <span>{partOfSpeechLabel ?? sense.shortMeaning}</span>
+                </button>
+              );
+            })}
           </div>
         ) : null}
+      </div>
 
-        {hasMultipleSenses ? (
-          <Tabs value={selectedSenseId} onValueChange={updateSenseSelection} className="space-y-4">
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 rounded-[1.5rem] p-2">
-              {word.resolvedSenses.map((sense) => {
-                const partOfSpeechLabel = formatPublicPartOfSpeech(sense.partOfSpeech)[0]?.label;
+      <SenseContent word={word} sense={selectedSense} />
 
-                return (
-                  <TabsTrigger
-                    key={sense.id}
-                    value={sense.id}
-                    className="h-auto min-h-0 max-w-full whitespace-normal px-4 py-3 text-left"
-                  >
-                    <span className="flex flex-col items-start gap-1">
-                      <span className="text-base font-semibold text-foreground">{sense.pinyin}</span>
-                      {partOfSpeechLabel ? (
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {partOfSpeechLabel}
-                        </span>
-                      ) : null}
-                      <span className="text-xs text-muted-foreground">{sense.shortMeaning}</span>
-                    </span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+      <AiSentenceGeneratorCard
+        key={selectedSense.id}
+        wordId={word.id}
+        senseId={selectedSense.id}
+        sensePinyin={selectedSense.pinyin}
+        sensePartOfSpeech={formatPublicPartOfSpeech(selectedSense.partOfSpeech)
+          .map((entry) => entry.label)
+          .join(", ")}
+        senseMeaning={selectedSense.meaningVi}
+        title={t("ai.sentences.title")}
+        description={t("ai.sentences.description")}
+      />
 
-            {word.resolvedSenses.map((sense) => (
-              <TabsContent key={sense.id} value={sense.id} className="mt-0">
-                <SenseContent word={word} sense={sense} />
-              </TabsContent>
-            ))}
-          </Tabs>
-        ) : (
-          <SenseContent word={word} sense={selectedSense} />
-        )}
-
-        <div className="flex flex-wrap gap-3 border-t border-border/70 pt-4">
-          <Button asChild variant="outline">
-            <Link href={link(`/practice/reading/words?word=${word.id}&sense=${selectedSense.id}`)}>
-              {t("practice.cta.reading")}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={link(`/practice/writing/${word.id}`)}>{t("practice.cta.writing")}</Link>
-          </Button>
-          <AiExplanationCard
-            payload={{ kind: "word", wordId: word.id }}
-            title={`${word.hanzi} · ${selectedSense.pinyin}`}
-            description={selectedSense.meaningVi}
-            triggerLabel={t("ai.explanation.open")}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex flex-wrap gap-3 border-t border-border/70 pt-4">
+        <Button asChild variant="outline">
+          <Link href={link(`/practice/reading/words?word=${word.id}&sense=${selectedSense.id}`)}>
+            {t("practice.cta.reading")}
+          </Link>
+        </Button>
+        <AiExplanationCard
+          payload={{ kind: "word", wordId: word.id }}
+          title={`${word.hanzi} · ${selectedSense.pinyin}`}
+          description={selectedSense.meaningVi}
+          triggerLabel={t("ai.explanation.open")}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -176,7 +170,7 @@ function SenseContent({
               pinyin: sense.pinyin,
               vietnameseMeaning: sense.meaningVi,
             }}
-            label="Nghe cach doc nay"
+            label={t("vocabulary.listenToReading")}
             className="rounded-full"
           />
         </div>
@@ -191,7 +185,7 @@ function SenseContent({
           ) : (
             <Badge variant="outline">{t("common.notAvailable")}</Badge>
           )}
-          {sense.isPrimary ? <Badge variant="outline">Primary</Badge> : null}
+          {sense.isPrimary ? <Badge variant="outline">{t("vocabulary.primarySense")}</Badge> : null}
         </div>
 
         {sense.usageNote ? (
@@ -206,18 +200,6 @@ function SenseContent({
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("vocabulary.examples")}
           </p>
-          <PronunciationButton
-            text={word.simplified}
-            sourceType="word"
-            sourceRefId={word.id}
-            sourceMetadata={{
-              slug: word.slug,
-              senseId: sense.id,
-              pinyin: sense.pinyin,
-            }}
-            label="Nghe lai"
-            className="rounded-full"
-          />
         </div>
 
         {sense.examples.length === 0 ? (
@@ -240,7 +222,7 @@ function SenseContent({
                     pinyin: example.pinyin,
                     vietnameseMeaning: example.vietnameseMeaning,
                   }}
-                  label="Nghe cau"
+                  label={t("vocabulary.listenSentence")}
                   className="rounded-full"
                 />
               </div>

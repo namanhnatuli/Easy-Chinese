@@ -13,6 +13,7 @@ export interface AiExampleSentence {
 
 export interface WordAiContext {
   id: string;
+  senseId: string | null;
   slug: string;
   hanzi: string;
   pinyin: string;
