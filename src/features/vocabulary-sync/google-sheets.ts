@@ -66,8 +66,8 @@ async function fetchSpreadsheetProperties(spreadsheetId: string) {
   );
 }
 
-async function fetchSheetValues(spreadsheetId: string, sheetName: string) {
-  const encodedRange = encodeURIComponent(sheetName);
+async function fetchSheetValues(spreadsheetId: string, range: string) {
+  const encodedRange = encodeURIComponent(range);
 
   return fetchGoogleJson<{
     values?: string[][];
@@ -79,12 +79,13 @@ async function fetchSheetValues(spreadsheetId: string, sheetName: string) {
 export async function readGoogleSheetRows(input: {
   spreadsheetId: string;
   sheetName: string;
+  range?: string;
   fromRow?: number;
   toRow?: number;
 }): Promise<GoogleSheetReadResult> {
   const [metadata, valuesResponse] = await Promise.all([
     fetchSpreadsheetProperties(input.spreadsheetId),
-    fetchSheetValues(input.spreadsheetId, input.sheetName),
+    fetchSheetValues(input.spreadsheetId, input.range?.trim() || input.sheetName),
   ]);
 
   const sheetProperties = metadata.sheets

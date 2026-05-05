@@ -456,6 +456,10 @@
       "syncError": "同步错误",
       "applyError": "应用错误"
     },
+    "contentTypes": {
+      "vocabulary": "词汇同步",
+      "grammar": "语法同步"
+    },
     "tabs": {
       "queue": "待审核队列",
       "resolved": "已处理历史",
@@ -591,6 +595,53 @@
       "unknown": "未知",
       "view": "查看",
       "batchesLabel": "批次"
+    },
+    "grammar": {
+      "header": {
+        "title": "Google Sheets 语法同步",
+        "description": "预览来自 Google Sheets 的语法行，检查已解析的例句，并批准或应用到已发布的语法内容。"
+      },
+      "tabs": {
+        "queue": "语法队列",
+        "resolved": "已处理语法",
+        "batchSync": "语法批次同步"
+      },
+      "filters": {
+        "searchPlaceholder": "搜索标题、slug 或结构"
+      },
+      "rows": {
+        "title": "语法行",
+        "description": "当前筛选条件匹配 {count} 条暂存行。"
+      },
+      "empty": {
+        "title": "没有语法同步行",
+        "description": "请运行语法预览同步，或调整当前筛选条件。"
+      },
+      "actions": {
+        "approveEligible": "批准可用行",
+        "applyApproved": "应用已批准行",
+        "review": "审核",
+        "apply": "应用"
+      },
+      "detail": {
+        "structure": "结构",
+        "explanation": "解释"
+      },
+      "batchSync": {
+        "startTitle": "开始语法预览同步",
+        "startDescription": "使用默认 spreadsheet ID 和语法专用工作表。行范围是可选的；留空则同步全部行。",
+        "useEnvDefault": "使用 env 默认值",
+        "sheetName": "语法工作表",
+        "sheetPlaceholder": "Grammar",
+        "sheetHintRequired": "请设置 GOOGLE_SHEETS_GRAMMAR_SHEET_NAME，或输入标签页名称。",
+        "historyTitle": "语法同步历史",
+        "noHistoryTitle": "还没有语法同步历史",
+        "noHistoryDescription": "从 Google Sheets 预览语法行，以创建第一个批次。",
+        "untitledBatch": "未命名语法批次",
+        "noSpreadsheetId": "没有 spreadsheet ID",
+        "historySummary": "行 {rows} · 待处理 {pending} · 已批准 {approved} · 已应用 {applied} · 错误 {errors}",
+        "openRows": "打开行"
+      }
     },
     "detail": {
       "title": "审核行详情",
@@ -1478,6 +1529,15 @@
         "titleLabel": "标题",
         "slug": "Slug",
         "hskLevel": "HSK 等级",
+        "sourceConfidence": "来源可信度",
+        "sourceConfidenceNotSet": "未设置",
+        "sourceConfidenceHigh": "高",
+        "sourceConfidenceMedium": "中",
+        "sourceConfidenceLow": "低",
+        "reviewStatus": "审核状态",
+        "aiStatus": "AI 状态",
+        "ambiguityFlag": "来源有歧义",
+        "ambiguityNote": "歧义说明",
         "published": "已发布",
         "structureText": "结构文本",
         "vietnameseExplanation": "越南语解释",
@@ -1527,7 +1587,9 @@
         "previousPage": "上一页",
         "nextPage": "下一页",
         "selectedCount": "已选择 {count} 个",
-        "clearAll": "清除全部"
+        "clearAll": "清除全部",
+        "summaryTitle": "已选择顺序",
+        "summaryGridTitle": "按顺序排列的已选项目"
       },
       "create": {
         "title": "新建课程",
@@ -1737,7 +1799,8 @@
         "filesCount": "{count} 个文件",
         "statsLine": "{characters} 字符 · {hits} 次命中",
         "topVoices": "热门语音",
-        "voiceStatsLine": "{characters} 字符 · {hits} 次命中 · {size}"
+        "voiceStatsLine": "{characters} 字符 · {hits} 次命中 · {size}",
+        "sourceTypes": "来源类型"
       },
       "filters": {
         "sourceType": "来源类型",
@@ -1765,6 +1828,8 @@
           "chars": "字符",
           "hits": "命中",
           "size": "大小",
+          "metadata": "元数据",
+          "viewMetadata": "查看元数据",
           "lastAccessed": "最后访问"
         }
       },

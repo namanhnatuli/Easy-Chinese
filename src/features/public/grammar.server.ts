@@ -12,6 +12,7 @@ export async function listPublicGrammarPoints(filters: GrammarFilters): Promise<
   let query = supabase
     .from("grammar_points")
     .select("id, title, slug, hsk_level, structure_text, explanation_vi, notes")
+    .eq("is_published", true)
     .order("hsk_level")
     .order("title");
 
@@ -34,6 +35,7 @@ export async function getPublicGrammarPointBySlug(slug: string): Promise<PublicG
     .from("grammar_points")
     .select("id, title, slug, hsk_level, structure_text, explanation_vi, notes")
     .eq("slug", slug)
+    .eq("is_published", true)
     .maybeSingle();
 
   if (pointError) {

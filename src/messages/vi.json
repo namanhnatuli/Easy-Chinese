@@ -456,6 +456,10 @@
       "syncError": "Lỗi đồng bộ",
       "applyError": "Lỗi áp dụng"
     },
+    "contentTypes": {
+      "vocabulary": "Đồng bộ từ vựng",
+      "grammar": "Đồng bộ ngữ pháp"
+    },
     "tabs": {
       "queue": "Hàng chờ duyệt",
       "resolved": "Lịch sử đã xử lý",
@@ -591,6 +595,53 @@
       "unknown": "Không rõ",
       "view": "Xem",
       "batchesLabel": "batch"
+    },
+    "grammar": {
+      "header": {
+        "title": "Đồng bộ ngữ pháp từ Google Sheets",
+        "description": "Preview các dòng ngữ pháp từ Google Sheets, kiểm tra ví dụ đã parse, rồi duyệt hoặc áp dụng vào nội dung ngữ pháp đã xuất bản."
+      },
+      "tabs": {
+        "queue": "Hàng đợi ngữ pháp",
+        "resolved": "Ngữ pháp đã xử lý",
+        "batchSync": "Đồng bộ ngữ pháp"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm tiêu đề, slug hoặc cấu trúc"
+      },
+      "rows": {
+        "title": "Dòng ngữ pháp",
+        "description": "{count} dòng đã stage khớp với bộ lọc hiện tại."
+      },
+      "empty": {
+        "title": "Không có dòng đồng bộ ngữ pháp",
+        "description": "Chạy preview đồng bộ ngữ pháp hoặc điều chỉnh bộ lọc hiện tại."
+      },
+      "actions": {
+        "approveEligible": "Duyệt dòng hợp lệ",
+        "applyApproved": "Áp dụng dòng đã duyệt",
+        "review": "Duyệt",
+        "apply": "Áp dụng"
+      },
+      "detail": {
+        "structure": "Cấu trúc",
+        "explanation": "Giải thích"
+      },
+      "batchSync": {
+        "startTitle": "Bắt đầu preview đồng bộ ngữ pháp",
+        "startDescription": "Dùng spreadsheet ID mặc định cùng sheet riêng cho ngữ pháp. Giới hạn dòng là tùy chọn; bỏ trống để đồng bộ tất cả.",
+        "useEnvDefault": "Dùng mặc định từ env",
+        "sheetName": "Sheet ngữ pháp",
+        "sheetPlaceholder": "Grammar",
+        "sheetHintRequired": "Đặt GOOGLE_SHEETS_GRAMMAR_SHEET_NAME hoặc nhập tên tab.",
+        "historyTitle": "Lịch sử đồng bộ ngữ pháp",
+        "noHistoryTitle": "Chưa có lịch sử đồng bộ ngữ pháp",
+        "noHistoryDescription": "Preview dữ liệu ngữ pháp từ Google Sheets để tạo batch đầu tiên.",
+        "untitledBatch": "Batch ngữ pháp chưa đặt tên",
+        "noSpreadsheetId": "Không có spreadsheet ID",
+        "historySummary": "Dòng {rows} · Chờ {pending} · Đã duyệt {approved} · Đã áp dụng {applied} · Lỗi {errors}",
+        "openRows": "Mở danh sách dòng"
+      }
     },
     "detail": {
       "title": "Chi tiết dòng cần duyệt",
@@ -1478,6 +1529,15 @@
         "titleLabel": "Tiêu đề",
         "slug": "Slug",
         "hskLevel": "Cấp độ HSK",
+        "sourceConfidence": "Độ tin cậy nguồn",
+        "sourceConfidenceNotSet": "Chưa đặt",
+        "sourceConfidenceHigh": "Cao",
+        "sourceConfidenceMedium": "Trung bình",
+        "sourceConfidenceLow": "Thấp",
+        "reviewStatus": "Trạng thái duyệt",
+        "aiStatus": "Trạng thái AI",
+        "ambiguityFlag": "Nguồn có mơ hồ",
+        "ambiguityNote": "Ghi chú mơ hồ",
         "published": "Đã xuất bản",
         "structureText": "Mẫu cấu trúc",
         "vietnameseExplanation": "Giải thích tiếng Việt",

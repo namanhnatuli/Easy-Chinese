@@ -20,6 +20,11 @@ const grammarSchema = z.object({
   structureText: z.string().min(1, "Structure text is required."),
   explanationVi: z.string().min(1, "Vietnamese explanation is required."),
   notes: z.string().nullable(),
+  sourceConfidence: z.enum(["low", "medium", "high"]).nullable(),
+  ambiguityFlag: z.boolean(),
+  ambiguityNote: z.string().nullable(),
+  reviewStatus: z.enum(["pending", "needs_review", "approved", "rejected", "applied"]),
+  aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]),
   isPublished: z.boolean(),
 });
 
@@ -41,6 +46,11 @@ export interface AdminGrammarEditor {
     structure_text: string;
     explanation_vi: string;
     notes: string | null;
+    source_confidence: "low" | "medium" | "high" | null;
+    ambiguity_flag: boolean;
+    ambiguity_note: string | null;
+    review_status: "pending" | "needs_review" | "approved" | "rejected" | "applied";
+    ai_status: "pending" | "processing" | "done" | "failed" | "skipped";
     is_published: boolean;
   };
   examplesText: string;
@@ -61,7 +71,7 @@ export async function getGrammarEditor(id: string): Promise<AdminGrammarEditor |
   const { supabase } = await requireAdminSupabase();
   const { data: grammarPoint, error } = await supabase
     .from("grammar_points")
-    .select("id, title, slug, hsk_level, structure_text, explanation_vi, notes, is_published")
+    .select("id, title, slug, hsk_level, structure_text, explanation_vi, notes, source_confidence, ambiguity_flag, ambiguity_note, review_status, ai_status, is_published")
     .eq("id", id)
     .maybeSingle();
 
@@ -98,6 +108,11 @@ export async function saveGrammarAction(formData: FormData) {
     structureText: requiredText(formData.get("structure_text")),
     explanationVi: requiredText(formData.get("explanation_vi")),
     notes: optionalText(formData.get("notes")),
+    sourceConfidence: optionalText(formData.get("source_confidence")) || null,
+    ambiguityFlag: formData.get("ambiguity_flag") === "on",
+    ambiguityNote: optionalText(formData.get("ambiguity_note")),
+    reviewStatus: optionalText(formData.get("review_status")) || "pending",
+    aiStatus: optionalText(formData.get("ai_status")) || "pending",
     isPublished: formData.get("is_published") === "on",
   });
 
@@ -108,6 +123,11 @@ export async function saveGrammarAction(formData: FormData) {
     structure_text: parsed.structureText,
     explanation_vi: parsed.explanationVi,
     notes: parsed.notes,
+    source_confidence: parsed.sourceConfidence,
+    ambiguity_flag: parsed.ambiguityFlag,
+    ambiguity_note: parsed.ambiguityNote,
+    review_status: parsed.reviewStatus,
+    ai_status: parsed.aiStatus,
     is_published: parsed.isPublished,
   };
 

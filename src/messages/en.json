@@ -456,6 +456,10 @@
       "syncError": "Sync error",
       "applyError": "Apply error"
     },
+    "contentTypes": {
+      "vocabulary": "Vocabulary Sync",
+      "grammar": "Grammar Sync"
+    },
     "tabs": {
       "queue": "Review Queue",
       "resolved": "Resolved History",
@@ -591,6 +595,53 @@
       "unknown": "Unknown",
       "view": "View",
       "batchesLabel": "batches"
+    },
+    "grammar": {
+      "header": {
+        "title": "Google Sheets grammar sync",
+        "description": "Preview staged grammar rows from Google Sheets, inspect parsed examples, and approve or apply them into published grammar content."
+      },
+      "tabs": {
+        "queue": "Grammar Queue",
+        "resolved": "Grammar Resolved",
+        "batchSync": "Grammar Batch Sync"
+      },
+      "filters": {
+        "searchPlaceholder": "Search title, slug, or structure"
+      },
+      "rows": {
+        "title": "Grammar rows",
+        "description": "{count} staged rows match the current filters."
+      },
+      "empty": {
+        "title": "No grammar sync rows",
+        "description": "Run a grammar preview sync or adjust the current filters."
+      },
+      "actions": {
+        "approveEligible": "Approve eligible",
+        "applyApproved": "Apply approved",
+        "review": "Review",
+        "apply": "Apply"
+      },
+      "detail": {
+        "structure": "Structure",
+        "explanation": "Explanation"
+      },
+      "batchSync": {
+        "startTitle": "Start grammar preview sync",
+        "startDescription": "Uses the default spreadsheet ID with a grammar-specific sheet name. Row limits are optional; leave them blank to sync all rows.",
+        "useEnvDefault": "Use env default",
+        "sheetName": "Grammar sheet",
+        "sheetPlaceholder": "Grammar",
+        "sheetHintRequired": "Set GOOGLE_SHEETS_GRAMMAR_SHEET_NAME or enter a tab name.",
+        "historyTitle": "Grammar sync history",
+        "noHistoryTitle": "No grammar sync history",
+        "noHistoryDescription": "Preview grammar rows from Google Sheets to create the first batch.",
+        "untitledBatch": "Untitled grammar batch",
+        "noSpreadsheetId": "No spreadsheet ID",
+        "historySummary": "Rows {rows} · Pending {pending} · Approved {approved} · Applied {applied} · Errors {errors}",
+        "openRows": "Open rows"
+      }
     },
     "detail": {
       "title": "Review row detail",
@@ -1478,6 +1529,15 @@
         "titleLabel": "Title",
         "slug": "Slug",
         "hskLevel": "HSK level",
+        "sourceConfidence": "Source confidence",
+        "sourceConfidenceNotSet": "Not set",
+        "sourceConfidenceHigh": "High",
+        "sourceConfidenceMedium": "Medium",
+        "sourceConfidenceLow": "Low",
+        "reviewStatus": "Review status",
+        "aiStatus": "AI status",
+        "ambiguityFlag": "Ambiguous source",
+        "ambiguityNote": "Ambiguity note",
         "published": "Published",
         "structureText": "Structure text",
         "vietnameseExplanation": "Vietnamese explanation",
