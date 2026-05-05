@@ -40,9 +40,11 @@ function serializeExamples(examples: ExampleSlot[]) {
 export function WordExamplesEditor({
   name,
   defaultValue,
+  disabled = false,
 }: {
   name: string;
   defaultValue: string;
+  disabled?: boolean;
 }) {
   const { t } = useI18n();
   const initialExamples = useMemo(() => parseExamplesText(defaultValue), [defaultValue]);
@@ -58,6 +60,7 @@ export function WordExamplesEditor({
           type="button"
           variant="outline"
           size="sm"
+          disabled={disabled}
           onClick={() =>
             setExamples([
               ...examples,
@@ -79,6 +82,7 @@ export function WordExamplesEditor({
           >
             <input
               value={example.chineseText}
+              disabled={disabled}
               onChange={(event) =>
                 setExamples((current) =>
                   current.map((item, itemIndex) =>
@@ -91,6 +95,7 @@ export function WordExamplesEditor({
             />
             <input
               value={example.pinyin}
+              disabled={disabled}
               onChange={(event) =>
                 setExamples((current) =>
                   current.map((item, itemIndex) =>
@@ -103,6 +108,7 @@ export function WordExamplesEditor({
             />
             <input
               value={example.vietnameseMeaning}
+              disabled={disabled}
               onChange={(event) =>
                 setExamples((current) =>
                   current.map((item, itemIndex) =>
@@ -117,10 +123,11 @@ export function WordExamplesEditor({
             />
             <button
               type="button"
+              disabled={disabled}
               onClick={() =>
                 setExamples((current) => current.filter((_, itemIndex) => itemIndex !== index))
               }
-              className="flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              className="flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Trash2 className="size-4" />
             </button>

@@ -627,6 +627,21 @@
         "structure": "Cấu trúc",
         "explanation": "Giải thích"
       },
+      "modal": {
+        "description": "Duyệt payload ngữ pháp đã stage, ví dụ, lỗi validation và các thao tác trước khi áp dụng.",
+        "tabs": {
+          "overview": "Tổng quan",
+          "examples": "Ví dụ",
+          "payload": "Payload",
+          "issues": "Vấn đề"
+        },
+        "booleanYes": "Có",
+        "booleanNo": "Không",
+        "noExamplesTitle": "Không có ví dụ ngữ pháp",
+        "noExamplesDescription": "Dòng đã stage này không có ví dụ nào được parse.",
+        "examplesEditHint": "Mỗi dòng một ví dụ: Chinese | Pinyin | Vietnamese meaning. Pinyin và nghĩa tiếng Việt là tùy chọn cho dòng ngữ pháp đã stage.",
+        "editLocked": "Dòng này đã được duyệt, áp dụng, bỏ qua hoặc từ chối. Chỉ có thể xem."
+      },
       "batchSync": {
         "startTitle": "Bắt đầu preview đồng bộ ngữ pháp",
         "startDescription": "Dùng spreadsheet ID mặc định cùng sheet riêng cho ngữ pháp. Giới hạn dòng là tùy chọn; bỏ trống để đồng bộ tất cả.",

@@ -627,6 +627,21 @@
         "structure": "结构",
         "explanation": "解释"
       },
+      "modal": {
+        "description": "在应用之前，审核已暂存的语法 payload、例句、校验问题和可用操作。",
+        "tabs": {
+          "overview": "概览",
+          "examples": "例句",
+          "payload": "Payload",
+          "issues": "问题"
+        },
+        "booleanYes": "是",
+        "booleanNo": "否",
+        "noExamplesTitle": "没有语法例句",
+        "noExamplesDescription": "这条暂存行没有解析出任何例句。",
+        "examplesEditHint": "每行一个例句：Chinese | Pinyin | Vietnamese meaning。对于暂存语法行，拼音和越南语释义可选。",
+        "editLocked": "这条记录已批准、应用、跳过或拒绝，目前只能查看。"
+      },
       "batchSync": {
         "startTitle": "开始语法预览同步",
         "startDescription": "使用默认 spreadsheet ID 和语法专用工作表。行范围是可选的；留空则同步全部行。",

@@ -37,6 +37,7 @@ import {
   getGrammarSyncAdminPageData,
   parseGrammarContentSyncFilters,
   rejectGrammarSyncRowAction,
+  saveGrammarSyncRowEditsAction,
   startGrammarContentSyncPreviewAction,
 } from "@/features/admin/grammar-sync";
 import type { GrammarSyncRow } from "@/features/grammar-sync/types";
@@ -50,6 +51,7 @@ import { ContentSyncDetailDialog } from "@/components/admin/content-sync-detail-
 import { ContentSyncBatchDialog } from "@/components/admin/content-sync-batch-dialog";
 import { ContentSyncBatchHistoryTable } from "@/components/admin/content-sync-batch-history-table";
 import { ContentSyncReviewModule } from "@/components/admin/content-sync-review-module";
+import { GrammarSyncReviewDialog } from "@/components/admin/grammar-sync-review-dialog";
 import { buildContentSyncPath } from "@/features/admin/content-sync-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -482,8 +484,6 @@ function GrammarSyncPanel({
   link: (href: string) => string;
   t: Awaited<ReturnType<typeof getServerI18n>>["t"];
 }) {
-  const selectedPayload = data.selectedRow ? getGrammarPayload(data.selectedRow) : null;
-
   return (
     <Tabs defaultValue={data.filters.view === "resolved" ? "resolved" : "queue"} className="w-full">
       <TabsList className="bg-background/50 border rounded-full p-1 h-auto flex flex-wrap justify-start gap-1">
@@ -615,38 +615,14 @@ function GrammarSyncPanel({
           </div>
         )}
 
-        {data.selectedRow && selectedPayload ? (
-          <Card className="border-primary/30">
-            <CardHeader>
-              <CardTitle>{selectedPayload.title || data.selectedRow.sourceRowKey}</CardTitle>
-              <CardDescription>{selectedPayload.slug}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">{t("contentSync.grammar.detail.structure")}</p>
-                  <p className="mt-1 rounded-lg bg-muted p-3 text-sm font-medium text-primary">{selectedPayload.structureText}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">{t("contentSync.grammar.detail.explanation")}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{selectedPayload.explanationVi}</p>
-                </div>
-              </div>
-              {selectedPayload.notes ? <p className="text-sm text-muted-foreground">{selectedPayload.notes}</p> : null}
-              {selectedPayload.examples.length > 0 ? (
-                <div className="grid gap-3">
-                  {selectedPayload.examples.map((example) => (
-                    <div key={`${example.sortOrder}-${example.chineseText}`} className="rounded-lg border p-3">
-                      <p className="font-semibold">{example.chineseText}</p>
-                      {example.pinyin ? <p className="mt-1 text-pinyin">{example.pinyin}</p> : null}
-                      {example.vietnameseMeaning ? <p className="mt-2 text-sm text-muted-foreground">{example.vietnameseMeaning}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : null}
+        <GrammarSyncReviewDialog
+          row={data.selectedRow}
+          filters={data.filters}
+          approveAction={approveGrammarSyncRowAction}
+          applyAction={applyGrammarSyncRowAction}
+          rejectAction={rejectGrammarSyncRowAction}
+          saveAction={saveGrammarSyncRowEditsAction}
+        />
       </TabsContent>
 
       <TabsContent value="batch-sync" className="pt-6">

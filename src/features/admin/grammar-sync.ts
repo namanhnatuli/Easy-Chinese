@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { optionalText, requireAdminSupabase, revalidateAdminPaths, redirectTo } from "@/features/admin/shared";
 import {
   ContentSyncFilters,
@@ -6,6 +8,8 @@ import {
   parseContentSyncFilters,
   summarizeRows,
 } from "@/features/admin/content-sync-utils";
+import { buildGrammarContentHash } from "@/features/grammar-sync/content-hash";
+import { buildGrammarSourceRowKey } from "@/features/grammar-sync/normalize";
 import { applyApprovedGrammarSyncRows } from "@/features/grammar-sync/apply";
 import {
   getGlobalGrammarSyncPreviewRows,
@@ -20,7 +24,12 @@ import {
   updateGrammarSyncBatch,
   updateGrammarSyncRow,
 } from "@/features/grammar-sync/repository";
-import type { GrammarSyncBatch, GrammarSyncRow } from "@/features/grammar-sync/types";
+import type {
+  GrammarSyncBatch,
+  GrammarSyncRow,
+  NormalizedGrammarExample,
+  NormalizedGrammarSyncPayload,
+} from "@/features/grammar-sync/types";
 import { logger } from "@/lib/logger";
 
 export interface GrammarSyncPageData {
@@ -49,6 +58,79 @@ function parseInteger(value: string | null) {
   if (!value) return undefined;
   const parsed = parseInt(value, 10);
   return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+function parseBooleanValue(value: FormDataEntryValue | null) {
+  return value === "on" || value === "true" || value === "1";
+}
+
+function parseGrammarExamplesTextarea(value: FormDataEntryValue | null): NormalizedGrammarExample[] {
+  if (typeof value !== "string") return [];
+
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const [chineseText = "", pinyin = "", vietnameseMeaning = ""] = line
+        .split("|")
+        .map((part) => part.trim());
+
+      return {
+        chineseText,
+        pinyin: pinyin || null,
+        vietnameseMeaning: vietnameseMeaning || null,
+        sortOrder: index + 1,
+      };
+    })
+    .filter((example) => example.chineseText);
+}
+
+const editedGrammarPayloadSchema = z.object({
+  title: z.string().trim().min(1),
+  slug: z.string().trim().min(1),
+  structureText: z.string().trim().min(1),
+  explanationVi: z.string().trim().min(1),
+  notes: z.string().trim().nullable(),
+  examples: z.array(
+    z.object({
+      chineseText: z.string().trim().min(1),
+      pinyin: z.string().trim().nullable(),
+      vietnameseMeaning: z.string().trim().nullable(),
+      sortOrder: z.number().int().positive(),
+    }),
+  ),
+  hskLevel: z.number().int().min(1).max(9),
+  sourceConfidence: z.enum(["low", "medium", "high"]).nullable(),
+  ambiguityFlag: z.boolean(),
+  ambiguityNote: z.string().trim().nullable(),
+  reviewStatus: z.enum(["pending", "needs_review", "approved", "rejected", "applied"]),
+  aiStatus: z.enum(["pending", "processing", "done", "failed", "skipped"]),
+  sourceUpdatedAt: z.string().trim().nullable(),
+});
+
+function buildEditedGrammarPayload(formData: FormData, row: GrammarSyncRow): NormalizedGrammarSyncPayload {
+  const basePayload = (row.adminEditedPayload ?? row.normalizedPayload ?? {}) as Partial<NormalizedGrammarSyncPayload>;
+  const hskLevel = parseInteger(optionalText(formData.get("hsk_level")));
+  const sourceConfidence = optionalText(formData.get("source_confidence"));
+
+  return editedGrammarPayloadSchema.parse({
+    title: String(formData.get("title") ?? "").trim(),
+    slug: String(formData.get("slug") ?? "").trim(),
+    structureText: String(formData.get("structure_text") ?? "").trim(),
+    explanationVi: String(formData.get("explanation_vi") ?? "").trim(),
+    notes: optionalText(formData.get("notes")),
+    examples: parseGrammarExamplesTextarea(formData.get("examples_text")),
+    hskLevel,
+    sourceConfidence: sourceConfidence || null,
+    ambiguityFlag: parseBooleanValue(formData.get("ambiguity_flag")),
+    ambiguityNote: optionalText(formData.get("ambiguity_note")),
+    reviewStatus: (optionalText(formData.get("review_status")) ?? row.reviewStatus) as NormalizedGrammarSyncPayload["reviewStatus"],
+    aiStatus: (optionalText(formData.get("ai_status")) ?? row.aiStatus) as NormalizedGrammarSyncPayload["aiStatus"],
+    sourceUpdatedAt:
+      optionalText(formData.get("source_updated_at")) ??
+      (typeof basePayload.sourceUpdatedAt === "string" ? basePayload.sourceUpdatedAt : row.sourceUpdatedAt),
+  });
 }
 
 function getPayloadText(row: GrammarSyncRow, key: string) {
@@ -266,6 +348,45 @@ export async function approveGrammarSyncRowAction(formData: FormData) {
   await reviewGrammarSyncRows([rowId], "approve");
   revalidateAdminPaths(["/admin/content-sync"]);
   redirectBackFromFormData(formData, { selectedRowId: rowId });
+}
+
+export async function saveGrammarSyncRowEditsAction(formData: FormData) {
+  "use server";
+
+  const rowId = optionalText(formData.get("row_id"));
+  if (!rowId) throw new Error("Row id is required.");
+
+  const row = await getGrammarSyncRow(rowId);
+  if (!row) throw new Error("Grammar sync row not found.");
+  if (row.reviewStatus === "applied" || row.applyStatus === "applied" || row.applyStatus === "skipped") {
+    throw new Error("Applied grammar sync rows cannot be edited.");
+  }
+
+  const payload = buildEditedGrammarPayload(formData, row);
+  const contentHash = buildGrammarContentHash(payload);
+  const sourceRowKey = buildGrammarSourceRowKey(payload);
+  const nextChangeClassification =
+    row.changeClassification === "invalid"
+      ? row.matchedGrammarIds.length > 0
+        ? "changed"
+        : "new"
+      : row.changeClassification;
+
+  await updateGrammarSyncRow(row.id, {
+    adminEditedPayload: payload as unknown as Record<string, unknown>,
+    sourceRowKey,
+    contentHash,
+    changeClassification: nextChangeClassification,
+    parseErrors: [],
+    errorMessage: null,
+    reviewStatus: payload.reviewStatus,
+    aiStatus: payload.aiStatus,
+    sourceConfidence: payload.sourceConfidence,
+  });
+
+  await refreshGrammarBatchReviewCounts(row.batchId);
+  revalidateAdminPaths(["/admin/content-sync"]);
+  redirectBackFromFormData(formData, { selectedRowId: row.id });
 }
 
 export async function rejectGrammarSyncRowAction(formData: FormData) {

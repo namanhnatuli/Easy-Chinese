@@ -627,6 +627,21 @@
         "structure": "Structure",
         "explanation": "Explanation"
       },
+      "modal": {
+        "description": "Review the staged grammar payload, examples, validation issues, and available actions before applying it.",
+        "tabs": {
+          "overview": "Overview",
+          "examples": "Examples",
+          "payload": "Payload",
+          "issues": "Issues"
+        },
+        "booleanYes": "Yes",
+        "booleanNo": "No",
+        "noExamplesTitle": "No grammar examples",
+        "noExamplesDescription": "This staged row did not include any parsed examples.",
+        "examplesEditHint": "One example per line: Chinese | Pinyin | Vietnamese meaning. Pinyin and Vietnamese meaning are optional for staged grammar rows.",
+        "editLocked": "This row is already approved, applied, skipped, or rejected. It is view-only."
+      },
       "batchSync": {
         "startTitle": "Start grammar preview sync",
         "startDescription": "Uses the default spreadsheet ID with a grammar-specific sheet name. Row limits are optional; leave them blank to sync all rows.",
